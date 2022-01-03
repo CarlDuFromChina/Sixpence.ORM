@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixpence.ORM", "Sixpence.ORM.csproj", "{A3DC3A05-7320-4510-8A47-47AEDACFFAF4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sixpence.ORM", "Sixpence.ORM\Sixpence.ORM.csproj", "{8530FA5A-593F-4A55-846C-1A1B0B20ECCD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixpence.ORM.Test", "Sixpence.ORM.Test\Sixpence.ORM.Test.csproj", "{284EA750-BB3F-41C9-84E2-FECF43BE2E40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A3DC3A05-7320-4510-8A47-47AEDACFFAF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A3DC3A05-7320-4510-8A47-47AEDACFFAF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A3DC3A05-7320-4510-8A47-47AEDACFFAF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A3DC3A05-7320-4510-8A47-47AEDACFFAF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8530FA5A-593F-4A55-846C-1A1B0B20ECCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8530FA5A-593F-4A55-846C-1A1B0B20ECCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8530FA5A-593F-4A55-846C-1A1B0B20ECCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8530FA5A-593F-4A55-846C-1A1B0B20ECCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
