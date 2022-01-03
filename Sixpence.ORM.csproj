@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Authors>Karl Du</Authors>
+    <Company>Sixpence</Company>
+    <Description>基于 Dapper 的 ORM 框架，仅支持 PostgreSql</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.0.123" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.22" />
+    <PackageReference Include="Npgsql" Version="6.0.2" />
+    <PackageReference Include="Sixpence.Common" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>
