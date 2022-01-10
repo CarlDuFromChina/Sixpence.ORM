@@ -9,30 +9,19 @@ namespace Sixpence.ORM
 {
     public class DBSourceConfig : BaseAppConfig<DBSourceConfig>
     {
-        public DBNode Main { get; set; }
-        public DBNode StandBy { get; set; }
-    }
-
-    public class DBNode
-    {
+        /// <summary>
+        /// 驱动：Postgresql、MySql
+        /// </summary>
         public string DriverType { get; set; }
-        public string Value { get; set; }
-    }
 
-    /// <summary>
-    /// 数据库类型（主从）
-    /// </summary>
-    public enum DbType
-    {
         /// <summary>
-        /// 主库（负责读和写）
+        /// 连接字符串
         /// </summary>
-        [Description("主库")]
-        Main,
+        public string ConnectionString { get; set; }
+
         /// <summary>
-        /// 从库（负责读）
+        /// 超时时间
         /// </summary>
-        [Description("从库")]
-        StandBy
+        public int CommandTimeOut { get; set; }
     }
 }
