@@ -71,44 +71,44 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// 名称
         /// </summary>
-        [DataMember, Attr("name", "名称", DataType.Varchar, 100)]
+        [DataMember, Column("name", "名称", DataType.Varchar, 100)]
         public string name { get; set; }
 
         /// <summary>
         /// 创建人
         /// </summary>
-        [DataMember, Attr("createdby", "创建人id", DataType.Varchar, 100, true)]
+        [DataMember, Column("createdby", "创建人id", DataType.Varchar, 100, true)]
         public string createdBy { get; set; }
 
         /// <summary>
         /// 创建人
         /// </summary>
-        [DataMember, Attr("createdbyname", "创建人名称", DataType.Varchar, 100, true)]
+        [DataMember, Column("createdbyname", "创建人名称", DataType.Varchar, 100, true)]
         public string createdByName { get; set; }
 
         /// <summary>
         /// 创建日期
         /// </summary>
-        [DataMember, Attr("createdon", "创建日期", DataType.Timestamp, 6, true)]
+        [DataMember, Column("createdon", "创建日期", DataType.Timestamp, 6, true)]
         public DateTime? createdOn { get; set; }
 
         /// <summary>
         /// 修改人
         /// </summary>
-        [DataMember, Attr("modifiedby", "修改人id", DataType.Varchar, 100, true)]
+        [DataMember, Column("modifiedby", "修改人id", DataType.Varchar, 100, true)]
         public string modifiedBy { get; set; }
 
         /// <summary>
         /// 修改人
         /// </summary>
-        [DataMember, Attr("modifiedbyname", "修改人名称", DataType.Varchar, 100, true)]
+        [DataMember, Column("modifiedbyname", "修改人名称", DataType.Varchar, 100, true)]
         public string modifiedByName { get; set; }
 
 
         /// <summary>
         /// 创建日期
         /// </summary>
-        [DataMember, Attr("modifiedon", "创建日期", DataType.Timestamp, 6, true)]
+        [DataMember, Column("modifiedon", "创建日期", DataType.Timestamp, 6, true)]
         public DateTime? modifiedOn { get; set; }
 
         #endregion
@@ -145,7 +145,7 @@ namespace Sixpence.ORM.Entity
             var attributes = new Dictionary<string, object>();
             this.GetType()
                 .GetProperties()
-                .Where(item => item.IsDefined(typeof(AttrAttribute), false))
+                .Where(item => item.IsDefined(typeof(ColumnAttribute), false))
                 .ToList().ForEach(item =>
             {
                 attributes.Add(item.Name, item.GetValue(this));
@@ -192,12 +192,12 @@ namespace Sixpence.ORM.Entity
         /// 获取实体所有字段
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Column> GetAttrs()
+        public IEnumerable<Column> GetColumns()
         {
             return this.GetType()
                 .GetProperties()
-                .Where(item => item.IsDefined(typeof(AttrAttribute), false))
-                ?.Select(item => (item.GetCustomAttributes(typeof(AttrAttribute), false).FirstOrDefault() as AttrAttribute).Attr);
+                .Where(item => item.IsDefined(typeof(ColumnAttribute), false))
+                ?.Select(item => (item.GetCustomAttributes(typeof(ColumnAttribute), false).FirstOrDefault() as ColumnAttribute).Column);
         }
 
         /// <summary>

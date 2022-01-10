@@ -72,6 +72,6 @@ namespace Sixpence.ORM.Entity
         /// 获取实体所有字段
         /// </summary>
         /// <returns></returns>
-        IEnumerable<Column> GetAttrs();
+        IEnumerable<Column> GetColumns();
     }
 }

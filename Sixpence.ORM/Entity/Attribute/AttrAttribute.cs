@@ -9,7 +9,7 @@ namespace Sixpence.ORM.Entity
     /// <summary>
     /// 字段特性（映射数据库字段类型）
     /// </summary>
-    public sealed class AttrAttribute : Attribute
+    public sealed class ColumnAttribute : Attribute
     {
         /// <summary>
         /// 构造函数
@@ -19,9 +19,9 @@ namespace Sixpence.ORM.Entity
         /// <param name="type">字段类型</param>
         /// <param name="length">字段长度</param>
         /// <param name="isRequire">是否必填</param>
-        public AttrAttribute(string name, string logicalName, DataType type, int length, bool isRequire = false, object defaultValue = null)
+        public ColumnAttribute(string name, string logicalName, DataType type, int length, bool isRequire = false, object defaultValue = null)
         {
-            this.Attr = new Column()
+            this.Column = new Column()
             {
                 Name = name,
                 LogicalName = logicalName,
@@ -32,9 +32,9 @@ namespace Sixpence.ORM.Entity
             };
         }
 
-        public AttrAttribute(string name, string logicalName, DataType type, bool isRequire = false, object defaultValue = null)
+        public ColumnAttribute(string name, string logicalName, DataType type, bool isRequire = false, object defaultValue = null)
         {
-            this.Attr = new Column()
+            this.Column = new Column()
             {
                 Name = name,
                 LogicalName = logicalName,
@@ -44,6 +44,6 @@ namespace Sixpence.ORM.Entity
             };
         }
 
-        public Column Attr { get; set; }
+        public Column Column { get; set; }
     }
 }

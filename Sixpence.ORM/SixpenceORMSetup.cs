@@ -31,7 +31,7 @@ namespace Sixpence.ORM
                         ServiceContainer.Resolve<IPreCreateEntity>()?.Execute(broker, item); // 创建前
 
                         var attrSql = item
-                            .GetAttrs()
+                            .GetColumns()
                             .Select(e =>
                             {
                                 return $"{e.Name} {e.Type.GetDescription()}{(e.Length != null ? $"({e.Length.Value})" : "")} {(e.IsRequire.HasValue && e.IsRequire.Value ? "NOT NULL" : "")}{(e.Name == $"{item.GetEntityName()}id" ? " PRIMARY KEY" : "")}";
