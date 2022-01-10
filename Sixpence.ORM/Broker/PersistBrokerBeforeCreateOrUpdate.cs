@@ -25,18 +25,18 @@ namespace Sixpence.ORM.Broker
             {
                 case EntityAction.PreCreate:
                     {
-                        if ((!entity.GetAttributes().ContainsKey("createdBy") || entity.GetAttributeValue("createdBy") == null) && entity.GetType().GetProperty("createdBy") != null)
+                        if ((!entity.GetAttributes().ContainsKey("created_by") || entity.GetAttributeValue("created_by") == null) && entity.GetType().GetProperty("created_by") != null)
                         {
-                            entity.SetAttributeValue("createdBy", user.Id);
-                            entity.SetAttributeValue("createdByName", user.Name);
+                            entity.SetAttributeValue("created_by", user.Id);
+                            entity.SetAttributeValue("created_by_name", user.Name);
                         }
-                        if ((!entity.GetAttributes().ContainsKey("createdOn") || entity.GetAttributeValue("createdOn") == null) && entity.GetType().GetProperty("createdOn") != null)
+                        if ((!entity.GetAttributes().ContainsKey("created_at") || entity.GetAttributeValue("created_at") == null) && entity.GetType().GetProperty("created_at") != null)
                         {
-                            entity.SetAttributeValue("createdOn", DateTime.Now);
+                            entity.SetAttributeValue("created_at", DateTime.Now);
                         }
-                        entity.SetAttributeValue("modifiedBy", user.Id);
-                        entity.SetAttributeValue("modifiedByName", user.Name);
-                        entity.SetAttributeValue("modifiedOn", DateTime.Now);
+                        entity.SetAttributeValue("updated_by", user.Id);
+                        entity.SetAttributeValue("updated_by_name", user.Name);
+                        entity.SetAttributeValue("updated_at", DateTime.Now);
 
                         SetBooleanName(entity);
                         CheckDuplicate(entity, broker);
@@ -44,9 +44,9 @@ namespace Sixpence.ORM.Broker
                     break;
                 case EntityAction.PreUpdate:
                     {
-                        entity.SetAttributeValue("modifiedBy", user.Id);
-                        entity.SetAttributeValue("modifiedByName", user.Name);
-                        entity.SetAttributeValue("modifiedOn", DateTime.Now);
+                        entity.SetAttributeValue("updated_by", user.Id);
+                        entity.SetAttributeValue("updated_by_name", user.Name);
+                        entity.SetAttributeValue("updated_at", DateTime.Now);
 
                         SetBooleanName(entity);
                         CheckDuplicate(entity, broker);

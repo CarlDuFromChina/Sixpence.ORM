@@ -77,39 +77,39 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// 创建人
         /// </summary>
-        [DataMember, Column("createdby", "创建人id", DataType.Varchar, 100, true)]
-        public string createdBy { get; set; }
+        [DataMember, Column("created_by", "创建人id", DataType.Varchar, 100, true)]
+        public string created_by { get; set; }
 
         /// <summary>
         /// 创建人
         /// </summary>
-        [DataMember, Column("createdbyname", "创建人名称", DataType.Varchar, 100, true)]
-        public string createdByName { get; set; }
+        [DataMember, Column("created_by_name", "创建人名称", DataType.Varchar, 100, true)]
+        public string created_by_name { get; set; }
 
         /// <summary>
         /// 创建日期
         /// </summary>
-        [DataMember, Column("createdon", "创建日期", DataType.Timestamp, 6, true)]
-        public DateTime? createdOn { get; set; }
+        [DataMember, Column("created_at", "创建日期", DataType.Timestamp, 6, true)]
+        public DateTime? created_at { get; set; }
 
         /// <summary>
         /// 修改人
         /// </summary>
-        [DataMember, Column("modifiedby", "修改人id", DataType.Varchar, 100, true)]
-        public string modifiedBy { get; set; }
+        [DataMember, Column("updated_by", "修改人id", DataType.Varchar, 100, true)]
+        public string updated_by { get; set; }
 
         /// <summary>
         /// 修改人
         /// </summary>
-        [DataMember, Column("modifiedbyname", "修改人名称", DataType.Varchar, 100, true)]
-        public string modifiedByName { get; set; }
+        [DataMember, Column("updated_by_name", "修改人名称", DataType.Varchar, 100, true)]
+        public string updated_by_name { get; set; }
 
 
         /// <summary>
-        /// 创建日期
+        /// 修改日期
         /// </summary>
-        [DataMember, Column("modifiedon", "创建日期", DataType.Timestamp, 6, true)]
-        public DateTime? modifiedOn { get; set; }
+        [DataMember, Column("updated_at", "创建日期", DataType.Timestamp, 6, true)]
+        public DateTime? updated_at { get; set; }
 
         #endregion
 
