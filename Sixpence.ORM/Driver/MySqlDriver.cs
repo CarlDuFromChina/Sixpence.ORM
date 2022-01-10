@@ -71,7 +71,7 @@ namespace Sixpence.ORM.Driver
             throw new NotImplementedException();
         }
 
-        public string GetTable(string tableName)
+        public string TableExsit(string tableName)
         {
             throw new NotImplementedException();
         }

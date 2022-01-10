@@ -9,24 +9,18 @@ namespace Sixpence.ORM.Test
     [TestFixture]
     internal class BaseEntityTest
     {
-        private account _account;
+        private Test test;
 
         [SetUp]
         public void SetUp()
         {
-            _account = new account() { code = "A001", name = "Test", Id = Guid.NewGuid().ToString() };
+            test = new Test() { code = "A001", name = "Test", Id = Guid.NewGuid().ToString() };
         }
 
         [Test]
         public void ContainsKey()
         {
-            Assert.IsTrue(_account.ContainKey("code"));
+            Assert.IsTrue(test.ContainKey("code"));
         }
-    }
-
-    [Entity("account", "客户", false)]
-    class account : BaseEntity
-    {
-        public string code { get; set; }
     }
 }

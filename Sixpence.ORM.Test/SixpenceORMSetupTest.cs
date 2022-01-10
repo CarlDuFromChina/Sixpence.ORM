@@ -1,22 +1,17 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Sixpence.Common;
+using Sixpence.Common.Utils;
 using Sixpence.ORM.Broker;
 using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.Text;
-using Dapper;
 
 namespace Sixpence.ORM.Test
 {
-    [TestFixture]
-    internal class PersistBrokerTest
+    internal class SixpenceORMSetupTest
     {
-        IPersistBroker broker;
-
         [SetUp]
         public void SetUp()
         {
@@ -25,7 +20,15 @@ namespace Sixpence.ORM.Test
             {
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
-            broker = PersistBrokerFactory.GetPersistBroker();
+        }
+
+        [Test]
+        public void Check_Entity_AutoGenerate()
+        {
+            SixpenceORMSetup.UseEntityGenerate(null);
+            var broker = PersistBrokerFactory.GetPersistBroker();
+            var result = broker.ExecuteScalar(broker.DbClient.Driver.TableExsit("test"));
+            Assert.IsTrue(ConvertUtil.ConToBoolean(result));
         }
     }
 }

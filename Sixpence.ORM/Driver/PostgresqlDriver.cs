@@ -98,10 +98,10 @@ ALTER TABLE {tableName}
             return sql;
         }
 
-        public string GetTable(string tableName)
+        public string TableExsit(string tableName)
         {
             return $@"
-SELECT * FROM pg_tables
+SELECT COUNT(1) > 0 FROM pg_tables
 WHERE schemaname = 'public' AND tablename = '{tableName}'";
         }
 
