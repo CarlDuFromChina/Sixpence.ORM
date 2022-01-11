@@ -34,7 +34,7 @@ namespace Sixpence.ORM
                             .GetColumns()
                             .Select(e =>
                             {
-                                return $"{e.Name} {e.Type.GetDescription()}{(e.Length != null ? $"({e.Length.Value})" : "")} {(e.IsRequire.HasValue && e.IsRequire.Value ? "NOT NULL" : "")}{(e.Name == $"{item.GetEntityName()}id" ? " PRIMARY KEY" : "")}";
+                                return $"{e.Name} {e.Type.GetDescription()}{(e.Length != null ? $"({e.Length.Value})" : "")} {(e.IsRequire.HasValue && e.IsRequire.Value ? "NOT NULL" : "")}{(e.Name == $"{item.GetPrimaryKey()}" ? " PRIMARY KEY" : "")}";
                             })
                             .Aggregate((a, b) => a + ",\r\n" + b);
                         broker.Execute($@"CREATE TABLE public.{item.GetEntityName()} ({attrSql})");

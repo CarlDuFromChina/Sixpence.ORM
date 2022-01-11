@@ -23,13 +23,6 @@ namespace Sixpence.ORM.Driver
         DbConnection GetDbConnection(string connectionString);
 
         /// <summary>
-        /// 创建表
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        string CreateTable(string name);
-
-        /// <summary>
         /// 创建角色
         /// </summary>
         /// <param name="name"></param>

@@ -27,17 +27,6 @@ namespace Sixpence.ORM.Driver
             return $"CREATE ROLE {name}";
         }
 
-        public string CreateTable(string name)
-        {
-            var sql = $@"
-CREATE TABLE {name}
-(
-{name}id VARCHAR(100) PRIMARY KEY
-)
-";
-            return sql;
-        }
-
         public string CreateTemporaryTable(IDbConnection conn, string tableName)
         {
             var newTableName = tableName + Guid.NewGuid().ToString().Replace("-", "");

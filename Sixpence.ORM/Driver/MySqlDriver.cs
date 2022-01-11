@@ -26,11 +26,6 @@ namespace Sixpence.ORM.Driver
             throw new NotImplementedException();
         }
 
-        public string CreateTable(string name)
-        {
-            throw new NotImplementedException();
-        }
-
         public string CreateTemporaryTable(IDbConnection conn, string tableName)
         {
             throw new NotImplementedException();
