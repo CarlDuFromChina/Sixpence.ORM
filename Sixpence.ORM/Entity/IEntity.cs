@@ -24,6 +24,12 @@ namespace Sixpence.ORM.Entity
         string GetLogicalName();
 
         /// <summary>
+        /// 获取主键字段名
+        /// </summary>
+        /// <returns></returns>
+        string GetPrimaryKey();
+
+        /// <summary>
         /// 获取属性值
         /// </summary>
         /// <param name="name"></param>

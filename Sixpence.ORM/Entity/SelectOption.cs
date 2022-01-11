@@ -1,11 +1,8 @@
-﻿using Sixpence.Common;
-using Sixpence.Common.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
 
-namespace Sixpence.ORM.SelectOption
+namespace Sixpence.ORM.Entity
 {
     /// <summary>
     /// 选项集

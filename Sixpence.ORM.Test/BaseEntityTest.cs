@@ -14,7 +14,7 @@ namespace Sixpence.ORM.Test
         [SetUp]
         public void SetUp()
         {
-            test = new Test() { code = "A001", name = "Test", Id = Guid.NewGuid().ToString() };
+            test = new Test() { code = "A001", name = "Test", id = Guid.NewGuid().ToString() };
         }
 
         [Test]

@@ -1,5 +1,6 @@
 ﻿using Sixpence.Common;
 using Sixpence.Common.IoC;
+using Sixpence.Common.Utils;
 using Sixpence.ORM.Broker;
 using Sixpence.ORM.DbClient;
 using Sixpence.ORM.Driver;
@@ -59,8 +60,8 @@ namespace Sixpence.ORM.Broker
                 var paramList = new Dictionary<string, object>();
                 foreach (var attr in entity.GetAttributes())
                 {
-                    var attrName = attr.Key == "Id" ? entity.MainKeyName : attr.Key;
-                    var keyValue = ParseSqlUtil.GetSpecialValue($"@{attrName}", attr.Value);
+                    var attrName = attr.Key; // 列名
+                    var keyValue = ParseSqlUtil.GetSpecialValue($"@{attrName}", attr.Value); // 值
                     attrs.Add(attrName);
                     values.Add(keyValue.name);
                     paramList.Add(attrName, keyValue.value);
@@ -77,7 +78,7 @@ namespace Sixpence.ORM.Broker
                 }
                 #endregion
 
-                return entity.Id;
+                return entity.PrimaryKey.Value;
             });
         }
 
@@ -89,14 +90,17 @@ namespace Sixpence.ORM.Broker
         /// <returns></returns>
         public int Delete(string entityName, string id)
         {
-            var dataList = _dbClient.Query($"SELECT * FROM {entityName} WHERE {entityName}id = @id", new Dictionary<string, object>() { { "@id", id } });
-            var entity = new SimpleEntity(entityName, id);
-            entity.Attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
+            var entity = ServiceContainer.Resolve<IEntity>(key => key.ToLower().Equals(entityName.Replace("_", "").ToLower())) as BaseEntity;
+            AssertUtil.CheckNull<SpException>(entity, $"未找到实体：{entityName}", "FB2369B2-6B3E-471D-986A-7719330DBF5E");
+            var dataList = _dbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new Dictionary<string, object>() { { "@id", id } });
+
+            var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
+            attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value));
             var plugin = ServiceContainer.Resolve<IPersistBrokerPlugin>(item => item.StartsWith(entityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
             plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
 
-            var sql = "DELETE FROM {0} WHERE {1}id = @id";
-            sql = string.Format(sql, entityName, entityName);
+            var sql = "DELETE FROM {0} WHERE {1} = @id";
+            sql = string.Format(sql, entityName, entity.PrimaryKey.Name);
             int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", id } });
 
             plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
@@ -114,9 +118,9 @@ namespace Sixpence.ORM.Broker
             {
                 var plugin = ServiceContainer.Resolve<IPersistBrokerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
                 plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreDelete });
-                var sql = "DELETE FROM {0} WHERE {1}id = @id";
-                sql = string.Format(sql, entity.EntityName, entity.EntityName);
-                int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", entity.Id } });
+                var sql = "DELETE FROM {0} WHERE {1} = @id";
+                sql = string.Format(sql, entity.EntityName, entity.PrimaryKey.Name);
+                int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } });
                 plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PostDelete });
                 return result;
             });
@@ -143,16 +147,16 @@ namespace Sixpence.ORM.Broker
         {
             var sql = $@"
 SELECT * FROM {entity.EntityName}
-WHERE {entity.EntityName}Id = @id;
+WHERE {entity.PrimaryKey.Name} = @id;
 ";
-            var dataList = this.Query(sql, new Dictionary<string, object>() { { "@id", entity.Id } });
+            var dataList = this.Query(sql, new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } });
 
             if (dataList != null && dataList.Rows.Count > 0)
                 Update(entity);
             else
                 Create(entity);
 
-            return entity.Id;
+            return entity.PrimaryKey.Value;
         }
 
         /// <summary>
@@ -176,14 +180,14 @@ WHERE {entity.EntityName}Id = @id;
                 var sql = @"
 UPDATE {0} SET {1} WHERE {2} = @id;
 ";
-                var paramList = new Dictionary<string, object>() { { "@id", entity.Id } };
+                var paramList = new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } };
 
                 #region 处理属性
                 var attributes = new List<string>();
                 int count = 0;
                 foreach (var item in entity.GetAttributes())
                 {
-                    if (item.Key != "Id" && item.Key != entity.EntityName + "Id")
+                    if (item.Key != "id" && item.Key != entity.PrimaryKey.Name)
                     {
                         var keyValue = ParseSqlUtil.GetSpecialValue($"@param{count}", item.Value);
                         paramList.Add($"@param{count}", keyValue.value);
@@ -192,7 +196,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
                     }
                 }
                 #endregion
-                sql = string.Format(sql, entity.EntityName, string.Join(",", attributes), entity.MainKeyName);
+                sql = string.Format(sql, entity.EntityName, string.Join(",", attributes), entity.PrimaryKey.Name);
                 var result = this.Execute(sql, paramList);
 
                 #region 更新后 Plugin
@@ -228,7 +232,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <returns></returns>
         public T Retrieve<T>(string id) where T : BaseEntity, new()
         {
-            var sql = $"SELECT * FROM {new T().EntityName} WHERE {new T().EntityName}id =@id";
+            var sql = $"SELECT * FROM {new T().EntityName} WHERE {new T().PrimaryKey.Name} =@id";
             return Retrieve<T>(sql, new Dictionary<string, object>() { { "@id", id } });
         }
 
@@ -313,7 +317,7 @@ SELECT
 FROM
 	{new T().EntityName}
 WHERE 
-	{new T().EntityName}id IN (@ids)";
+	{new T().PrimaryKey.Name} IN (@ids)";
             var parmas = new Dictionary<string, object>();
             var count = 0;
             ids.ToList().ForEach(item =>

@@ -25,9 +25,9 @@ namespace Sixpence.ORM.Broker
 
             if (dataList.IsEmpty()) return;
 
-            var tableName = dataList[0].EntityName;
-            var dt = client.Query($"select * from {tableName}");
-            BulkCreate(broker, dataList.ToDataTable(dt.Columns), tableName);
+            var t = new TEntity();
+            var dt = client.Query($"select * from {t.EntityName}");
+            BulkCreate(broker, dataList.ToDataTable(dt.Columns), t.EntityName,t.PrimaryKey.Name);
         }
 
         /// <summary>
@@ -36,7 +36,8 @@ namespace Sixpence.ORM.Broker
         /// <param name="broker"></param>
         /// <param name="dataTable"></param>
         /// <param name="tableName"></param>
-        public static void BulkCreate(this IPersistBroker broker, DataTable dataTable, string tableName)
+        /// <param name="primaryKey"></param>
+        public static void BulkCreate(this IPersistBroker broker, DataTable dataTable, string tableName, string primaryKey)
         {
             if (dataTable.IsEmpty()) return;
 
@@ -49,7 +50,7 @@ namespace Sixpence.ORM.Broker
             client.BulkCopy(dataTable, tempName);
 
             // 3. 将临时表数据插入到目标表中
-            client.Execute(string.Format("INSERT INTO {0} SELECT * FROM {1} WHERE NOT EXISTS(SELECT 1 FROM {0} WHERE {0}.{2}id = {1}.{2}id)", tableName, tempName, tableName));
+            client.Execute(string.Format("INSERT INTO {0} SELECT * FROM {1} WHERE NOT EXISTS(SELECT 1 FROM {0} WHERE {0}.{2} = {1}.{2})", tableName, tempName, primaryKey));
 
             // 4. 删除临时表
             client.DropTable(tempName);
@@ -66,7 +67,7 @@ namespace Sixpence.ORM.Broker
             if (dataList.IsEmpty()) return;
 
             var client = broker.DbClient;
-            var mainKeyName = new TEntity().MainKeyName; // 主键
+            var mainKeyName = new TEntity().PrimaryKey.Name; // 主键
             var tableName = new TEntity().EntityName; // 表名
 
             // 1. 创建临时表
@@ -115,7 +116,7 @@ AND {tempTableName}.{mainKeyName} IS NOT NULL
             if (dataList.IsEmpty()) return;
 
             var client = broker.DbClient;
-            var mainKeyName = new TEntity().MainKeyName; // 主键
+            var mainKeyName = new TEntity().PrimaryKey.Name; // 主键
             var tableName = new TEntity().EntityName; // 表名
 
             // 1. 创建临时表

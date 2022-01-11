@@ -7,25 +7,13 @@ using System.Text;
 namespace Sixpence.ORM.Test
 {
     [Entity("test", "测试")]
+    [KeyAttributes("code不能重复", "code")]
     public class Test : BaseEntity
     {
-        /// <summary>
-        /// 实体id
-        /// </summary>
-        [Column("testid", "实体id", DataType.Varchar, 100)]
-        public string testid
-        {
-            get
-            {
-                return this.Id;
-            }
-            set
-            {
-                this.Id = value;
-            }
-        }
+        [PrimaryColumn]
+        public string id { get; set; }
 
-        [Column("code", "编码", DataType.Varchar)]
+        [Column("code", "编码", DataType.Varchar, 100)]
         public string code { get; set; }
     }
 }

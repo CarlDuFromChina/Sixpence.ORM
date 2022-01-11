@@ -1,4 +1,5 @@
 ﻿using Sixpence.Common;
+using Sixpence.Common.Utils;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Concurrent;
@@ -17,10 +18,11 @@ namespace Sixpence.ORM.Entity
         public BaseEntity() { }
         public BaseEntity(string entityName) { this._entityName = entityName; }
 
+        private string _entityName;
+
         /// <summary>
         /// 实体名
         /// </summary>
-        private string _entityName;
         public string EntityName
         {
             get
@@ -56,18 +58,20 @@ namespace Sixpence.ORM.Entity
         }
 
         /// <summary>
-        /// 主键名
+        /// 主键
         /// </summary>
-        private string _mainKeyName;
-        public string MainKeyName { get { return this._mainKeyName ?? EntityName + "id"; } set { _mainKeyName = value; } }
+        public (string Name, string Value) PrimaryKey
+        {
+            get
+            {
+                var keyName = GetPrimaryColumn()?.Name;
+                return (Name: keyName, Value: GetAttributeValue<string>(keyName));
+            }
+        }
+
+        public string GetPrimaryKey() => this.PrimaryKey.Name;
 
         #region 实体基础字段
-        /// <summary>
-        ///  实体id
-        /// </summary>
-        [DataMember]
-        public string Id { get; set; }
-
         /// <summary>
         /// 名称
         /// </summary>
@@ -125,6 +129,15 @@ namespace Sixpence.ORM.Entity
         }
 
         #region Methods
+        public PrimaryColumnAttribute GetPrimaryColumn()
+        {
+            return this.GetType()
+                    .GetProperties()
+                    .FirstOrDefault(item => item.IsDefined(typeof(PrimaryColumnAttribute), false))
+                    .GetCustomAttributes(typeof(PrimaryColumnAttribute), false)
+                    .FirstOrDefault() as PrimaryColumnAttribute;
+        }
+
         public virtual IEnumerable<string> GetKeys()
         {
             return this.GetType().GetProperties().Select(item => item.Name);
@@ -145,7 +158,7 @@ namespace Sixpence.ORM.Entity
             var attributes = new Dictionary<string, object>();
             this.GetType()
                 .GetProperties()
-                .Where(item => item.IsDefined(typeof(ColumnAttribute), false))
+                .Where(item => item.IsDefined(typeof(ColumnAttribute), true))
                 .ToList().ForEach(item =>
             {
                 attributes.Add(item.Name, item.GetValue(this));
@@ -197,7 +210,8 @@ namespace Sixpence.ORM.Entity
             return this.GetType()
                 .GetProperties()
                 .Where(item => item.IsDefined(typeof(ColumnAttribute), false))
-                ?.Select(item => (item.GetCustomAttributes(typeof(ColumnAttribute), false).FirstOrDefault() as ColumnAttribute).Column);
+                .Select(item => (item.GetCustomAttributes(typeof(ColumnAttribute), true).FirstOrDefault() as ColumnAttribute).Column)
+                .ToList();
         }
 
         /// <summary>
@@ -213,7 +227,18 @@ namespace Sixpence.ORM.Entity
             }
             return attr.LogicalName;
         }
-        #endregion
 
+        /// <summary>
+        /// 转换 BaseEntity 为选项
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public SelectOption ToSelectOption()
+        {
+            AssertUtil.CheckIsNullOrEmpty<SpException>(name, "选项名不能为空", "C54EDDA7-CD30-4F89-A924-A7AB6D22666F");
+            AssertUtil.CheckIsNullOrEmpty<SpException>(PrimaryKey.Value, "选项值不能为空", "236580B0-4A9A-404B-8266-1AFC71716F37");
+            return new SelectOption(name, PrimaryKey.Value);
+        }
+        #endregion
     }
 }

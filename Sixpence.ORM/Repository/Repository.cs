@@ -1,22 +1,23 @@
 ﻿using Sixpence.Common;
 using Sixpence.ORM.Broker;
+using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Entity
+namespace Sixpence.ORM
 {
-    public abstract class EntityContextBase<E>
+    public class Repository<E>
         where E : BaseEntity, new()
     {
         #region 构造函数
-        public EntityContextBase()
+        public Repository()
         {
             Broker = PersistBrokerFactory.GetPersistBroker();
         }
 
-        public EntityContextBase(IPersistBroker broker)
+        public Repository(IPersistBroker broker)
         {
             Broker = broker;
         }
@@ -31,7 +32,7 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public virtual string Create(E entity)
         {
-            if (string.IsNullOrEmpty(entity.Id))
+            if (string.IsNullOrEmpty(entity.PrimaryKey.Value))
             {
                 return "";
             }
@@ -47,7 +48,7 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public virtual string CreateOrUpdateData(E entity)
         {
-            var id = entity.Id;
+            var id = entity.PrimaryKey.Value;
             var isExist = SingleQuery(id) != null;
             if (isExist)
             {
@@ -60,6 +61,11 @@ namespace Sixpence.ORM.Entity
             return id;
         }
 
+        public virtual void Delete(string id)
+        {
+            Broker.Delete(new E().EntityName, id);
+        }
+
         /// <summary>
         /// 删除历史记录
         /// </summary>
@@ -67,14 +73,7 @@ namespace Sixpence.ORM.Entity
         /// <param name="ids"></param>
         public virtual void Delete(IEnumerable<string> ids)
         {
-            Broker.ExecuteTransaction(() =>
-            {
-                ids.Each(id =>
-                {
-                    var data = Broker.Retrieve<E>(id);
-                    Broker.Delete(new E().EntityName, id);
-                });
-            });
+            Broker.ExecuteTransaction(() => ids.Each(id => Delete(id)));
         }
 
 
@@ -82,11 +81,10 @@ namespace Sixpence.ORM.Entity
         /// 获取实体记录
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="id"></param>
         /// <returns></returns>
-        public virtual IEnumerable<E> Query(string id)
+        public virtual IEnumerable<E> Query()
         {
-            return Broker.RetrieveMultiple<E>(id);
+            return Broker.RetrieveMultiple<E>($"SELECT * FROM {new E().EntityName}");
         }
 
         /// <summary>
@@ -106,7 +104,7 @@ namespace Sixpence.ORM.Entity
         /// <param name="entity"></param>
         public virtual void Update(E entity)
         {
-            if (string.IsNullOrEmpty(entity?.Id))
+            if (string.IsNullOrEmpty(entity?.PrimaryKey.Value))
             {
                 return;
             }

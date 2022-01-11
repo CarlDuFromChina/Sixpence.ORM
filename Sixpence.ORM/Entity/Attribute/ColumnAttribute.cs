@@ -9,8 +9,14 @@ namespace Sixpence.ORM.Entity
     /// <summary>
     /// 字段特性（映射数据库字段类型）
     /// </summary>
-    public sealed class ColumnAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Property)]
+    public class ColumnAttribute : Attribute
     {
+        internal ColumnAttribute()
+        {
+
+        }
+
         /// <summary>
         /// 构造函数
         /// </summary>
