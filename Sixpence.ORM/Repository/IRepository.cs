@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sixpence.ORM.EntityManager;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,6 +7,7 @@ namespace Sixpence.ORM.Repository
 {
     public interface IRepository<E>
     {
+        IEntityManager Manager { get; set; }
         string Create(E entity);
         string Save(E entity);
         void Delete(string id);
