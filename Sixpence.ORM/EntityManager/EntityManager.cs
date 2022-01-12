@@ -1,7 +1,7 @@
 ﻿using Sixpence.Common;
 using Sixpence.Common.IoC;
 using Sixpence.Common.Utils;
-using Sixpence.ORM.Broker;
+using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.DbClient;
 using Sixpence.ORM.Driver;
 using Sixpence.ORM.Entity;
@@ -10,18 +10,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Broker
+namespace Sixpence.ORM.EntityManager
 {
     /// <summary>
-    /// 持久化存储
+    /// 实体管理
     /// </summary>
-    internal class PersistBroker : IPersistBroker, IDisposable
+    internal class EntityManager : IEntityManager, IDisposable
     {
-        /// <summary>
-        /// Generate Broker
-        /// </summary>
-        /// <param name="readonly">只读</param>
-        internal PersistBroker(string connectionString, DriverType driverType = DriverType.Postgresql)
+        internal EntityManager(string connectionString, DriverType driverType = DriverType.Postgresql)
         {
             _dbClient = new DbClientProxy();
             _dbClient.Initialize(connectionString, driverType);
@@ -44,12 +40,12 @@ namespace Sixpence.ORM.Broker
             return this.ExecuteTransaction(() =>
             {
                 #region 创建前 Plugin
-                var context = new PersistBrokerPluginContext() { Entity = entity, Broker = this, Action = EntityAction.PreCreate, EntityName = entity.EntityName };
-                ServiceContainer.ResolveAll<IPersistBrokerBeforeCreateOrUpdate>()?
+                var context = new EntityManagerPluginContext() { Entity = entity, EntityManager = this, Action = EntityAction.PreCreate, EntityName = entity.EntityName };
+                ServiceContainer.ResolveAll<IEntityManagerCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
                 if (usePlugin)
                 {
-                    ServiceContainer.ResolveAll<IPersistBrokerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -73,7 +69,7 @@ namespace Sixpence.ORM.Broker
                 if (usePlugin)
                 {
                     context.Action = EntityAction.PostCreate;
-                    ServiceContainer.ResolveAll<IPersistBrokerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -96,14 +92,14 @@ namespace Sixpence.ORM.Broker
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value));
-            var plugin = ServiceContainer.Resolve<IPersistBrokerPlugin>(item => item.StartsWith(entityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
-            plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
+            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => item.StartsWith(entityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
+            plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
 
             var sql = "DELETE FROM {0} WHERE {1} = @id";
             sql = string.Format(sql, entityName, entity.PrimaryKey.Name);
             int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", id } });
 
-            plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
+            plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
             return result;
         }
 
@@ -116,12 +112,12 @@ namespace Sixpence.ORM.Broker
         {
             return this.ExecuteTransaction(() =>
             {
-                var plugin = ServiceContainer.Resolve<IPersistBrokerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
-                plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreDelete });
+                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
+                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreDelete });
                 var sql = "DELETE FROM {0} WHERE {1} = @id";
                 sql = string.Format(sql, entity.EntityName, entity.PrimaryKey.Name);
                 int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } });
-                plugin?.Execute(new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PostDelete });
+                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PostDelete });
                 return result;
             });
         }
@@ -169,11 +165,11 @@ WHERE {entity.PrimaryKey.Name} = @id;
             return this.ExecuteTransaction(() =>
             {
                 #region 更新前 Plugin
-                var context = new PersistBrokerPluginContext() { Broker = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreUpdate };
-                ServiceContainer.ResolveAll<IPersistBrokerBeforeCreateOrUpdate>()?
+                var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreUpdate };
+                ServiceContainer.ResolveAll<IEntityManagerCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
 
-                ServiceContainer.ResolveAll<IPersistBrokerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
                     .Each(item => item.Execute(context));
                 #endregion
 
@@ -201,7 +197,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
 
                 #region 更新后 Plugin
                 context.Action = EntityAction.PostUpdate;
-                ServiceContainer.ResolveAll<IPersistBrokerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
                     .Each(item => item.Execute(context));
                 #endregion
                 return result;

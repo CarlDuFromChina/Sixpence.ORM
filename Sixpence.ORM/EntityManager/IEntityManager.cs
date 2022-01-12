@@ -5,12 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Broker
+namespace Sixpence.ORM.EntityManager
 {
-    public interface IPersistBroker
+    public interface IEntityManager
     {
         IDbClient DbClient { get; }
-
 
         #region Create Update Delete
 

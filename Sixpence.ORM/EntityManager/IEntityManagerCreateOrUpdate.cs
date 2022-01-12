@@ -5,11 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Broker
+namespace Sixpence.ORM.EntityManager
 {
     [ServiceRegister]
-    public interface IPersistBrokerBeforeCreateOrUpdate
+    public interface IEntityManagerCreateOrUpdate
     {
-        void Execute(PersistBrokerPluginContext context);
+        void Execute(EntityManagerPluginContext context);
     }
 }

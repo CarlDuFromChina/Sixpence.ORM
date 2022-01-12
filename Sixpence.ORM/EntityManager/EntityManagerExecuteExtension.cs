@@ -4,40 +4,40 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Sixpence.ORM.Broker
+namespace Sixpence.ORM.EntityManager
 {
-    public static class IPersistBrokerExecuteExtension
+    public static class EntityManagerExecuteExtension
     {
         /// <summary>
         /// 执行Sql
         /// </summary>
-        /// <param name="broker"></param>
+        /// <param name="manager"></param>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
-        public static int Execute(this IPersistBroker broker, string sql, IDictionary<string, object> paramList = null)
+        public static int Execute(this IEntityManager manager, string sql, IDictionary<string, object> paramList = null)
         {
-            return broker.DbClient.Execute(sql, paramList);
+            return manager.DbClient.Execute(sql, paramList);
         }
 
         /// <summary>
         /// 执行Sql返回第一行第一列记录
         /// </summary>
-        /// <param name="broker"></param>
+        /// <param name="manager"></param>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public static object ExecuteScalar(this IPersistBroker broker, string sql, IDictionary<string, object> paramList = null)
+        public static object ExecuteScalar(this IEntityManager manager, string sql, IDictionary<string, object> paramList = null)
         {
-            return broker.DbClient.ExecuteScalar(sql, paramList);
+            return manager.DbClient.ExecuteScalar(sql, paramList);
         }
 
         /// <summary>
         /// 执行SQL文件
         /// </summary>
-        /// <param name="broker"></param>
+        /// <param name="manager"></param>
         /// <param name="sqlFile"></param>
         /// <returns></returns>
-        public static int ExecuteSqlScript(this IPersistBroker broker, string sqlFile)
+        public static int ExecuteSqlScript(this IEntityManager manager, string sqlFile)
         {
             int returnValue = -1;
             int sqlCount = 0, errorCount = 0;
@@ -69,7 +69,7 @@ namespace Sixpence.ORM.Broker
                         try
                         {
                             sqlCount++;
-                            broker.Execute(sql, null);
+                            manager.Execute(sql, null);
                         }
                         catch (Exception ex)
                         {

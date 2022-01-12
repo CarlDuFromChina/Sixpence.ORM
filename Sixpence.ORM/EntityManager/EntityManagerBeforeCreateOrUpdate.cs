@@ -7,17 +7,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Broker
+namespace Sixpence.ORM.EntityManager
 {
     /// <summary>
-    /// Broker 创建数据钩子
+    /// 创建数据钩子
     /// </summary>
-    public class PersistBrokerBeforeCreateOrUpdate : IPersistBrokerBeforeCreateOrUpdate
+    public class EntityManagerBeforeCreateOrUpdate : IEntityManagerCreateOrUpdate
     {
-        public void Execute(PersistBrokerPluginContext context)
+        public void Execute(EntityManagerPluginContext context)
         {
             var entity = context.Entity;
-            var broker = context.Broker;
+            var manager = context.EntityManager;
 
             var user = CallContext<CurrentUserModel>.GetData(CallContextType.User);
 
@@ -39,7 +39,7 @@ namespace Sixpence.ORM.Broker
                         entity.SetAttributeValue("updated_at", DateTime.Now);
 
                         SetBooleanName(entity);
-                        CheckDuplicate(entity, broker);
+                        CheckDuplicate(entity, manager);
                     }
                     break;
                 case EntityAction.PreUpdate:
@@ -49,7 +49,7 @@ namespace Sixpence.ORM.Broker
                         entity.SetAttributeValue("updated_at", DateTime.Now);
 
                         SetBooleanName(entity);
-                        CheckDuplicate(entity, broker);
+                        CheckDuplicate(entity, manager);
                     }
                     break;
                 default:
@@ -61,8 +61,8 @@ namespace Sixpence.ORM.Broker
         /// 重复字段检查
         /// </summary>
         /// <param name="entity"></param>
-        /// <param name="broker"></param>
-        private void CheckDuplicate(BaseEntity entity, IPersistBroker broker)
+        /// <param name="manager"></param>
+        private void CheckDuplicate(BaseEntity entity, IEntityManager manager)
         {
             var attrs = entity.GetType().GetCustomAttributes(typeof(KeyAttributesAttribute), false);
             if (attrs.Length == 0) return;
@@ -82,7 +82,7 @@ namespace Sixpence.ORM.Broker
                    });
 
                    var sql = string.Format(@"SELECT {0} FROM {1} WHERE 1 = 1 ",  entity.PrimaryKey.Name, entity.EntityName) + string.Join("", sqlParam);
-                   AssertUtil.CheckBoolean<SpException>(broker.Query<string>(sql, paramList)?.Count() > 0, item.RepeatMessage, "7293452C-AFCA-408D-9EBD-B1CECD206A7D");
+                   AssertUtil.CheckBoolean<SpException>(manager.Query<string>(sql, paramList)?.Count() > 0, item.RepeatMessage, "7293452C-AFCA-408D-9EBD-B1CECD206A7D");
                });
         }
 

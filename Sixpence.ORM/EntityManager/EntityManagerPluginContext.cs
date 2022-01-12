@@ -5,14 +5,14 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Broker
+namespace Sixpence.ORM.EntityManager
 {
     /// <summary>
     /// 持久化插件上下文
     /// </summary>
-    public class PersistBrokerPluginContext
+    public class EntityManagerPluginContext
     {
-        public IPersistBroker Broker { get; set; }
+        public IEntityManager EntityManager { get; set; }
         public BaseEntity Entity { get; set; }
         public string EntityName { get; set; }
         public EntityAction Action { get; set; }

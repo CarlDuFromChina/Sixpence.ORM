@@ -6,42 +6,42 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Broker
+namespace Sixpence.ORM.EntityManager
 {
     /// <summary>
-    /// PersistBroker 批量创建或更新扩展
+    /// EntityManager 批量创建或更新扩展
     /// </summary>
-    public static class PersistBrokerBulkCreateOrUpdateExtension
+    public static class EntityManagerBulkCreateOrUpdateExtension
     {
         /// <summary>
         /// 批量创建
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
-        /// <param name="broker"></param>
+        /// <param name="manager"></param>
         /// <param name="dataList"></param>
-        public static void BulkCreate<TEntity>(this IPersistBroker broker, List<TEntity> dataList) where TEntity : BaseEntity, new()
+        public static void BulkCreate<TEntity>(this IEntityManager manager, List<TEntity> dataList) where TEntity : BaseEntity, new()
         {
-            var client = broker.DbClient;
+            var client = manager.DbClient;
 
             if (dataList.IsEmpty()) return;
 
             var t = new TEntity();
             var dt = client.Query($"select * from {t.EntityName}");
-            BulkCreate(broker, dataList.ToDataTable(dt.Columns), t.EntityName,t.PrimaryKey.Name);
+            BulkCreate(manager, dataList.ToDataTable(dt.Columns), t.EntityName,t.PrimaryKey.Name);
         }
 
         /// <summary>
         /// 批量创建数据
         /// </summary>
-        /// <param name="broker"></param>
+        /// <param name="manager"></param>
         /// <param name="dataTable"></param>
         /// <param name="tableName"></param>
         /// <param name="primaryKey"></param>
-        public static void BulkCreate(this IPersistBroker broker, DataTable dataTable, string tableName, string primaryKey)
+        public static void BulkCreate(this IEntityManager manager, DataTable dataTable, string tableName, string primaryKey)
         {
             if (dataTable.IsEmpty()) return;
 
-            var client = broker.DbClient;
+            var client = manager.DbClient;
 
             // 1. 创建临时表
             var tempName = client.CreateTemporaryTable(tableName);
@@ -60,13 +60,13 @@ namespace Sixpence.ORM.Broker
         /// 批量更新
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
-        /// <param name="broker"></param>
+        /// <param name="manager"></param>
         /// <param name="dataList"></param>
-        public static void BulkUpdate<TEntity>(this IPersistBroker broker, List<TEntity> dataList) where TEntity : BaseEntity, new()
+        public static void BulkUpdate<TEntity>(this IEntityManager manager, List<TEntity> dataList) where TEntity : BaseEntity, new()
         {
             if (dataList.IsEmpty()) return;
 
-            var client = broker.DbClient;
+            var client = manager.DbClient;
             var mainKeyName = new TEntity().PrimaryKey.Name; // 主键
             var tableName = new TEntity().EntityName; // 表名
 
@@ -109,13 +109,13 @@ AND {tempTableName}.{mainKeyName} IS NOT NULL
         /// 批量创建或更新
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
-        /// <param name="broker"></param>
+        /// <param name="manager"></param>
         /// <param name="dataList"></param>
-        public static void BulkCreateOrUpdate<TEntity>(this IPersistBroker broker, List<TEntity> dataList, List<string> updateFieldList = null) where TEntity : BaseEntity, new()
+        public static void BulkCreateOrUpdate<TEntity>(this IEntityManager manager, List<TEntity> dataList, List<string> updateFieldList = null) where TEntity : BaseEntity, new()
         {
             if (dataList.IsEmpty()) return;
 
-            var client = broker.DbClient;
+            var client = manager.DbClient;
             var mainKeyName = new TEntity().PrimaryKey.Name; // 主键
             var tableName = new TEntity().EntityName; // 表名
 

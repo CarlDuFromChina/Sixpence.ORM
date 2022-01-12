@@ -11,7 +11,7 @@ using System.Text;
 namespace Sixpence.ORM.DbClient
 {
     /// <summary>
-    /// DbClient 代理类（实现日志、本地化Sql转换）
+    /// DbClient 代理类（记录日志、Sql本地化）
     /// </summary>
     public class DbClientProxy : IDbClient, IDisposable
     {

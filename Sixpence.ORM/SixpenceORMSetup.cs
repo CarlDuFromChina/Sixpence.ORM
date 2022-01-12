@@ -2,7 +2,7 @@
 using Sixpence.Common;
 using Sixpence.Common.IoC;
 using Sixpence.Common.Logging;
-using Sixpence.ORM.Broker;
+using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
@@ -16,19 +16,19 @@ namespace Sixpence.ORM
         public static IApplicationBuilder UseEntityGenerate(this IApplicationBuilder app)
         {
             var logger = LogFactory.GetLogger("entity");
-            var broker = PersistBrokerFactory.GetPersistBroker();
-            var dialect = broker.DbClient.Driver;
+            var manager = EntityManagerFactory.GetManager();
+            var dialect = manager.DbClient.Driver;
             var entityList = ServiceContainer.ResolveAll<IEntity>();
 
-            broker.ExecuteTransaction(() =>
+            manager.ExecuteTransaction(() =>
             {
-                ServiceContainer.Resolve<IPreCreateEntities>()?.Execute(broker, entityList);
+                ServiceContainer.Resolve<IPreCreateEntities>()?.Execute(manager, entityList);
 
                 entityList.Each(item =>
                 {
-                    if (broker.QueryCount(dialect.TableExsit(item.GetEntityName())) == 0)
+                    if (manager.QueryCount(dialect.TableExsit(item.GetEntityName())) == 0)
                     {
-                        ServiceContainer.Resolve<IPreCreateEntity>()?.Execute(broker, item); // 创建前
+                        ServiceContainer.Resolve<IPreCreateEntity>()?.Execute(manager, item); // 创建前
 
                         var attrSql = item
                             .GetColumns()
@@ -37,15 +37,15 @@ namespace Sixpence.ORM
                                 return $"{e.Name} {e.Type.GetDescription()}{(e.Length != null ? $"({e.Length.Value})" : "")} {(e.IsRequire.HasValue && e.IsRequire.Value ? "NOT NULL" : "")}{(e.Name == $"{item.GetPrimaryKey()}" ? " PRIMARY KEY" : "")}";
                             })
                             .Aggregate((a, b) => a + ",\r\n" + b);
-                        broker.Execute($@"CREATE TABLE public.{item.GetEntityName()} ({attrSql})");
+                        manager.Execute($@"CREATE TABLE public.{item.GetEntityName()} ({attrSql})");
 
-                        ServiceContainer.Resolve<IPostCreateEntity>()?.Execute(broker, item); // 创建后
+                        ServiceContainer.Resolve<IPostCreateEntity>()?.Execute(manager, item); // 创建后
 
                         logger.Info($"实体{item.GetLogicalName()}（{item.GetEntityName()}）创建成功");
                     }
                 });
 
-                ServiceContainer.Resolve<IPostCreateEntities>()?.Execute(broker, entityList);
+                ServiceContainer.Resolve<IPostCreateEntities>()?.Execute(manager, entityList);
             });
 
             return app;
@@ -58,7 +58,7 @@ namespace Sixpence.ORM
     [ServiceRegister]
     public interface IPreCreateEntity
     {
-        void Execute(IPersistBroker broker, IEntity entity);
+        void Execute(IEntityManager manager, IEntity entity);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ namespace Sixpence.ORM
     [ServiceRegister]
     public interface IPostCreateEntity
     {
-        void Execute(IPersistBroker broker, IEntity entity);
+        void Execute(IEntityManager manager, IEntity entity);
     }
 
     /// <summary>
@@ -76,7 +76,7 @@ namespace Sixpence.ORM
     [ServiceRegister]
     public interface IPreCreateEntities
     {
-        void Execute(IPersistBroker broker, IEnumerable<IEntity> entities);
+        void Execute(IEntityManager manager, IEnumerable<IEntity> entities);
     }
 
     /// <summary>
@@ -85,6 +85,6 @@ namespace Sixpence.ORM
     [ServiceRegister]
     public interface IPostCreateEntities
     {
-        void Execute(IPersistBroker broker, IEnumerable<IEntity> entities);
+        void Execute(IEntityManager manager, IEnumerable<IEntity> entities);
     }
 }
