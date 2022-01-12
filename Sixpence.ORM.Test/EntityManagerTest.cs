@@ -50,7 +50,7 @@ namespace Sixpence.ORM.Test
         public void Check_Entity_Query()
         {
             var manager = EntityManagerFactory.GetManager();
-            var result = manager.Retrieve<Test>("123");
+            var result = manager.QueryFirst<Test>("123");
             Assert.IsNotNull(result);
         }
 
@@ -59,10 +59,10 @@ namespace Sixpence.ORM.Test
         public void Check_Entity_Update()
         {
             var manager = EntityManagerFactory.GetManager();
-            var data = manager.Retrieve<Test>("123");
+            var data = manager.QueryFirst<Test>("123");
             data.name = "test";
             manager.Update(data);
-            data = manager.Retrieve<Test>("123");
+            data = manager.QueryFirst<Test>("123");
             Assert.IsTrue(data.name.Equals("test"));
         }
 
@@ -72,20 +72,20 @@ namespace Sixpence.ORM.Test
         {
             var manager = EntityManagerFactory.GetManager();
             manager.Delete("test", "123");
-            var data = manager.Retrieve<Test>("123");
+            var data = manager.QueryFirst<Test>("123");
             Assert.IsNull(data);
 
             Check_Entity_Create();
-            data = manager.Retrieve<Test>("123");
+            data = manager.QueryFirst<Test>("123");
             manager.Delete(data);
-            data = manager.Retrieve<Test>("123");
+            data = manager.QueryFirst<Test>("123");
             Assert.IsNull(data);
 
 
             Check_Entity_Create();
-            var dataList = manager.RetrieveMultiple<Test>("select * from test where id = '123'").ToArray();
+            var dataList = manager.Query<Test>("select * from test where id = '123'").ToArray();
             manager.Delete(dataList);
-            dataList = manager.RetrieveMultiple<Test>("select * from test where id = '123'").ToArray();
+            dataList = manager.Query<Test>("select * from test where id = '123'").ToArray();
             Assert.IsTrue(dataList.Length == 0);
         }
 
@@ -113,7 +113,7 @@ namespace Sixpence.ORM.Test
         public void Check_BulkUpdate()
         {
             var manager = EntityManagerFactory.GetManager();
-            var dataList = manager.RetrieveMultiple<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
+            var dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
             dataList[0].name = "test1";
             dataList[1].name = "test2";
             dataList[2].name = "test3";
@@ -121,7 +121,7 @@ namespace Sixpence.ORM.Test
             {
                 manager.BulkUpdate(dataList);
             });
-            dataList = manager.RetrieveMultiple<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
+            dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
             Assert.AreEqual(dataList[0].name, "test1");
             Assert.AreEqual(dataList[1].name, "test2");
             Assert.AreEqual(dataList[2].name, "test3");

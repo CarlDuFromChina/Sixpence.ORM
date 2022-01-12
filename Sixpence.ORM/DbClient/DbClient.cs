@@ -161,16 +161,6 @@ namespace Sixpence.ORM.DbClient
             => DbConnection.Query<T>(sql, paramList);
 
         /// <summary>
-        /// 执行SQL语句，并返回查询结果集
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="sql"></param>
-        /// <param name="param"></param>
-        /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, object param = null)
-            => DbConnection.Query<T>(sql, param);
-
-        /// <summary>
         /// 执行SQL语句，并返回查询结果
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -179,16 +169,6 @@ namespace Sixpence.ORM.DbClient
         /// <returns></returns>
         public T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null)
             => DbConnection.QueryFirst<T>(sql, paramList);
-
-        /// <summary>
-        /// 执行SQL语句，并返回查询结果
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="sql"></param>
-        /// <param name="param"></param>
-        /// <returns></returns>
-        public T QueryFirst<T>(string sql, object param = null)
-            => DbConnection.QueryFirst<T>(sql, param);
         #endregion
 
         #region DataTable

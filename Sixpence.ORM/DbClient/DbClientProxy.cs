@@ -271,14 +271,6 @@ namespace Sixpence.ORM.DbClient
             dbClient.BulkCopy(dataTable, tableName);
         }
 
-        public IEnumerable<T> Query<T>(string sql, object param = null)
-        {
-            var paramList = param.ToDictionary();
-            sql = ConvertSqlToDialectSql(sql, paramList);
-            LogUtils.Debug(sql + paramList.ToLogString());
-            return dbClient.Query<T>(sql, param);
-        }
-
         public T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null)
         {
             var paramListClone = new Dictionary<string, object>();
@@ -289,14 +281,6 @@ namespace Sixpence.ORM.DbClient
             sql = ConvertSqlToDialectSql(sql, paramListClone);
             LogUtils.Debug(sql + paramListClone.ToLogString());
             return dbClient.QueryFirst<T>(sql, paramList);
-        }
-
-        public T QueryFirst<T>(string sql, object param = null)
-        {
-            var paramList = param.ToDictionary();
-            sql = ConvertSqlToDialectSql(sql, paramList);
-            LogUtils.Debug(sql + paramList.ToLogString());
-            return dbClient.QueryFirst<T>(sql, param);
         }
     }
 }

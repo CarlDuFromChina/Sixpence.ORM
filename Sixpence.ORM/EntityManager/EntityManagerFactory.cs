@@ -9,15 +9,11 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM.EntityManager
 {
-    /// <summary>
-    /// 持久化存储工厂类
-    /// </summary>
     public class EntityManagerFactory
     {
         /// <summary>
-        /// 获取Manager
+        /// 获取 EntityManager
         /// </summary>
-        /// <param name="type"></param>
         /// <returns></returns>
         public static IEntityManager GetManager()
         {
@@ -26,6 +22,18 @@ namespace Sixpence.ORM.EntityManager
             AssertUtil.CheckIsNullOrEmpty<SpException>(dbConfig.ConnectionString, "数据库连接字符串为空", "AD4BC4F2-CF8D-4A4E-ACE8-F68EBD89DE42");
             AssertUtil.CheckBoolean<SpException>(!Enum.TryParse<DriverType>(dbConfig.DriverType, out var driverType), "数据库类型错误", "AD4BC4F2-CF8D-4A4E-ACE8-F68EBD89DE42");
             return new EntityManager(dbConfig.ConnectionString, Enum.Parse<DriverType>(dbConfig.DriverType));
+        }
+
+
+        /// <summary>
+        /// 获取 EntityManager
+        /// </summary>
+        /// <param name="connectionString">数据库连接字符串</param>
+        /// <param name="driverType">数据库驱动类型</param>
+        /// <returns></returns>
+        public static IEntityManager GetManager(string connectionString, DriverType driverType)
+        {
+            return new EntityManager(connectionString, driverType);
         }
     }
 }

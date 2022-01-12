@@ -9,6 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Data;
+using System.IO;
+using Sixpence.Common.Logging;
 
 namespace Sixpence.ORM.EntityManager
 {
@@ -23,10 +26,9 @@ namespace Sixpence.ORM.EntityManager
             _dbClient.Initialize(connectionString, driverType);
         }
 
-        /// <summary>
-        /// 数据库实例
-        /// </summary>
-        private IDbClient _dbClient;
+        public IDbDriver Driver => DbClient.Driver;
+
+        IDbClient _dbClient;
         public IDbClient DbClient => _dbClient;
 
         #region CRUD
@@ -41,7 +43,7 @@ namespace Sixpence.ORM.EntityManager
             {
                 #region 创建前 Plugin
                 var context = new EntityManagerPluginContext() { Entity = entity, EntityManager = this, Action = EntityAction.PreCreate, EntityName = entity.EntityName };
-                ServiceContainer.ResolveAll<IEntityManagerCreateOrUpdate>()?
+                ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
                 if (usePlugin)
                 {
@@ -88,7 +90,7 @@ namespace Sixpence.ORM.EntityManager
         {
             var entity = ServiceContainer.Resolve<IEntity>(key => key.ToLower().Equals(entityName.Replace("_", "").ToLower())) as BaseEntity;
             AssertUtil.CheckNull<SpException>(entity, $"未找到实体：{entityName}", "FB2369B2-6B3E-471D-986A-7719330DBF5E");
-            var dataList = _dbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new Dictionary<string, object>() { { "@id", id } });
+            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new Dictionary<string, object>() { { "@id", id } });
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value));
@@ -135,6 +137,21 @@ namespace Sixpence.ORM.EntityManager
         }
 
         /// <summary>
+        /// 根据条件删除实体
+        /// </summary>
+        /// <param name="entityName"></param>
+        /// <param name="where"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        public int DeleteByWhere(string entityName, string where, Dictionary<string, object> paramList = null)
+        {
+            var sql = "DELETE FROM {0} WHERE 1=1 {1}";
+            sql = string.Format(sql, entityName, string.IsNullOrEmpty(where) ? "" : $" AND {where}");
+            int result = this.Execute(sql, paramList);
+            return result;
+        }
+
+        /// <summary>
         /// 保存实体记录
         /// </summary>
         /// <param name="entity"></param>
@@ -166,7 +183,7 @@ WHERE {entity.PrimaryKey.Name} = @id;
             {
                 #region 更新前 Plugin
                 var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreUpdate };
-                ServiceContainer.ResolveAll<IEntityManagerCreateOrUpdate>()?
+                ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
 
                 ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => item.StartsWith(entity.EntityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase))
@@ -206,54 +223,133 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         #endregion
 
         /// <summary>
-        /// 根据条件删除实体
+        /// 释放资源
         /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="where"></param>
-        /// <param name="paramList"></param>
-        /// <returns></returns>
-        public int DeleteByWhere(string entityName, string where, Dictionary<string, object> paramList = null)
+        public void Dispose()
         {
-            var sql = "DELETE FROM {0} WHERE 1=1 {1}";
-            sql = string.Format(sql, entityName, string.IsNullOrEmpty(where) ? "" : $" AND {where}");
-            int result = this.Execute(sql, paramList);
-            return result;
+            (this.DbClient as IDisposable).Dispose();
+        }
+
+        #region Transcation
+        /// <summary>
+        /// 执行事务
+        /// </summary>
+        /// <param name="func"></param>
+        public void ExecuteTransaction(Action func)
+        {
+            try
+            {
+                DbClient.Open();
+                DbClient.BeginTransaction();
+
+                func?.Invoke();
+
+                DbClient.CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                DbClient.Rollback();
+                throw ex;
+            }
+            finally
+            {
+                DbClient.Close();
+            }
         }
 
         /// <summary>
-        /// 查询记录
+        /// 执行事务返回结果
+        /// </summary>
+        /// <param name="func"></param>
+        public T ExecuteTransaction<T>(Func<T> func)
+        {
+
+            try
+            {
+                DbClient.Open();
+                DbClient.BeginTransaction();
+
+                var t = default(T);
+
+                if (func != null)
+                {
+                    t = func();
+                }
+
+                DbClient.CommitTransaction();
+
+                return t;
+            }
+            catch (Exception ex)
+            {
+                DbClient.Rollback();
+                throw ex;
+            }
+            finally
+            {
+                DbClient.Close();
+            }
+        }
+        #endregion
+
+        #region Query
+        /// <summary>
+        /// 根据id查询记录
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="id"></param>
         /// <returns></returns>
-        public T Retrieve<T>(string id) where T : BaseEntity, new()
+        public T QueryFirst<T>(string id) where T : BaseEntity, new()
         {
             var sql = $"SELECT * FROM {new T().EntityName} WHERE {new T().PrimaryKey.Name} =@id";
-            return Retrieve<T>(sql, new Dictionary<string, object>() { { "@id", id } });
+            return QueryFirst<T>(sql, new Dictionary<string, object>() { { "@id", id } });
         }
 
         /// <summary>
-        /// 查询记录
+        /// 执行SQL，返回查询记录
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public T Retrieve<T>(string sql, Dictionary<string, object> paramList) where T : BaseEntity, new()
+        public T QueryFirst<T>(string sql, IDictionary<string, object> paramList) where T : BaseEntity, new()
         {
-            return _dbClient.Query<T>(sql, paramList).FirstOrDefault();
+            return DbClient.QueryFirst<T>(sql, paramList);
         }
 
         /// <summary>
-        /// 查询多条记录
+        /// 查询
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        public DataTable Query(string sql, IDictionary<string, object> paramList = null)
+        {
+            return DbClient.Query(sql, paramList);
+        }
+
+        /// <summary>
+        /// 查询数量
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public IList<T> RetrieveMultiple<T>(string sql, Dictionary<string, object> paramList = null) where T : BaseEntity, new()
+        public int QueryCount(string sql, IDictionary<string, object> paramList = null)
         {
-            return _dbClient.Query<T>(sql, paramList).ToList();
+            return ConvertUtil.ConToInt(this.ExecuteScalar(sql, paramList));
+        }
+
+        /// <summary>
+        /// 查询
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null)
+        {
+            return DbClient.Query<T>(sql, paramList);
         }
 
         /// <summary>
@@ -266,7 +362,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="pageSize"></param>
         /// <param name="pageIndex"></param>
         /// <returns></returns>
-        public IList<T> RetrieveMultiple<T>(string sql, Dictionary<string, object> paramList, string orderby, int pageSize, int pageIndex) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex) where T : BaseEntity, new()
         {
             if (!string.IsNullOrEmpty(orderby))
             {
@@ -277,7 +373,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
             }
 
             DbClient.Driver.AddLimit(ref sql, pageIndex, pageSize);
-            return RetrieveMultiple<T>(sql, paramList);
+            return Query<T>(sql, paramList);
         }
 
         /// <summary>
@@ -291,11 +387,11 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="pageIndex"></param>
         /// <param name="recordCount"></param>
         /// <returns></returns>
-        public IList<T> RetrieveMultiple<T>(string sql, Dictionary<string, object> paramList, string orderby, int pageSize, int pageIndex, out int recordCount) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex, out int recordCount) where T : BaseEntity, new()
         {
             var recordCountSql = $"SELECT COUNT(1) FROM ({sql}) AS table1";
             recordCount = Convert.ToInt32(this.ExecuteScalar(recordCountSql, paramList));
-            var data = RetrieveMultiple<T>(sql, paramList, orderby, pageSize, pageIndex);
+            var data = Query<T>(sql, paramList, orderby, pageSize, pageIndex);
             return data;
         }
 
@@ -305,7 +401,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <typeparam name="T"></typeparam>
         /// <param name="ids"></param>
         /// <returns></returns>
-        public IList<T> RetrieveMultiple<T>(IList<string> ids) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(IList<string> ids) where T : BaseEntity, new()
         {
             var sql = $@"
 SELECT
@@ -321,16 +417,99 @@ WHERE
                 parmas.Add($"@id{++count}", ids[count - 1]);
             });
             sql = sql.Replace("@ids", string.Join(",", parmas.Keys));
-            var data = RetrieveMultiple<T>(sql, parmas);
+            var data = Query<T>(sql, parmas);
             return data;
+        }
+        #endregion
+
+        #region Execute
+        /// <summary>
+        /// 执行Sql
+        /// </summary>
+        /// <param name="manager"></param>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        public int Execute(string sql, IDictionary<string, object> paramList = null)
+        {
+            return DbClient.Execute(sql, paramList);
         }
 
         /// <summary>
-        /// 释放资源
+        /// 执行Sql返回第一行第一列记录
         /// </summary>
-        public void Dispose()
+        /// <param name="manager"></param>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        public object ExecuteScalar(string sql, IDictionary<string, object> paramList = null)
         {
-            (this.DbClient as IDisposable).Dispose();
+            return DbClient.ExecuteScalar(sql, paramList);
         }
+
+        /// <summary>
+        /// 执行SQL文件
+        /// </summary>
+        /// <param name="manager"></param>
+        /// <param name="sqlFile"></param>
+        /// <returns></returns>
+        public int ExecuteSqlScript(string sqlFile)
+        {
+            int returnValue = -1;
+            int sqlCount = 0, errorCount = 0;
+            if (!File.Exists(sqlFile))
+            {
+                LogUtils.Error($"文件({sqlFile})不存在");
+                return -1;
+            }
+            using (StreamReader sr = new StreamReader(sqlFile))
+            {
+                string line = string.Empty;
+                char spaceChar = ' ';
+                string newLIne = "\r\n", semicolon = ";";
+                string sprit = "/", whiffletree = "-";
+                string sql = string.Empty;
+                do
+                {
+                    line = sr.ReadLine();
+                    // 文件结束
+                    if (line == null) break;
+                    // 跳过注释行
+                    if (line.StartsWith(sprit) || line.StartsWith(whiffletree)) continue;
+                    // 去除右边空格
+                    line = line.TrimEnd(spaceChar);
+                    sql += line;
+                    // 以分号(;)结尾，则执行SQL
+                    if (sql.EndsWith(semicolon))
+                    {
+                        try
+                        {
+                            sqlCount++;
+                            Execute(sql, null);
+                        }
+                        catch (Exception ex)
+                        {
+                            errorCount++;
+                            LogUtils.Error(sql + newLIne + ex.Message, ex);
+                        }
+                        sql = string.Empty;
+                    }
+                    else
+                    {
+                        // 添加换行符
+                        if (sql.Length > 0) sql += newLIne;
+                    }
+                } while (true);
+            }
+            if (sqlCount > 0 && errorCount == 0)
+                returnValue = 1;
+            if (sqlCount == 0 && errorCount == 0)
+                returnValue = 0;
+            else if (sqlCount > errorCount && errorCount > 0)
+                returnValue = -1;
+            else if (sqlCount == errorCount)
+                returnValue = -2;
+            return returnValue;
+        }
+        #endregion
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Sixpence.ORM.DbClient;
+using Sixpence.ORM.Driver;
 using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,9 +12,9 @@ namespace Sixpence.ORM.EntityManager
     public interface IEntityManager
     {
         IDbClient DbClient { get; }
+        IDbDriver Driver { get; }
 
-        #region Create Update Delete
-
+        #region CRUD
         /// <summary>
         /// 保存实体，系统根据ID自动判断更新还是新建
         /// </summary>
@@ -64,38 +66,65 @@ namespace Sixpence.ORM.EntityManager
 
         #endregion
 
-        #region Retrieve
+        #region Transcation
+        /// <summary>
+        /// 执行事务
+        /// </summary>
+        /// <param name="func"></param>
+        void ExecuteTransaction(Action func);
+
+        /// <summary>
+        /// 执行事务返回结果
+        /// </summary>
+        /// <param name="func"></param>
+        T ExecuteTransaction<T>(Func<T> func);
+        #endregion
+
+        #region Query
         /// <summary>
         /// 根据 实体T 和 实体Id 获取实体对象实例
         /// </summary>
-        T Retrieve<T>(string id)
-            where T : BaseEntity, new();
+        T QueryFirst<T>(string id) where T : BaseEntity, new();
 
         /// <summary>
         /// 根据查询条件查询实体对象
         /// </summary>
-        T Retrieve<T>(string sql, Dictionary<string, object> paramList = null)
-           where T : BaseEntity, new();
-        #endregion
+        T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null) where T : BaseEntity, new();
 
-        #region RetrieveMultiple
         /// <summary>
-        /// 根据查询条件查询实体的对象列表
+        /// 执行SQL查询
         /// </summary>
-        IList<T> RetrieveMultiple<T>(string sql, Dictionary<string, object> paramList = null)
-            where T : BaseEntity, new();
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        DataTable Query(string sql, IDictionary<string, object> paramList = null);
+
+        /// <summary>
+        /// 查询数量
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        int QueryCount(string sql, IDictionary<string, object> paramList = null);
+
+        /// <summary>
+        /// 根据SQL查询
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null);
 
         /// <summary>
         /// 根据查询条件查询实体的对象列表 (分页查询）
         /// </summary>
-        IList<T> RetrieveMultiple<T>(string sql, Dictionary<string, object> paramList, string orderby, int pageSize, int pageIndex)
-            where T : BaseEntity, new();
+        IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex) where T : BaseEntity, new();
 
         /// <summary>
         /// 根据查询条件查询实体的对象列表 (分页查询）
         /// </summary>
-        IList<T> RetrieveMultiple<T>(string sql, Dictionary<string, object> paramList, string orderby, int pageSize, int pageIndex, out int recordCount)
-            where T : BaseEntity, new();
+        IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex, out int recordCount) where T : BaseEntity, new();
 
         /// <summary>
         /// 根据 id 批量查询
@@ -103,8 +132,34 @@ namespace Sixpence.ORM.EntityManager
         /// <typeparam name="T"></typeparam>
         /// <param name="ids"></param>
         /// <returns></returns>
-        IList<T> RetrieveMultiple<T>(IList<string> ids)
-            where T : BaseEntity, new();
+        IEnumerable<T> Query<T>(IList<string> ids) where T : BaseEntity, new();
+        #endregion
+
+        #region Execute
+        /// <summary>
+        /// 执行Sql
+        /// </summary>
+        /// <param name="manager"></param>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        int Execute(string sql, IDictionary<string, object> paramList = null);
+
+        /// <summary>
+        /// 执行Sql返回第一行第一列记录
+        /// </summary>
+        /// <param name="manager"></param>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        object ExecuteScalar(string sql, IDictionary<string, object> paramList = null);
+
+        /// <summary>
+        /// 执行SQL文件
+        /// </summary>
+        /// <param name="manager"></param>
+        /// <param name="sqlFile"></param>
+        /// <returns></returns>
+        int ExecuteSqlScript(string sqlFile);
         #endregion
     }
 }

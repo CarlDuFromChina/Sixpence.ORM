@@ -49,7 +49,7 @@ namespace Sixpence.ORM.Repository
         public virtual string Save(E entity)
         {
             var id = entity.PrimaryKey.Value;
-            var isExist = SingleQuery(id) != null;
+            var isExist = Query(id) != null;
             if (isExist)
             {
                 Update(entity);
@@ -61,6 +61,10 @@ namespace Sixpence.ORM.Repository
             return id;
         }
 
+        /// <summary>
+        /// 根据id删除实体
+        /// </summary>
+        /// <param name="id"></param>
         public virtual void Delete(string id)
         {
             Manager.Delete(new E().EntityName, id);
@@ -76,7 +80,6 @@ namespace Sixpence.ORM.Repository
             Manager.ExecuteTransaction(() => ids.Each(id => Delete(id)));
         }
 
-
         /// <summary>
         /// 获取实体记录
         /// </summary>
@@ -84,7 +87,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual IEnumerable<E> Query()
         {
-            return Manager.RetrieveMultiple<E>($"SELECT * FROM {new E().EntityName}");
+            return Manager.Query<E>($"SELECT * FROM {new E().EntityName}");
         }
 
         /// <summary>
@@ -92,9 +95,9 @@ namespace Sixpence.ORM.Repository
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public virtual E SingleQuery(string id)
+        public virtual E Query(string id)
         {
-            return Manager.Retrieve<E>(id);
+            return Manager.QueryFirst<E>(id);
         }
 
         /// <summary>

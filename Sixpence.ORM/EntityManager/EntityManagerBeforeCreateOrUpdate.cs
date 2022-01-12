@@ -12,7 +12,7 @@ namespace Sixpence.ORM.EntityManager
     /// <summary>
     /// 创建数据钩子
     /// </summary>
-    public class EntityManagerBeforeCreateOrUpdate : IEntityManagerCreateOrUpdate
+    public class EntityManagerBeforeCreateOrUpdate : IEntityManagerBeforeCreateOrUpdate
     {
         public void Execute(EntityManagerPluginContext context)
         {

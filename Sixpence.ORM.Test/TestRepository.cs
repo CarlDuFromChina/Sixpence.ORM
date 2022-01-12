@@ -34,7 +34,7 @@ namespace Sixpence.ORM.Test
         public void Check_Repository_Insert()
         {
             testRepository.Create(new Test() { code = "A001", name = "Test", id = "124" });
-            var data = testRepository.SingleQuery("124");
+            var data = testRepository.Query("124");
             Assert.IsNotNull(data);
         }
 
@@ -50,10 +50,10 @@ namespace Sixpence.ORM.Test
         [Order(3)]
         public void Check_Repository_Update()
         {
-            var data = testRepository.SingleQuery("124");
+            var data = testRepository.Query("124");
             data.name = "test";
             testRepository.Update(data);
-            data = testRepository.SingleQuery("124");
+            data = testRepository.Query("124");
             Assert.IsTrue(data.name.Equals("test"));
         }
 
@@ -62,7 +62,7 @@ namespace Sixpence.ORM.Test
         public void Check_Repository_Delete()
         {
             testRepository.Delete("124");
-            var data = testRepository.SingleQuery("124");
+            var data = testRepository.Query("124");
             Assert.IsNull(data);
         }
     }

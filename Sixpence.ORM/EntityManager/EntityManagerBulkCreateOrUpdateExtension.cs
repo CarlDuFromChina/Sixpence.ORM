@@ -21,12 +21,10 @@ namespace Sixpence.ORM.EntityManager
         /// <param name="dataList"></param>
         public static void BulkCreate<TEntity>(this IEntityManager manager, List<TEntity> dataList) where TEntity : BaseEntity, new()
         {
-            var client = manager.DbClient;
-
             if (dataList.IsEmpty()) return;
 
             var t = new TEntity();
-            var dt = client.Query($"select * from {t.EntityName}");
+            var dt = manager.Query($"select * from {t.EntityName}");
             BulkCreate(manager, dataList.ToDataTable(dt.Columns), t.EntityName,t.PrimaryKey.Name);
         }
 

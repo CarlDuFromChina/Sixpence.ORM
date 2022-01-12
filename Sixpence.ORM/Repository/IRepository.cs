@@ -11,7 +11,7 @@ namespace Sixpence.ORM.Repository
         void Delete(string id);
         void Delete(IEnumerable<string> ids);
         IEnumerable<E> Query();
-        E SingleQuery(string id);
+        E Query(string id);
         void Update(E entity);
     }
 }

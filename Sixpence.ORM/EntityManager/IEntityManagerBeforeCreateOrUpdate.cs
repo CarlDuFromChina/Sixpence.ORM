@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Sixpence.ORM.EntityManager
 {
     [ServiceRegister]
-    public interface IEntityManagerCreateOrUpdate
+    public interface IEntityManagerBeforeCreateOrUpdate
     {
         void Execute(EntityManagerPluginContext context);
     }
