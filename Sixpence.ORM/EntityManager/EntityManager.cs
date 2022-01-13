@@ -92,6 +92,8 @@ namespace Sixpence.ORM.EntityManager
             AssertUtil.CheckNull<SpException>(entity, $"未找到实体：{entityName}", "FB2369B2-6B3E-471D-986A-7719330DBF5E");
             var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new Dictionary<string, object>() { { "@id", id } });
 
+            if (dataList.Rows.Count == 0) return 0;
+
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value));
             var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => item.StartsWith(entityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));

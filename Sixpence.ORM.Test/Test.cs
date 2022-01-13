@@ -13,6 +13,9 @@ namespace Sixpence.ORM.Test
         [PrimaryColumn]
         public string id { get; set; }
 
+        [Column("name", "名称", DataType.Varchar, 100)]
+        public string name { get; set; }
+
         [Column("code", "编码", DataType.Varchar, 100)]
         public string code { get; set; }
     }

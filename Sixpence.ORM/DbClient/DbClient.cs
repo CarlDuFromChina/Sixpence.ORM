@@ -168,7 +168,7 @@ namespace Sixpence.ORM.DbClient
         /// <param name="paramList"></param>
         /// <returns></returns>
         public T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.QueryFirst<T>(sql, paramList);
+            => DbConnection.QueryFirstOrDefault<T>(sql, paramList);
         #endregion
 
         #region DataTable

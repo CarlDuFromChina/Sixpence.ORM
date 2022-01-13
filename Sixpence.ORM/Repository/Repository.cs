@@ -48,8 +48,8 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual string Save(E entity)
         {
-            var id = entity.PrimaryKey.Value;
-            var isExist = Query(id) != null;
+            var id = entity.PrimaryKey.Value ?? Guid.NewGuid().ToString();
+            var isExist = FindOne(id) != null;
             if (isExist)
             {
                 Update(entity);
@@ -85,19 +85,38 @@ namespace Sixpence.ORM.Repository
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public virtual IEnumerable<E> Query()
+        public virtual IEnumerable<E> Find(IDictionary<string, object> conditions = null)
         {
-            return Manager.Query<E>($"SELECT * FROM {new E().EntityName}");
+            var result = ParseConditions(conditions);
+            return Manager.Query<E>($"SELECT * FROM {new E().EntityName} WHERE 1 = 1 {result.WhereSQL}", result.ParamList);
         }
 
         /// <summary>
-        /// 查询单条记录
+        /// 根据id查询
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="ids"></param>
         /// <returns></returns>
-        public virtual E Query(string id)
+        public virtual IEnumerable<E> FindByIds(string ids)
         {
-            return Manager.QueryFirst<E>(id);
+            var paramList = new Dictionary<string, object>();
+            var sql = $"SELECT * FROM {new E().EntityName} WHERE 1 = 1";
+            if (!string.IsNullOrEmpty(ids))
+            {
+                sql += $" AND {new E().PrimaryKey.Name} IN (in@ids)";
+                paramList.Add("in@ids", ids);
+            }
+            return Query(sql, paramList);
+        }
+
+        /// <summary>
+        /// 执行原生SQL查询
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        public virtual IEnumerable<E> Query(string sql, IDictionary<string, object> paramList = null)
+        {
+            return Manager.Query<E>(sql, paramList);
         }
 
         /// <summary>
@@ -113,6 +132,56 @@ namespace Sixpence.ORM.Repository
             }
 
             Manager.Update(entity);
+        }
+
+        /// <summary>
+        /// 根据id查找实体
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public E FindOne(string id)
+        {
+            return Manager.QueryFirst<E>(id);
+        }
+
+        /// <summary>
+        /// 根据条件查询实体
+        /// </summary>
+        /// <param name="conditions"></param>
+        /// <returns></returns>
+        public E FindOne(IDictionary<string, object> conditions = null)
+        {
+            var result = ParseConditions(conditions);
+            var sql = $"SELECT * FROM {new E().EntityName} WHERE 1 = 1 {result.WhereSQL}";
+            return Manager.QueryFirst<E>(sql, result.ParamList);
+        }
+
+        /// <summary>
+        /// 转换条件为SQL原生where语句
+        /// </summary>
+        /// <param name="conditions"></param>
+        /// <returns></returns>
+        internal (string WhereSQL, Dictionary<string, object> ParamList) ParseConditions(IDictionary<string, object> conditions)
+        {
+            string whereSQL = string.Empty;
+            Dictionary<string, object> paramList = new Dictionary<string, object>();
+            if (!conditions.IsEmpty())
+            {
+                conditions.Distinct().Each(item =>
+                {
+                    whereSQL += $" AND {item.Key} = @{item.Key}";
+                    paramList.Add($"@{item.Key}", item.Value);
+                });
+            }
+            return (whereSQL, paramList);
+        }
+
+        /// <summary>
+        /// 清空表
+        /// </summary>
+        public void Clear()
+        {
+            Manager.Execute($"TRUNCATE TABLE {new E().EntityName}");
         }
     }
 }

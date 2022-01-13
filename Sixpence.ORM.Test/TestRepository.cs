@@ -34,7 +34,7 @@ namespace Sixpence.ORM.Test
         public void Check_Repository_Insert()
         {
             testRepository.Create(new Test() { code = "A001", name = "Test", id = "124" });
-            var data = testRepository.Query("124");
+            var data = testRepository.FindOne("124");
             Assert.IsNotNull(data);
         }
 
@@ -42,18 +42,24 @@ namespace Sixpence.ORM.Test
         [Order(2)]
         public void Check_Repository_Query()
         {
-            var data = testRepository.Query();
-            Assert.IsTrue(data != null && data.ToList().Count > 0);
+            var dataList = testRepository.Find();
+            Assert.IsTrue(dataList != null && dataList.ToList().Count > 0);
+            var data = testRepository.FindOne(new Dictionary<string, object>() { { "id", "124" } });
+            Assert.IsNotNull(data);
+            data = testRepository.FindOne("124");
+            Assert.IsNotNull(data);
+            dataList = testRepository.FindByIds("124");
+            Assert.IsTrue(dataList != null && dataList.ToList().Count > 0);
         }
 
         [Test]
         [Order(3)]
         public void Check_Repository_Update()
         {
-            var data = testRepository.Query("124");
+            var data = testRepository.FindOne("124");
             data.name = "test";
             testRepository.Update(data);
-            data = testRepository.Query("124");
+            data = testRepository.FindOne("124");
             Assert.IsTrue(data.name.Equals("test"));
         }
 
@@ -62,7 +68,16 @@ namespace Sixpence.ORM.Test
         public void Check_Repository_Delete()
         {
             testRepository.Delete("124");
-            var data = testRepository.Query("124");
+            var data = testRepository.FindOne("124");
+            Assert.IsNull(data);
+
+           var id = testRepository.Save(new Test() { code = "A001", name = "Test" });
+            Assert.IsNotEmpty(id);
+            data = testRepository.FindOne(id);
+            Assert.IsNotNull(data);
+
+            testRepository.Delete(new string[] { id });
+            data = testRepository.FindOne(id);
             Assert.IsNull(data);
         }
     }

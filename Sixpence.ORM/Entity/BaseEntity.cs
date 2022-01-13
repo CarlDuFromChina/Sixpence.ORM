@@ -73,12 +73,6 @@ namespace Sixpence.ORM.Entity
 
         #region 实体基础字段
         /// <summary>
-        /// 名称
-        /// </summary>
-        [DataMember, Column("name", "名称", DataType.Varchar, 100)]
-        public string name { get; set; }
-
-        /// <summary>
         /// 创建人
         /// </summary>
         [DataMember, Column("created_by", "创建人id", DataType.Varchar, 100, true)]
@@ -93,7 +87,7 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// 创建日期
         /// </summary>
-        [DataMember, Column("created_at", "创建日期", DataType.Timestamp, 6, true)]
+        [DataMember, Column("created_at", "创建时间", DataType.Timestamp, 6, true)]
         public DateTime? created_at { get; set; }
 
         /// <summary>
@@ -112,7 +106,7 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// 修改日期
         /// </summary>
-        [DataMember, Column("updated_at", "创建日期", DataType.Timestamp, 6, true)]
+        [DataMember, Column("updated_at", "修改时间", DataType.Timestamp, 6, true)]
         public DateTime? updated_at { get; set; }
 
         #endregion
@@ -226,18 +220,6 @@ namespace Sixpence.ORM.Entity
                 return string.Empty;
             }
             return attr.LogicalName;
-        }
-
-        /// <summary>
-        /// 转换 BaseEntity 为选项
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public SelectOption ToSelectOption()
-        {
-            AssertUtil.CheckIsNullOrEmpty<SpException>(name, "选项名不能为空", "C54EDDA7-CD30-4F89-A924-A7AB6D22666F");
-            AssertUtil.CheckIsNullOrEmpty<SpException>(PrimaryKey.Value, "选项值不能为空", "236580B0-4A9A-404B-8266-1AFC71716F37");
-            return new SelectOption(name, PrimaryKey.Value);
         }
         #endregion
     }

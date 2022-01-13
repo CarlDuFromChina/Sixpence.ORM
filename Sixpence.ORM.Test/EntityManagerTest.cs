@@ -75,7 +75,9 @@ namespace Sixpence.ORM.Test
             var data = manager.QueryFirst<Test>("123");
             Assert.IsNull(data);
 
-            Check_Entity_Create();
+            var entity = new Test() { code = "A001", name = "Test", id = "123" };
+            manager.Create(entity);
+            
             data = manager.QueryFirst<Test>("123");
             manager.Delete(data);
             data = manager.QueryFirst<Test>("123");
