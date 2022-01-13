@@ -117,8 +117,16 @@ public class TestService
         testRepository.Update(test); // 更新
     }
 
-    public Test Query(string id) {
+    public Test QueryById(string id) {
         return testRepository.SingleQuery(id); // 查询单个记录
+    }
+    
+    public IList<Test> Query(string ids) {
+        return testRepository.FindByIds(ids); // 根据多个id查询
+    }
+    
+    public Test QueryByName(string name) {
+        return testRepository.FindOne(new Dictionary<string, Object>() { { "name", name } }); // 条件查询
     }
 }
 ```
