@@ -118,7 +118,7 @@ public class TestService
     }
 
     public Test QueryById(string id) {
-        return testRepository.SingleQuery(id); // 查询单个记录
+        return testRepository.FindOne(id); // 查询单个记录
     }
     
     public IList<Test> Query(string ids) {
