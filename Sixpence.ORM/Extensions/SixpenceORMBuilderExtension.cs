@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Sixpence.ORM.Extensions
 {
-    public static class SixpenceORMExtension
+    public static class SixpenceORMBuilderExtension
     {
         public static IApplicationBuilder UseEntityGenerate(this IApplicationBuilder app)
         {
