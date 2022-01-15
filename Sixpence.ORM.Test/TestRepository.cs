@@ -25,7 +25,7 @@ namespace Sixpence.ORM.Test
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
             CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
-            SixpenceORMSetup.UseEntityGenerate(null);
+            SixpenceORMExtension.UseEntityGenerate(null);
             testRepository = new Repository<Test>();
         }
 

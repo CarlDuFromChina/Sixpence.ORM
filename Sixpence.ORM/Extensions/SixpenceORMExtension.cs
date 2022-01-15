@@ -9,9 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Sixpence.ORM
+namespace Sixpence.ORM.Extensions
 {
-    public static class SixpenceORMSetup
+    public static class SixpenceORMExtension
     {
         public static IApplicationBuilder UseEntityGenerate(this IApplicationBuilder app)
         {
@@ -50,41 +50,5 @@ namespace Sixpence.ORM
 
             return app;
         }
-    }
-
-    /// <summary>
-    /// 创建实体前
-    /// </summary>
-    [ServiceRegister]
-    public interface IPreCreateEntity
-    {
-        void Execute(IEntityManager manager, IEntity entity);
-    }
-
-    /// <summary>
-    /// 创建实体后
-    /// </summary>
-    [ServiceRegister]
-    public interface IPostCreateEntity
-    {
-        void Execute(IEntityManager manager, IEntity entity);
-    }
-
-    /// <summary>
-    /// 创建所有实体前
-    /// </summary>
-    [ServiceRegister]
-    public interface IPreCreateEntities
-    {
-        void Execute(IEntityManager manager, IEnumerable<IEntity> entities);
-    }
-
-    /// <summary>
-    /// 创建所有实体后
-    /// </summary>
-    [ServiceRegister]
-    public interface IPostCreateEntities
-    {
-        void Execute(IEntityManager manager, IEnumerable<IEntity> entities);
     }
 }

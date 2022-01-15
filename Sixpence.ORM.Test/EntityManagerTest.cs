@@ -29,7 +29,7 @@ namespace Sixpence.ORM.Test
         [Order(1)]
         public void Check_Entity_AutoGenerate()
         {
-            SixpenceORMSetup.UseEntityGenerate(null);
+            SixpenceORMExtension.UseEntityGenerate(null);
             var manager = EntityManagerFactory.GetManager();
             var result = manager.ExecuteScalar(manager.DbClient.Driver.TableExsit("test"));
             Assert.IsTrue(ConvertUtil.ConToBoolean(result));
