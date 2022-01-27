@@ -95,7 +95,7 @@ namespace Sixpence.ORM.EntityManager
             if (dataList.Rows.Count == 0) return 0;
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
-            attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value));
+            attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
             var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => item.StartsWith(entityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase));
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
 
