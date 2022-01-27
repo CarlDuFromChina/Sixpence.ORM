@@ -4,6 +4,7 @@ using Sixpence.Common;
 using Sixpence.Common.Current;
 using Sixpence.Common.Utils;
 using Sixpence.ORM.EntityManager;
+using Sixpence.ORM.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace Sixpence.ORM.Test
         [Order(1)]
         public void Check_Entity_AutoGenerate()
         {
-            SixpenceORMExtension.UseEntityGenerate(null);
+            SixpenceORMBuilderExtension.UseEntityGenerate(null);
             var manager = EntityManagerFactory.GetManager();
             var result = manager.ExecuteScalar(manager.DbClient.Driver.TableExsit("test"));
             Assert.IsTrue(ConvertUtil.ConToBoolean(result));
@@ -83,6 +84,10 @@ namespace Sixpence.ORM.Test
             data = manager.QueryFirst<Test>("123");
             Assert.IsNull(data);
 
+            manager.Create(entity);
+            manager.Delete("test", entity.id);
+            data = manager.QueryFirst<Test>("123");
+            Assert.IsNull(data);
 
             Check_Entity_Create();
             var dataList = manager.Query<Test>("select * from test where id = '123'").ToArray();

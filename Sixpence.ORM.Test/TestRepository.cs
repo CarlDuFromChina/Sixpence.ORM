@@ -3,6 +3,7 @@ using NUnit.Framework;
 using Sixpence.Common;
 using Sixpence.Common.Current;
 using Sixpence.ORM.Entity;
+using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Repository;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,7 @@ namespace Sixpence.ORM.Test
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
             CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
-            SixpenceORMExtension.UseEntityGenerate(null);
+            SixpenceORMBuilderExtension.UseEntityGenerate(null);
             testRepository = new Repository<Test>();
         }
 
