@@ -75,7 +75,11 @@ public class Startup
 
     public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHttpContextAccessor accessor)
     {
-        app.UseEntityGenerate(); // 实体自动生成
+        app.UseORM(options => 
+        {
+            options.EntityClassNameCase = ClassNameCase.UnderScore; // 实体下划线命名
+            options.AutoGenerate = true; // 自动生成实体
+        });
     }
 }
 ```
@@ -89,7 +93,7 @@ namespace Blog
 {
     [Entity("test", "测试")]
     [KeyAttributes("code不能重复", "code")]
-    public class Test : BaseEntity
+    public class test : BaseEntity
     {
         [PrimaryColumn]
         public string id { get; set; }
