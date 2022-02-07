@@ -13,7 +13,39 @@ namespace Sixpence.ORM.Extensions
 {
     public static class SixpenceORMBuilderExtension
     {
-        public static IApplicationBuilder UseEntityGenerate(this IApplicationBuilder app)
+        internal static ORMOptions Options = new ORMOptions() { AutoGenerate = true, EntityClassNameCase = ClassNameCase.UnderScore };
+
+        public static int EntityClassNameCase { get; internal set; }
+
+        public static IApplicationBuilder UseORM(this IApplicationBuilder app, Action<ORMOptions> action = null)
+        {
+            action?.Invoke(Options);
+
+            if (Options.AutoGenerate)
+            {
+                OpenEntityAutoGenerate();
+            }
+
+            return app;
+        }
+
+        /// <summary>
+        /// ORM参数
+        /// </summary>
+        public class ORMOptions
+        {
+            /// <summary>
+            /// 实体自动生成
+            /// </summary>
+            public bool AutoGenerate { get; set; }
+
+            /// <summary>
+            /// 实体类命名规范
+            /// </summary>
+            public ClassNameCase EntityClassNameCase { get; set; }
+        }
+
+        private static void OpenEntityAutoGenerate()
         {
             var logger = LogFactory.GetLogger("entity");
             var manager = EntityManagerFactory.GetManager();
@@ -47,8 +79,21 @@ namespace Sixpence.ORM.Extensions
 
                 ServiceContainer.Resolve<IPostCreateEntities>()?.Execute(manager, entityList);
             });
-
-            return app;
         }
+    }
+
+    /// <summary>
+    /// 类命名规范
+    /// </summary>
+    public enum ClassNameCase
+    {
+        /// <summary>
+        /// 帕斯卡命名（UserInfo）
+        /// </summary>
+        Pascal,
+        /// <summary>
+        /// 下划线命名（user_info）
+        /// </summary>
+        UnderScore
     }
 }

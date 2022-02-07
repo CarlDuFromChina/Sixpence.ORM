@@ -1,5 +1,6 @@
 ﻿using Sixpence.Common;
 using Sixpence.Common.Utils;
+using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Concurrent;
