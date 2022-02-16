@@ -161,5 +161,32 @@ namespace Sixpence.ORM.EntityManager
         /// <returns></returns>
         int ExecuteSqlScript(string sqlFile);
         #endregion
+
+        #region Bulk CURD
+        /// <summary>
+        /// 批量创建
+        /// </summary>
+        /// <param name="dataList"></param>
+        public void BulkCreate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new();
+
+        /// <summary>
+        /// 批量更新
+        /// </summary>
+        /// <param name="dataList"></param>
+        public void BulkUpdate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new();
+
+        /// <summary>
+        /// 批量删除
+        /// </summary>
+        /// <param name="dataList"></param>
+        public void BulkDelete<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new();
+
+        /// <summary>
+        /// 批量创建或更新
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="dataList"></param>
+        public void BulkCreateOrUpdate<TEntity>(List<TEntity> dataList, List<string> updateFieldList = null) where TEntity : BaseEntity, new();
+        #endregion
     }
 }

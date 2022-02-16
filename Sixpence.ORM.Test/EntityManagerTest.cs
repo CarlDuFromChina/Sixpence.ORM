@@ -107,10 +107,7 @@ namespace Sixpence.ORM.Test
                 new Test() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
             };
             var manager = EntityManagerFactory.GetManager();
-            manager.ExecuteTransaction(() =>
-            {
-                manager.BulkCreate(dataList);
-            });
+            manager.BulkCreate(dataList);
             var count = manager.QueryCount("select COUNT(1) from test where code in ('B001', 'B002', 'B003')");
             Assert.AreEqual(3, count);
         }
@@ -124,15 +121,32 @@ namespace Sixpence.ORM.Test
             dataList[0].name = "test1";
             dataList[1].name = "test2";
             dataList[2].name = "test3";
-            manager.ExecuteTransaction(() =>
-            {
-                manager.BulkUpdate(dataList);
-            });
+            manager.BulkUpdate(dataList);
             dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
             Assert.AreEqual(dataList[0].name, "test1");
             Assert.AreEqual(dataList[1].name, "test2");
             Assert.AreEqual(dataList[2].name, "test3");
             manager.Execute("TRUNCATE test");
+        }
+
+        [Test]
+        [Order(8)]
+        public void Check_BulkDelete()
+        {
+            var dataList = new List<Test>()
+            {
+                new Test() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+                new Test() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+                new Test() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+            };
+            var manager = EntityManagerFactory.GetManager();
+            manager.ExecuteTransaction(() =>
+            {
+                manager.BulkCreate(dataList);
+                manager.BulkDelete(dataList);
+                dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
+                Assert.IsTrue(dataList.IsEmpty());
+            });
         }
     }
 }

@@ -514,5 +514,170 @@ WHERE
             return returnValue;
         }
         #endregion
+
+        #region Bulk CRUD
+        /// <summary>
+        /// 批量创建
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="dataList"></param>
+        public void BulkCreate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty()) return;
+
+            var t = new TEntity();
+            var tableName = t.EntityName;
+            var primaryKey = t.PrimaryKey.Name;
+
+            ExecuteTransaction(() =>
+            {
+                var dt = Query($"select * from {tableName}");
+
+                // 1. 创建临时表
+                var tempName = DbClient.CreateTemporaryTable(tableName);
+
+                // 2. 拷贝数据到临时表
+                DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempName);
+
+                // 3. 将临时表数据插入到目标表中
+                DbClient.Execute(string.Format("INSERT INTO {0} SELECT * FROM {1} WHERE NOT EXISTS(SELECT 1 FROM {0} WHERE {0}.{2} = {1}.{2})", tableName, tempName, primaryKey));
+
+                // 4. 删除临时表
+                DbClient.DropTable(tempName);
+            });
+        }
+
+        /// <summary>
+        /// 批量更新
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="dataList"></param>
+        public void BulkUpdate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty()) return;
+
+            var t = new TEntity();
+            var mainKeyName = t.PrimaryKey.Name; // 主键
+            var tableName = t.EntityName; // 表名
+
+            ExecuteTransaction(() =>
+            {
+                // 1. 创建临时表
+                var tempTableName = DbClient.CreateTemporaryTable(tableName);
+
+                // 2. 查询临时表结构
+                var dt = DbClient.Query($"SELECT * FROM {tempTableName}");
+
+                // 3. 拷贝数据到临时表
+                DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempTableName);
+
+                // 4. 获取更新字段
+                var updateFieldList = new List<string>();
+                foreach (DataColumn column in dt.Columns)
+                {
+                    // 主键去除
+                    if (!column.ColumnName.Equals(mainKeyName, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        updateFieldList.Add(column.ColumnName);
+                    }
+                }
+
+                // 5. 拼接Set语句
+                var updateFieldSql = updateFieldList.Select(item => string.Format(" {1} = {0}.{1} ", tempTableName, item)).Aggregate((a, b) => a + " , " + b);
+
+                // 6. 更新
+                DbClient.Execute($@"
+UPDATE {tableName}
+SET {updateFieldSql} FROM {tempTableName}
+WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName}
+AND {tempTableName}.{mainKeyName} IS NOT NULL
+");
+
+                // 7. 删除临时表
+                DbClient.DropTable(tempTableName);
+            });
+        }
+
+        /// <summary>
+        /// 批量创建或更新
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="dataList"></param>
+        /// <param name="updateFieldList"></param>
+        public void BulkCreateOrUpdate<TEntity>(List<TEntity> dataList, List<string> updateFieldList = null) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty()) return;
+
+            var mainKeyName = new TEntity().PrimaryKey.Name; // 主键
+            var tableName = new TEntity().EntityName; // 表名
+
+            // 1. 创建临时表
+            var tempTableName = DbClient.CreateTemporaryTable(tableName);
+
+            // 2. 查询临时表结构
+            var dt = DbClient.Query($"SELECT * FROM {tempTableName}");
+
+            // 3. 拷贝数据到临时表
+            DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempTableName);
+
+            // 4. 获取更新字段
+            if (updateFieldList.IsEmpty())
+            {
+                updateFieldList = new List<string>();
+                foreach (DataColumn column in dt.Columns)
+                {
+                    // 主键去除
+                    if (!column.ColumnName.Equals(mainKeyName, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        updateFieldList.Add(column.ColumnName);
+                    }
+                }
+            }
+
+            // 5. 拼接Set语句
+            var updateFieldSql = updateFieldList.Select(item => string.Format(" {1} = {0}.{1} ", tempTableName, item)).Aggregate((a, b) => a + " , " + b);
+
+            // 6. 更新
+            DbClient.Execute($@"
+UPDATE {tableName}
+SET {updateFieldSql} FROM {tempTableName}
+WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName}
+AND {tempTableName}.{mainKeyName} IS NOT NULL
+");
+            // 7. 新增
+            DbClient.Execute($@"
+INSERT INTO {tableName}
+SELECT * FROM {tempTableName}
+WHERE NOT EXISTS(SELECT 1 FROM {tableName} WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName})
+AND {tempTableName}.{mainKeyName} IS NOT NULL
+");
+
+            // 8. 删除临时表
+            DbClient.DropTable(tempTableName);
+        }
+
+        /// <summary>
+        /// 批量删除
+        /// </summary>
+        /// <param name="entities"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        public void BulkDelete<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty())
+            {
+                return;
+            }
+
+            var t  = new TEntity();
+            var tableName = t.EntityName;
+            var primaryKeyName = t.PrimaryKey.Name;
+            var ids = string.Join(",", dataList.Select(item => "'" + item.PrimaryKey.Value + "'"));
+
+            ExecuteTransaction(() =>
+            {
+                DbClient.Execute($"DELETE FROM {tableName} WHERE {primaryKeyName} IN ({ids})");
+            });
+        }
+        #endregion
     }
 }
