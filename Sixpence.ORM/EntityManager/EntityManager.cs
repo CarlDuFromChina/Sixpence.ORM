@@ -1,7 +1,6 @@
 ﻿using Sixpence.Common;
 using Sixpence.Common.IoC;
 using Sixpence.Common.Utils;
-using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.DbClient;
 using Sixpence.ORM.Driver;
 using Sixpence.ORM.Entity;
@@ -91,7 +90,7 @@ namespace Sixpence.ORM.EntityManager
         {
             var entity = ServiceContainer.Resolve<IEntity>(key => MatchEntity.CompareEntityName(key, entityName)) as BaseEntity;
             AssertUtil.CheckNull<SpException>(entity, $"未找到实体：{entityName}", "FB2369B2-6B3E-471D-986A-7719330DBF5E");
-            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new Dictionary<string, object>() { { "@id", id } });
+            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new { id });
 
             if (dataList.Rows.Count == 0) return 0;
 
@@ -102,7 +101,7 @@ namespace Sixpence.ORM.EntityManager
 
             var sql = "DELETE FROM {0} WHERE {1} = @id";
             sql = string.Format(sql, entityName, entity.PrimaryKey.Name);
-            int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", id } });
+            int result = this.Execute(sql, new { id });
 
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
             return result;
@@ -121,7 +120,7 @@ namespace Sixpence.ORM.EntityManager
                 plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreDelete });
                 var sql = "DELETE FROM {0} WHERE {1} = @id";
                 sql = string.Format(sql, entity.EntityName, entity.PrimaryKey.Name);
-                int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } });
+                int result = this.Execute(sql, new { id = entity.PrimaryKey.Value });
                 plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PostDelete });
                 return result;
             });
@@ -165,7 +164,7 @@ namespace Sixpence.ORM.EntityManager
 SELECT * FROM {entity.EntityName}
 WHERE {entity.PrimaryKey.Name} = @id;
 ";
-            var dataList = this.Query(sql, new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } });
+            var dataList = this.Query(sql, new { id = entity.PrimaryKey.Value });
 
             if (dataList != null && dataList.Rows.Count > 0)
                 Update(entity);
@@ -305,7 +304,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         public T QueryFirst<T>(string id) where T : BaseEntity, new()
         {
             var sql = $"SELECT * FROM {new T().EntityName} WHERE {new T().PrimaryKey.Name} =@id";
-            return QueryFirst<T>(sql, new Dictionary<string, object>() { { "@id", id } });
+            return QueryFirst<T>(sql, new { id });
         }
 
         /// <summary>
@@ -315,9 +314,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public T QueryFirst<T>(string sql, IDictionary<string, object> paramList) where T : BaseEntity, new()
+        public T QueryFirst<T>(string sql, object param = null) where T : BaseEntity, new()
         {
-            return DbClient.QueryFirst<T>(sql, paramList);
+            return DbClient.QueryFirst<T>(sql, param);
         }
 
         /// <summary>
@@ -326,9 +325,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public DataTable Query(string sql, IDictionary<string, object> paramList = null)
+        public DataTable Query(string sql, object param = null)
         {
-            return DbClient.Query(sql, paramList);
+            return DbClient.Query(sql, param);
         }
 
         /// <summary>
@@ -338,9 +337,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public int QueryCount(string sql, IDictionary<string, object> paramList = null)
+        public int QueryCount(string sql, object param = null)
         {
-            return ConvertUtil.ConToInt(this.ExecuteScalar(sql, paramList));
+            return ConvertUtil.ConToInt(this.ExecuteScalar(sql, param));
         }
 
         /// <summary>
@@ -350,9 +349,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null)
+        public IEnumerable<T> Query<T>(string sql, object param = null)
         {
-            return DbClient.Query<T>(sql, paramList);
+            return DbClient.Query<T>(sql, param);
         }
 
         /// <summary>
@@ -365,7 +364,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="pageSize"></param>
         /// <param name="pageIndex"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(string sql, object param, string orderby, int pageSize, int pageIndex) where T : BaseEntity, new()
         {
             if (!string.IsNullOrEmpty(orderby))
             {
@@ -376,7 +375,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
             }
 
             DbClient.Driver.AddLimit(ref sql, pageIndex, pageSize);
-            return Query<T>(sql, paramList);
+            return Query<T>(sql, param);
         }
 
         /// <summary>
@@ -390,11 +389,11 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="pageIndex"></param>
         /// <param name="recordCount"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex, out int recordCount) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(string sql, object param, string orderby, int pageSize, int pageIndex, out int recordCount) where T : BaseEntity, new()
         {
             var recordCountSql = $"SELECT COUNT(1) FROM ({sql}) AS table1";
-            recordCount = Convert.ToInt32(this.ExecuteScalar(recordCountSql, paramList));
-            var data = Query<T>(sql, paramList, orderby, pageSize, pageIndex);
+            recordCount = Convert.ToInt32(this.ExecuteScalar(recordCountSql, param));
+            var data = Query<T>(sql, param, orderby, pageSize, pageIndex);
             return data;
         }
 
@@ -432,9 +431,9 @@ WHERE
         /// <param name="manager"></param>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
-        public int Execute(string sql, IDictionary<string, object> paramList = null)
+        public int Execute(string sql, object param = null)
         {
-            return DbClient.Execute(sql, paramList);
+            return DbClient.Execute(sql, param);
         }
 
         /// <summary>
@@ -444,9 +443,9 @@ WHERE
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string sql, IDictionary<string, object> paramList = null)
+        public object ExecuteScalar(string sql, object param = null)
         {
-            return DbClient.ExecuteScalar(sql, paramList);
+            return DbClient.ExecuteScalar(sql, param);
         }
 
         /// <summary>
@@ -461,7 +460,7 @@ WHERE
             int sqlCount = 0, errorCount = 0;
             if (!File.Exists(sqlFile))
             {
-                LogUtils.Error($"文件({sqlFile})不存在");
+                LogUtil.Error($"文件({sqlFile})不存在");
                 return -1;
             }
             using (StreamReader sr = new StreamReader(sqlFile))
@@ -492,7 +491,7 @@ WHERE
                         catch (Exception ex)
                         {
                             errorCount++;
-                            LogUtils.Error(sql + newLIne + ex.Message, ex);
+                            LogUtil.Error(sql + newLIne + ex.Message, ex);
                         }
                         sql = string.Empty;
                     }

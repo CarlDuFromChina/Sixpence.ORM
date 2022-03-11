@@ -136,8 +136,8 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public int Execute(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.Execute(sql, paramList);
+        public int Execute(string sql, object param = null)
+            => DbConnection.Execute(sql, param);
 
         /// <summary>
         /// 执行SQL语句，并返回第一行第一列
@@ -145,8 +145,8 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.ExecuteScalar(sql, paramList);
+        public object ExecuteScalar(string sql, object param = null)
+            => DbConnection.ExecuteScalar(sql, param);
         #endregion
 
         #region Query
@@ -155,10 +155,10 @@ namespace Sixpence.ORM.DbClient
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
-        /// <param name="paramList"></param>
+        /// <param name="param"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.Query<T>(sql, paramList);
+        public IEnumerable<T> Query<T>(string sql, object param = null)
+            => DbConnection.Query<T>(sql, param);
 
         /// <summary>
         /// 执行SQL语句，并返回查询结果
@@ -167,8 +167,8 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.QueryFirstOrDefault<T>(sql, paramList);
+        public T QueryFirst<T>(string sql, object param = null)
+            => DbConnection.QueryFirstOrDefault<T>(sql, param);
         #endregion
 
         #region DataTable
@@ -178,10 +178,10 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public DataTable Query(string sql, IDictionary<string, object> paramList = null)
+        public DataTable Query(string sql, object param = null)
         {
             DataTable dt = new DataTable();
-            var reader = DbConnection.ExecuteReader(sql, paramList);
+            var reader = DbConnection.ExecuteReader(sql, param);
             dt.Load(reader);
             return dt;
         }

@@ -53,6 +53,8 @@ namespace Sixpence.ORM.Test
             var manager = EntityManagerFactory.GetManager();
             var result = manager.QueryFirst<Test>("123");
             Assert.IsNotNull(result);
+            result = manager.QueryFirst<Test>("select * from test where id = @id", new { id = "123" });
+            Assert.IsNotNull(result);
         }
 
         [Test]
@@ -90,9 +92,9 @@ namespace Sixpence.ORM.Test
             Assert.IsNull(data);
 
             Check_Entity_Create();
-            var dataList = manager.Query<Test>("select * from test where id = '123'").ToArray();
+            var dataList = manager.Query<Test>("select * from test where id = @id", new { id = "123" }).ToArray();
             manager.Delete(dataList);
-            dataList = manager.Query<Test>("select * from test where id = '123'").ToArray();
+            dataList = manager.Query<Test>("select * from test where id = @id", new { id = "123" }).ToArray();
             Assert.IsTrue(dataList.Length == 0);
         }
 

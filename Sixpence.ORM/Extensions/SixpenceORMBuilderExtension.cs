@@ -47,7 +47,7 @@ namespace Sixpence.ORM.Extensions
 
         private static void OpenEntityAutoGenerate()
         {
-            var logger = LogFactory.GetLogger("entity");
+            var logger = LoggerFactory.GetLogger("entity");
             var manager = EntityManagerFactory.GetManager();
             var dialect = manager.DbClient.Driver;
             var entityList = ServiceContainer.ResolveAll<IEntity>();

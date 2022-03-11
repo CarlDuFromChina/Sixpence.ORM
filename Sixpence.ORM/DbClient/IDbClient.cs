@@ -64,16 +64,16 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sqlText"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        int Execute(string sqlText, IDictionary<string, object> paramList = null);
+        int Execute(string sqlText, object param = null);
 
         /// <summary>
         /// 根据SQL查询，返回传入类型集合
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
-        /// <param name="paramList"></param>
+        /// <param name="param"></param>
         /// <returns></returns>
-        IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null);
+        IEnumerable<T> Query<T>(string sql, object param = null);
 
         /// <summary>
         /// 查询单条数据
@@ -82,7 +82,7 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null);
+        T QueryFirst<T>(string sql, object param = null);
 
         /// <summary>
         /// 根据SQL查询，返回DataTable
@@ -90,7 +90,7 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        DataTable Query(string sql, IDictionary<string, object> paramList = null);
+        DataTable Query(string sql, object param = null);
 
         /// <summary>
         /// 执行SQL，返回第一行第一列
@@ -98,7 +98,7 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        object ExecuteScalar(string sql, IDictionary<string, object> paramList = null);
+        object ExecuteScalar(string sql, object param = null);
 
         /// <summary>
         /// 创建临时表

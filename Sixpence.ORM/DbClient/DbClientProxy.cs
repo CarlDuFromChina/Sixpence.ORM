@@ -89,36 +89,28 @@ namespace Sixpence.ORM.DbClient
         /// 执行SQL，返回受影响行数（记录 log）
         /// </summary>
         /// <param name="sqlText"></param>
-        /// <param name="paramList"></param>
+        /// <param name="param"></param>
         /// <returns></returns>
-        public int Execute(string sqlText, IDictionary<string, object> paramList = null)
+        public int Execute(string sqlText, object param  = null)
         {
-            var paramListClone = new Dictionary<string, object>();
-            if (paramList != null)
-            {
-                paramListClone = paramListClone.Concat(paramList).ToDictionary(k => k.Key, v => v.Value);
-            }
-            var sql = ConvertSqlToDialectSql(sqlText, paramListClone);
-            LogUtils.Debug(sql + paramListClone.ToLogString());
-            return dbClient.Execute(sql, paramListClone);
+            var paramList = param?.ToDictionary();
+            sqlText = ConvertSqlToDialectSql(sqlText, paramList);
+            LogUtil.Debug(sqlText + paramList.ToLogString());
+            return dbClient.Execute(sqlText, paramList);
         }
 
         /// <summary>
         /// 执行SQL，返回第一行第一列（记录 log）
         /// </summary>
         /// <param name="sql"></param>
-        /// <param name="paramList"></param>
+        /// <param name="param"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string sql, IDictionary<string, object> paramList = null)
+        public object ExecuteScalar(string sql, object param  = null)
         {
-            var paramListClone = new Dictionary<string, object>();
-            if (paramList != null)
-            {
-                paramListClone = paramListClone.Concat(paramList).ToDictionary(k => k.Key, v => v.Value);
-            }
-            sql = ConvertSqlToDialectSql(sql, paramListClone);
-            LogUtils.Debug(sql + paramListClone.ToLogString());
-            return dbClient.ExecuteScalar(sql, paramListClone);
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+            LogUtil.Debug(sql + paramList.ToLogString());
+            return dbClient.ExecuteScalar(sql, paramList);
         }
 
         /// <summary>
@@ -143,36 +135,28 @@ namespace Sixpence.ORM.DbClient
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
-        /// <param name="paramList"></param>
+        /// <param name="param"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null)
+        public IEnumerable<T> Query<T>(string sql, object param = null)
         {
-            var paramListClone = new Dictionary<string, object>();
-            if (paramList != null)
-            {
-                paramListClone = paramListClone.Concat(paramList).ToDictionary(k => k.Key, v => v.Value);
-            }
-            sql = ConvertSqlToDialectSql(sql, paramListClone);
-            LogUtils.Debug(sql + paramListClone.ToLogString());
-            return dbClient.Query<T>(sql, paramListClone);
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+            LogUtil.Debug(sql + paramList.ToLogString());
+            return dbClient.Query<T>(sql, param);
         }
 
         /// <summary>
         /// 根据SQL查询，返回DataTable（记录 log）
         /// </summary>
         /// <param name="sql"></param>
-        /// <param name="paramList"></param>
+        /// <param name="param"></param>
         /// <returns></returns>
-        public DataTable Query(string sql, IDictionary<string, object> paramList = null)
+        public DataTable Query(string sql, object param = null)
         {
-            var paramListClone = new Dictionary<string, object>();
-            if (paramList != null)
-            {
-                paramListClone = paramListClone.Concat(paramList).ToDictionary(k => k.Key, v => v.Value);
-            }
-            sql = ConvertSqlToDialectSql(sql, paramListClone);
-            LogUtils.Debug(sql + paramListClone.ToLogString());
-            return dbClient.Query(sql, paramListClone);
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+            LogUtil.Debug(sql + paramList.ToLogString());
+            return dbClient.Query(sql, paramList);
         }
 
         /// <summary>
@@ -182,7 +166,6 @@ namespace Sixpence.ORM.DbClient
         {
             dbClient.Rollback();
         }
-
 
         /// <summary>
         /// 将SQL转换为本地化SQL
@@ -271,15 +254,11 @@ namespace Sixpence.ORM.DbClient
             dbClient.BulkCopy(dataTable, tableName);
         }
 
-        public T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null)
+        public T QueryFirst<T>(string sql, object param  = null)
         {
-            var paramListClone = new Dictionary<string, object>();
-            if (paramList != null)
-            {
-                paramListClone = paramListClone.Concat(paramList).ToDictionary(k => k.Key, v => v.Value);
-            }
-            sql = ConvertSqlToDialectSql(sql, paramListClone);
-            LogUtils.Debug(sql + paramListClone.ToLogString());
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+            LogUtil.Debug(sql + paramList.ToLogString());
             return dbClient.QueryFirst<T>(sql, paramList);
         }
     }
