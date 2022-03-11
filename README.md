@@ -44,11 +44,13 @@ Install-Package Sixpence.ORM -Version 2.0.0
 + **灵活扩展**
 + **使用简单直观**
 
-## 使用
+## 使用教程
 
-### 使用 Sixpence.ORM
+`Sixpence.ORM`配置和使用都非常简单，你仅需要几分钟时间即可掌握该框架
 
-1、appsettings.json
+### 配置
+
+1、我们需要在`appsettings.json`里配置数据库连接
 
 ```json
 {
@@ -60,7 +62,7 @@ Install-Package Sixpence.ORM -Version 2.0.0
 }
 ```
 
-2、startup.cs
+2、我们在启动类`startup.cs`里注册服务
 
 ```csharp
 public class Startup
@@ -84,9 +86,14 @@ public class Startup
 }
 ```
 
-### 示例
+### 实体类定义（Entity）
 
-#### 1、Entity
+实体类必须要继承`BaseEntity`基类，此外还要注意特性声明
+
++ EntityAttribute：定义实体表名和逻辑名
++ KeyAttributes：定义唯一键
++ PrimaryColumn：定义主键
++ Column：定义列
 
 ```csharp
 namespace Blog
@@ -104,14 +111,14 @@ namespace Blog
 }
 ```
 
-#### 2、Repository
+### 仓储模型（Repository）
 
-简单使用：
+我们定义好实体后，可以利用仓储模型（Repository）直接进行增删改查。示例代码如下：
 
 ```csharp
 public class TestService
 {
-    private Repository<Test> testRepository = new Repository<Test>();
+    private Repository<Test> testRepository = new Repository<Test>(); // 实例化
 
     public void CreateData(Test test) {
         testRepository.Create(test); // 创建
@@ -135,33 +142,81 @@ public class TestService
 }
 ```
 
-#### 3、EntityManager
+### 实体管理器（EntityManager）
 
-获取实例：
+有时候`Repository`无法满足我们复杂的使用场景，这个时候我们就需要`EntityManager`
+
+**(1) 获取实例**
 
 ```csharp
 var manager = EntityManagerFactory.GetManager();
 ```
 
-查询数据：
+**(2) 查询数据**
+
+单条查询：
 
 ```csharp
-var data = manager.QueryFirst<Test>("123");
-var dataList = manager.Query<Test>();
+var data = manager.QueryFirst<Test>("123"); // 根据 id 查询数据
+var data = manager.QueryFirst<Test>("select * from test where id = @id", new { id = "123" }); // 原生 SQL 查询
 ```
 
-删除数据：
+多条查询：
 
 ```csharp
+var dataList = manager.Query<Test>(); // 查询 test 实体所有数据
+var dataList = manager.Query<Test>("select * from test where begin_time > @begin_time", new { begin_time = DateTime.Now }); // 原生 SQL 查询
+```
+
+**(3) 删除数据**
+
+单条删除：
+
+```csharp
+var test = new Test() { id = "123" };
+manager.Delete(test);
 manager.Delete("test", "123");
 ```
 
-更新数据：
+批量删除：
 
 ```csharp
-var data = manager.QueryFirst<Test>("123");
-data.name = "test";
+var dataList = new List<Test>()
+{
+    new Test() { id = "B001"},
+    new Test() { id = "B002"},
+    new Test() { id = "B003"},
+    // ...
+};
+manager.BulkDelete(dataList);
+```
+
+**(4) 更新数据**
+
+单条更新：
+
+```csharp
+var test = new Test() { id = "123", name = "王二" };
 manager.Update(data);
+```
+
+批量更新：
+
+```csharp
+var dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
+dataList[0].name = "test1";
+dataList[1].name = "test2";
+dataList[2].name = "test3";
+manager.BulkUpdate(dataList);
+```
+
+**(5) 创建数据**
+
+单条创建：
+
+```csharp
+var entity = new Test() { code = "A001", name = "Test", id = "123" };
+var result = manager.Create(entity);
 ```
 
 批量创建：
@@ -177,12 +232,13 @@ var manager = EntityManagerFactory.GetManager();
 manager.ExecuteTransaction(() => manager.BulkCreate(dataList));
 ```
 
-#### 4、Transcation
+### 事务（Transcation）
 
 `EntityManager`中使用事务：
 
 ```csharp
-public void Transcation(Test data) {
+public void Transcation(Test data)
+{
     var manager = EntityManagerFactory.GetManager();
     manager.ExecuteTransaction(() => {
         manager.Create(data);
@@ -195,7 +251,8 @@ public void Transcation(Test data) {
 `Repository`中使用事务：
 
 ```csharp
-public void Transcation(Test test, User user) {
+public void Transcation(Test test, User user)
+{
     var manager = EntityManagerFactory.GetManager();
     var testRepository = new Repository<Test>(manager);
     var userRepository = new Repository<User>(manager);
