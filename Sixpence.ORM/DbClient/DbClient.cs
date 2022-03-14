@@ -2,6 +2,7 @@
 using Npgsql;
 using Sixpence.Common;
 using Sixpence.Common.IoC;
+using Sixpence.Common.Utils;
 using Sixpence.ORM.Driver;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,8 @@ namespace Sixpence.ORM.DbClient
         /// </summary>
         public IDbConnection DbConnection { get; private set; }
 
-        private IDbDriver driver;
-        public IDbDriver Driver => driver;
+        private IDBProvider driver;
+        public IDBProvider Driver => driver;
 
         /// <summary>
         /// 初始化数据库连接
@@ -32,7 +33,8 @@ namespace Sixpence.ORM.DbClient
         /// <param name="connectionString"></param>
         public void Initialize(string connectionString, DriverType driverType)
         {
-            driver = ServiceContainer.Resolve<IDbDriver>($"{driverType}Driver");
+            driver = ServiceContainer.ResolveAll<IDBProvider>()?.FirstOrDefault(item => item.ProviderName == driverType.GetDescription());
+            AssertUtil.CheckNull<SpException>(driver, $"未找到数据库驱动类型[{driver.ProviderName}]", "9DAF36D2-74AD-4C85-B546-25DBDA40ADCA");
             DbConnection = driver.GetDbConnection(connectionString);
         }
 

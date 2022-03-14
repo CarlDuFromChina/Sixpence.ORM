@@ -39,7 +39,7 @@ namespace Sixpence.ORM.DbClient
         /// </summary>
         public ConnectionState ConnectionState => dbClient.ConnectionState;
 
-        public IDbDriver Driver => dbClient.Driver;
+        public IDBProvider Driver => dbClient.Driver;
 
         /// <summary>
         /// 开启事务

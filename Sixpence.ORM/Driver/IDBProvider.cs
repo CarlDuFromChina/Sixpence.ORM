@@ -13,8 +13,10 @@ using System.Threading.Tasks;
 namespace Sixpence.ORM.Driver
 {
     [ServiceRegister]
-    public interface IDbDriver
+    public interface IDBProvider
     {
+        string ProviderName { get; }
+
         /// <summary>
         /// 获取数据库连接对象
         /// </summary>
