@@ -23,7 +23,7 @@
 
 ### 链接
 
-完整文档请访问 [Wiki](https://github.com/CarlDuFromChina/Sixpence.ORM/wiki)
+完整文档请访问 [Wiki](https://karl-du.gitbook.io/sixpence-orm/)
 
 查看变更历史请访问 [CHANGELOG](https://github.com/CarlDuFromChina/Sixpence.ORM/blob/master/CHANGELOG.md)
 
