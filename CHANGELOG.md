@@ -1,3 +1,10 @@
+## 2.1.0
+
+### Features
+
++ 添加了批量操作方法：`BulkCreate`、`BulkUpdate`、`BulkCreateOrUpdate`、`BulkDelete`
++ SQL查询参数类型从`Dictionary<string, object>`变更为`object`
+
 ## 2.0.0
 
 ### Features
