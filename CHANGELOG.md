@@ -4,6 +4,8 @@
 
 + 添加了批量操作方法：`BulkCreate`、`BulkUpdate`、`BulkCreateOrUpdate`、`BulkDelete`
 + SQL查询参数类型从`Dictionary<string, object>`变更为`object`
++ 实体`ID`支持`Number`类型
++ 特性`EntityAttribute`的属性调整为选填
 
 ## 2.0.0
 
