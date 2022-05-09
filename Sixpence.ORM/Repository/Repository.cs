@@ -34,7 +34,7 @@ namespace Sixpence.ORM.Repository
         {
             if (string.IsNullOrEmpty(entity.PrimaryKey.Value))
             {
-                entity.SetAttributeValue(entity.PrimaryKey.Name, Guid.NewGuid().ToString());
+                entity.SetAttributeValue(entity.PrimaryKey.Name, entity.NewId());
             }
             var id = Manager.Create(entity);
             return id;
@@ -48,7 +48,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual string Save(E entity)
         {
-            var id = entity.PrimaryKey.Value ?? Guid.NewGuid().ToString();
+            var id = entity.PrimaryKey.Value ?? entity.NewId();
             var isExist = FindOne(id) != null;
             if (isExist)
             {

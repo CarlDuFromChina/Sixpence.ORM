@@ -41,14 +41,14 @@ namespace Sixpence.ORM.Test
         [Test]
         public void Check_Resolve_Entity()
         {
-            var entity = ServiceContainer.Resolve<IEntity>(className => MatchEntity.CompareEntityName(className, "user_info"));
+            var entity = ServiceContainer.Resolve<IEntity>(className => EntityCommon.CompareEntityName(className, "user_info"));
             Assert.IsNotNull(entity);
         }
 
         [Test]
         public void Check_Resolve_EntityManagerPlugin()
         {
-            var plugin = ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, "user_info"));
+            var plugin = ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, "user_info"));
             Assert.IsNotNull(plugin);
         }
     }

@@ -47,7 +47,7 @@ namespace Sixpence.ORM.EntityManager
                     .Each(item => item.Execute(context));
                 if (usePlugin)
                 {
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -71,7 +71,7 @@ namespace Sixpence.ORM.EntityManager
                 if (usePlugin)
                 {
                     context.Action = EntityAction.PostCreate;
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -88,7 +88,7 @@ namespace Sixpence.ORM.EntityManager
         /// <returns></returns>
         public int Delete(string entityName, string id)
         {
-            var entity = ServiceContainer.Resolve<IEntity>(key => MatchEntity.CompareEntityName(key, entityName)) as BaseEntity;
+            var entity = ServiceContainer.Resolve<IEntity>(key => EntityCommon.CompareEntityName(key, entityName)) as BaseEntity;
             AssertUtil.CheckNull<SpException>(entity, $"未找到实体：{entityName}", "FB2369B2-6B3E-471D-986A-7719330DBF5E");
             var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new { id });
 
@@ -96,7 +96,7 @@ namespace Sixpence.ORM.EntityManager
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
-            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName));
+            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName));
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
 
             var sql = "DELETE FROM {0} WHERE {1} = @id";
@@ -116,7 +116,7 @@ namespace Sixpence.ORM.EntityManager
         {
             return this.ExecuteTransaction(() =>
             {
-                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName));
+                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName));
                 plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreDelete });
                 var sql = "DELETE FROM {0} WHERE {1} = @id";
                 sql = string.Format(sql, entity.EntityName, entity.PrimaryKey.Name);
@@ -188,7 +188,7 @@ WHERE {entity.PrimaryKey.Name} = @id;
                 ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
 
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                     .Each(item => item.Execute(context));
                 #endregion
 
@@ -216,7 +216,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
 
                 #region 更新后 Plugin
                 context.Action = EntityAction.PostUpdate;
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                     .Each(item => item.Execute(context));
                 #endregion
                 return result;

@@ -61,12 +61,15 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// 主键
         /// </summary>
-        public (string Name, string Value) PrimaryKey
+        public (string Name, string Value, PrimaryType Type) PrimaryKey
         {
             get
             {
-                var keyName = GetPrimaryColumn()?.Name;
-                return (Name: keyName, Value: GetAttributeValue<string>(keyName));
+                var primaryColumn = GetPrimaryColumn();
+                var keyName = primaryColumn.Name;
+                var type = primaryColumn.Type;
+                var value = GetAttributeValue<string>(keyName);
+                return (Name: keyName, Value: value, Type: type);
             }
         }
 
@@ -221,6 +224,15 @@ namespace Sixpence.ORM.Entity
                 return string.Empty;
             }
             return attr.LogicalName;
+        }
+
+        /// <summary>
+        /// 生成一个新 ID
+        /// </summary>
+        /// <returns></returns>
+        public string NewId()
+        {
+            return EntityCommon.GenerateID(this.PrimaryKey.Type).ToString();
         }
         #endregion
     }
