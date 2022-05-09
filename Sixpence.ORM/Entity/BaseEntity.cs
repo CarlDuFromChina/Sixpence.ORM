@@ -38,7 +38,21 @@ namespace Sixpence.ORM.Entity
                         {
                             throw new SpException("获取实体名失败，请检查是否定义实体名", "");
                         }
-                        return attr.Name;
+
+                        // 若未设置自定义表名，则根据类名去格式化
+                        if (string.IsNullOrEmpty(attr.TableName))
+                        {
+                            var name = this.GetType().Name;
+                            switch (SixpenceORMBuilderExtension.Options.EntityClassNameCase)
+                            {
+                                case NameCase.UnderScore:
+                                    return name.ToLower();
+                                case NameCase.Pascal:
+                                default:
+                                    return EntityCommon.UpperChartToLowerUnderLine(name);
+                            }
+                        }
+                        return attr.TableName;
                     });
                 }
                 return _entityName;

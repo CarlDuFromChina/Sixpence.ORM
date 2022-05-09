@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Sixpence.ORM.Entity
 {
@@ -42,16 +43,17 @@ namespace Sixpence.ORM.Entity
         /// 比较类名和实体名
         /// </summary>
         /// <param name="className"></param>
+        /// <param name="tableName"></param>
         /// <returns></returns>
-        public static bool CompareEntityName(string className, string entityName)
+        public static bool CompareEntityName(string className, string tableName)
         {
             switch (SixpenceORMBuilderExtension.Options.EntityClassNameCase)
             {
-                case ClassNameCase.Pascal:
-                    return entityName.Replace("_", "").Equals(className, StringComparison.OrdinalIgnoreCase);
-                case ClassNameCase.UnderScore:
+                case NameCase.Pascal:
+                    return tableName.Replace("_", "").Equals(className, StringComparison.OrdinalIgnoreCase);
+                case NameCase.UnderScore:
                 default:
-                    return entityName.Equals(className, StringComparison.OrdinalIgnoreCase);
+                    return tableName.Equals(className, StringComparison.OrdinalIgnoreCase);
             }
         }
 
@@ -59,11 +61,34 @@ namespace Sixpence.ORM.Entity
         /// 匹配 EntityManager Plugin
         /// </summary>
         /// <param name="className"></param>
-        /// <param name="entityName"></param>
+        /// <param name="tableName"></param>
         /// <returns></returns>
-        public static bool MatchEntityManagerPlugin(string className, string entityName)
+        public static bool MatchEntityManagerPlugin(string className, string tableName)
         {
-            return className.StartsWith(entityName.Replace("_", ""), StringComparison.OrdinalIgnoreCase);
+            return className.StartsWith(tableName.Replace("_", ""), StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 大写字符转小写下划线
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static string UpperChartToLowerUnderLine(string name)
+        {
+            var formatName = new StringBuilder();
+            for (int i = 0; i < name.Length; i++)
+            {
+                var temp = name[i].ToString();
+                if (Regex.IsMatch(temp, "[A-Z]"))
+                {
+                    if (i == 0)
+                        temp = temp.ToLower();
+                    else
+                        temp = $"_{temp.ToLower()}";
+                }
+                formatName.Append(temp);
+            }
+            return formatName.ToString();
         }
     }
 }

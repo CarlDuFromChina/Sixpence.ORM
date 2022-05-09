@@ -28,7 +28,7 @@ namespace Sixpence.ORM.Test
             SixpenceORMBuilderExtension.UseORM(null, options =>
             {
                 options.AutoGenerate = true;
-                options.EntityClassNameCase = ClassNameCase.UnderScore;
+                options.EntityClassNameCase = NameCase.Pascal;
             });
         }
 
@@ -51,16 +51,6 @@ namespace Sixpence.ORM.Test
             var plugin = ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, "user_info"));
             Assert.IsNotNull(plugin);
         }
-    }
-
-    [Entity("user_info", "用户信息")]
-    public class user_info : BaseEntity
-    {
-        [PrimaryColumn]
-        public string id { get; set; }
-
-        [Column("code", "编码", DataType.Varchar, 100, false)]
-        public string code { get; set; }
     }
 
     public class UserInfoPlugin : IEntityManagerPlugin

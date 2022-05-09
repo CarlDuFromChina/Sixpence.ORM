@@ -16,7 +16,7 @@ namespace Sixpence.ORM.Test
     public class TestRepository
     {
         private Repository<Test> testRepository;
-        private Repository<test_guid_number> testGuidNumerRepository;
+        private Repository<TestGuidNumber> testGuidNumerRepository;
 
         [SetUp]
         public void SetUp()
@@ -29,7 +29,7 @@ namespace Sixpence.ORM.Test
             CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
             SixpenceORMBuilderExtension.UseORM(null);
             testRepository = new Repository<Test>();
-            testGuidNumerRepository = new Repository<test_guid_number>();
+            testGuidNumerRepository = new Repository<TestGuidNumber>();
         }
 
         [Test]
@@ -88,7 +88,7 @@ namespace Sixpence.ORM.Test
         [Order(5)]
         public void Check_Guid_Number_Generate()
         {
-            var id = testGuidNumerRepository.Create(new test_guid_number());
+            var id = testGuidNumerRepository.Create(new TestGuidNumber());
             Assert.IsTrue(!string.IsNullOrEmpty(id));
 
             testGuidNumerRepository.Delete(id);
