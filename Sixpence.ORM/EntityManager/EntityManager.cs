@@ -26,7 +26,7 @@ namespace Sixpence.ORM.EntityManager
             _dbClient.Initialize(connectionString, driverType);
         }
 
-        public IDBProvider Driver => DbClient.Driver;
+        public IDbDriver Driver => DbClient.Driver;
 
         IDbClient _dbClient;
         public IDbClient DbClient => _dbClient;

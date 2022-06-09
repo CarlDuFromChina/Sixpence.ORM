@@ -87,8 +87,13 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual IEnumerable<E> Find(object conditions = null)
         {
+            var sql = $"SELECT * FROM {new E().EntityName}";
+
+            if (conditions == null)
+                return Manager.Query<E>(sql);
+
             var result = ParseConditions(conditions?.ToDictionary());
-            return Manager.Query<E>($"SELECT * FROM {new E().EntityName} WHERE 1 = 1 {result.WhereSQL}", result.ParamList);
+            return Manager.Query<E>($"{sql} WHERE 1 = 1 {result.WhereSQL}", result.ParamList);
         }
 
         /// <summary>
@@ -116,7 +121,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual IEnumerable<E> Query(string sql, object param = null)
         {
-            return Manager.Query<E>(sql, param?.ToDictionary());
+            return Manager.Query<E>(sql, param);
         }
 
         /// <summary>

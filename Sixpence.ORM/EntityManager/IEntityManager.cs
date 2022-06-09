@@ -12,7 +12,7 @@ namespace Sixpence.ORM.EntityManager
     public interface IEntityManager
     {
         IDbClient DbClient { get; }
-        IDBProvider Driver { get; }
+        IDbDriver Driver { get; }
 
         #region CRUD
         /// <summary>

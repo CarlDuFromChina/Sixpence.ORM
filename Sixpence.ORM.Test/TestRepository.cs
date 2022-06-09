@@ -47,7 +47,7 @@ namespace Sixpence.ORM.Test
         {
             var dataList = testRepository.Find();
             Assert.IsTrue(dataList != null && dataList.ToList().Count > 0);
-            var data = testRepository.FindOne(new Dictionary<string, object>() { { "id", "124" } });
+            var data = testRepository.FindOne(new { id = "124" });
             Assert.IsNotNull(data);
             data = testRepository.FindOne("124");
             Assert.IsNotNull(data);

@@ -19,7 +19,7 @@ namespace Sixpence.ORM.DbClient
         /// <summary>
         /// 数据库方言
         /// </summary>
-        IDBProvider Driver { get; }
+        IDbDriver Driver { get; }
 
         /// <summary>
         /// 获取数据库的连接
