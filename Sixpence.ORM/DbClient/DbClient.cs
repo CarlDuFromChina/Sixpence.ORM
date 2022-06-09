@@ -34,7 +34,7 @@ namespace Sixpence.ORM.DbClient
         public void Initialize(string connectionString, DriverType driverType)
         {
             driver = ServiceContainer.ResolveAll<IDBProvider>()?.FirstOrDefault(item => item.ProviderName == driverType.GetDescription());
-            AssertUtil.CheckNull<SpException>(driver, $"未找到数据库驱动类型[{driver.ProviderName}]", "9DAF36D2-74AD-4C85-B546-25DBDA40ADCA");
+            AssertUtil.IsNull(driver, $"未找到数据库驱动类型[{driver.ProviderName}]");
             DbConnection = driver.GetDbConnection(connectionString);
         }
 

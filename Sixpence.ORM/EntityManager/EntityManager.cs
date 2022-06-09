@@ -89,7 +89,7 @@ namespace Sixpence.ORM.EntityManager
         public int Delete(string entityName, string id)
         {
             var entity = ServiceContainer.Resolve<IEntity>(key => EntityCommon.CompareEntityName(key, entityName)) as BaseEntity;
-            AssertUtil.CheckNull<SpException>(entity, $"未找到实体：{entityName}", "FB2369B2-6B3E-471D-986A-7719330DBF5E");
+            AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
             var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new { id });
 
             if (dataList.Rows.Count == 0) return 0;
