@@ -5,14 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sixpence.ORM.Extensions
+namespace Sixpence.ORM.Entity
 {
     /// <summary>
-    /// 创建实体后
+    /// 创建所有实体后
     /// </summary>
     [ServiceRegister]
-    public interface IPostCreateEntity
+    public interface IPostCreateEntities
     {
-        void Execute(IEntityManager manager, IEntity entity);
+        void Execute(IEntityManager manager, IEnumerable<IEntity> entities);
     }
 }

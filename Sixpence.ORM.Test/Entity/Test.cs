@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Sixpence.ORM.Test
 {
-    [Entity("test", "测试")]
+    [Entity]
     [KeyAttributes("code不能重复", "code")]
     public class Test : BaseEntity
     {

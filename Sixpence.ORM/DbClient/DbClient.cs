@@ -2,6 +2,7 @@
 using Npgsql;
 using Sixpence.Common;
 using Sixpence.Common.IoC;
+using Sixpence.Common.Utils;
 using Sixpence.ORM.Driver;
 using System;
 using System.Collections.Generic;
@@ -26,13 +27,16 @@ namespace Sixpence.ORM.DbClient
         private IDbDriver driver;
         public IDbDriver Driver => driver;
 
+        private int commandTimeOut = DBSourceConfig.Config.CommandTimeOut;
+
         /// <summary>
         /// 初始化数据库连接
         /// </summary>
         /// <param name="connectionString"></param>
         public void Initialize(string connectionString, DriverType driverType)
         {
-            driver = ServiceContainer.Resolve<IDbDriver>($"{driverType}Driver");
+            driver = ServiceContainer.ResolveAll<IDbDriver>()?.FirstOrDefault(item => item.Provider == driverType.GetDescription());
+            AssertUtil.IsNull(driver, $"未找到数据库驱动类型[{driver.Provider}]");
             DbConnection = driver.GetDbConnection(connectionString);
         }
 
@@ -136,8 +140,8 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public int Execute(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.Execute(sql, paramList);
+        public int Execute(string sql, object param = null)
+            => DbConnection.Execute(sql, param, commandTimeout: commandTimeOut);
 
         /// <summary>
         /// 执行SQL语句，并返回第一行第一列
@@ -145,8 +149,8 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.ExecuteScalar(sql, paramList);
+        public object ExecuteScalar(string sql, object param = null)
+            => DbConnection.ExecuteScalar(sql, param, commandTimeout: commandTimeOut);
         #endregion
 
         #region Query
@@ -155,10 +159,10 @@ namespace Sixpence.ORM.DbClient
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
-        /// <param name="paramList"></param>
+        /// <param name="param"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.Query<T>(sql, paramList);
+        public IEnumerable<T> Query<T>(string sql, object param = null)
+            => DbConnection.Query<T>(sql, param, commandTimeout: commandTimeOut);
 
         /// <summary>
         /// 执行SQL语句，并返回查询结果
@@ -167,8 +171,8 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public T QueryFirst<T>(string sql, IDictionary<string, object> paramList = null)
-            => DbConnection.QueryFirstOrDefault<T>(sql, paramList);
+        public T QueryFirst<T>(string sql, object param = null)
+            => DbConnection.QueryFirstOrDefault<T>(sql, param, commandTimeout: commandTimeOut);
         #endregion
 
         #region DataTable
@@ -178,10 +182,10 @@ namespace Sixpence.ORM.DbClient
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public DataTable Query(string sql, IDictionary<string, object> paramList = null)
+        public DataTable Query(string sql, object param = null)
         {
             DataTable dt = new DataTable();
-            var reader = DbConnection.ExecuteReader(sql, paramList);
+            var reader = DbConnection.ExecuteReader(sql, param, commandTimeout: commandTimeOut);
             dt.Load(reader);
             return dt;
         }
@@ -202,7 +206,7 @@ namespace Sixpence.ORM.DbClient
         public void DropTable(string tableName)
         {
             var sql = $"DROP TABLE IF EXISTS {tableName}";
-            DbConnection.Execute(sql);
+            DbConnection.Execute(sql, commandTimeout: commandTimeOut);
         }
 
         /// <summary>

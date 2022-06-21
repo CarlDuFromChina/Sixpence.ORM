@@ -1,5 +1,4 @@
 ﻿using Sixpence.Common;
-using Sixpence.Common.Utils;
 using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Models;
 using System;
@@ -36,9 +35,23 @@ namespace Sixpence.ORM.Entity
                         var attr = Attribute.GetCustomAttribute(type, typeof(EntityAttribute)) as EntityAttribute;
                         if (attr == null)
                         {
-                            throw new SpException("获取实体名失败，请检查是否定义实体名", "");
+                            throw new SpException("获取实体名失败，请检查是否定义实体名");
                         }
-                        return attr.Name;
+
+                        // 若未设置自定义表名，则根据类名去格式化
+                        if (string.IsNullOrEmpty(attr.TableName))
+                        {
+                            var name = this.GetType().Name;
+                            switch (SixpenceORMBuilderExtension.Options.EntityClassNameCase)
+                            {
+                                case NameCase.UnderScore:
+                                    return name.ToLower();
+                                case NameCase.Pascal:
+                                default:
+                                    return EntityCommon.UpperChartToLowerUnderLine(name);
+                            }
+                        }
+                        return attr.TableName;
                     });
                 }
                 return _entityName;
@@ -61,12 +74,15 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// 主键
         /// </summary>
-        public (string Name, string Value) PrimaryKey
+        public (string Name, string Value, PrimaryType Type) PrimaryKey
         {
             get
             {
-                var keyName = GetPrimaryColumn()?.Name;
-                return (Name: keyName, Value: GetAttributeValue<string>(keyName));
+                var primaryColumn = GetPrimaryColumn();
+                var keyName = primaryColumn.Name;
+                var type = primaryColumn.Type;
+                var value = GetAttributeValue<string>(keyName);
+                return (Name: keyName, Value: value, Type: type);
             }
         }
 
@@ -221,6 +237,15 @@ namespace Sixpence.ORM.Entity
                 return string.Empty;
             }
             return attr.LogicalName;
+        }
+
+        /// <summary>
+        /// 生成一个新 ID
+        /// </summary>
+        /// <returns></returns>
+        public string NewId()
+        {
+            return EntityCommon.GenerateID(this.PrimaryKey.Type).ToString();
         }
         #endregion
     }

@@ -36,6 +36,10 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// GUID
         /// </summary>
-        GUID
+        GUID,
+        /// <summary>
+        /// GUID 转换为数字类型
+        /// </summary>
+        GUIDNumber,
     }
 }

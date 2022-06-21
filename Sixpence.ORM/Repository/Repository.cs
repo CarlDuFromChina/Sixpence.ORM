@@ -34,7 +34,7 @@ namespace Sixpence.ORM.Repository
         {
             if (string.IsNullOrEmpty(entity.PrimaryKey.Value))
             {
-                entity.SetAttributeValue(entity.PrimaryKey.Name, Guid.NewGuid().ToString());
+                entity.SetAttributeValue(entity.PrimaryKey.Name, entity.NewId());
             }
             var id = Manager.Create(entity);
             return id;
@@ -48,7 +48,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual string Save(E entity)
         {
-            var id = entity.PrimaryKey.Value ?? Guid.NewGuid().ToString();
+            var id = entity.PrimaryKey.Value ?? entity.NewId();
             var isExist = FindOne(id) != null;
             if (isExist)
             {
@@ -85,10 +85,15 @@ namespace Sixpence.ORM.Repository
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public virtual IEnumerable<E> Find(IDictionary<string, object> conditions = null)
+        public virtual IEnumerable<E> Find(object conditions = null)
         {
-            var result = ParseConditions(conditions);
-            return Manager.Query<E>($"SELECT * FROM {new E().EntityName} WHERE 1 = 1 {result.WhereSQL}", result.ParamList);
+            var sql = $"SELECT * FROM {new E().EntityName}";
+
+            if (conditions == null)
+                return Manager.Query<E>(sql);
+
+            var result = ParseConditions(conditions?.ToDictionary());
+            return Manager.Query<E>($"{sql} WHERE 1 = 1 {result.WhereSQL}", result.ParamList);
         }
 
         /// <summary>
@@ -114,9 +119,9 @@ namespace Sixpence.ORM.Repository
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public virtual IEnumerable<E> Query(string sql, IDictionary<string, object> paramList = null)
+        public virtual IEnumerable<E> Query(string sql, object param = null)
         {
-            return Manager.Query<E>(sql, paramList);
+            return Manager.Query<E>(sql, param);
         }
 
         /// <summary>
@@ -149,9 +154,9 @@ namespace Sixpence.ORM.Repository
         /// </summary>
         /// <param name="conditions"></param>
         /// <returns></returns>
-        public E FindOne(IDictionary<string, object> conditions = null)
+        public E FindOne(object conditions = null)
         {
-            var result = ParseConditions(conditions);
+            var result = ParseConditions(conditions?.ToDictionary());
             var sql = $"SELECT * FROM {new E().EntityName} WHERE 1 = 1 {result.WhereSQL}";
             return Manager.QueryFirst<E>(sql, result.ParamList);
         }

@@ -82,7 +82,7 @@ namespace Sixpence.ORM.EntityManager
                    });
 
                    var sql = string.Format(@"SELECT {0} FROM {1} WHERE 1 = 1 ",  entity.PrimaryKey.Name, entity.EntityName) + string.Join("", sqlParam);
-                   AssertUtil.CheckBoolean<SpException>(manager.Query<string>(sql, paramList)?.Count() > 0, item.RepeatMessage, "7293452C-AFCA-408D-9EBD-B1CECD206A7D");
+                   AssertUtil.IsTrue(manager.Query<string>(sql, paramList)?.Count() > 0, item.RepeatMessage);
                });
         }
 

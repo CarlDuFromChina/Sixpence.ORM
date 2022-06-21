@@ -15,8 +15,10 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM.Driver
 {
-    public class PostgresqlDriver : IDbDriver
+    public class PostgresDriver : IDbDriver
     {
+        public string Provider => "Postgres";
+
         public DbConnection GetDbConnection(string connectionString)
         {
             return DbConnectionFactory.GetDbConnection(DriverType.Postgresql, connectionString);

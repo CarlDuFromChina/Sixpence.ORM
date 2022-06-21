@@ -16,10 +16,8 @@ namespace Sixpence.ORM.DbClient
             {
                 case DriverType.Postgresql:
                     return new NpgsqlConnection(connectionString);
-                case DriverType.Mysql:
-                    throw new NotImplementedException();
                 default:
-                    throw new ArgumentException();
+                    throw new NotImplementedException();
             }
         }
     }

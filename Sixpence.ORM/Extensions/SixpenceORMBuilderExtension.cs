@@ -13,7 +13,11 @@ namespace Sixpence.ORM.Extensions
 {
     public static class SixpenceORMBuilderExtension
     {
-        internal static ORMOptions Options = new ORMOptions() { AutoGenerate = true, EntityClassNameCase = ClassNameCase.UnderScore };
+        internal static ORMOptions Options = new ORMOptions()
+        {
+            AutoGenerate = true,
+            EntityClassNameCase = NameCase.Pascal, // 类名用帕斯卡命名
+        };
 
         public static int EntityClassNameCase { get; internal set; }
 
@@ -35,19 +39,19 @@ namespace Sixpence.ORM.Extensions
         public class ORMOptions
         {
             /// <summary>
-            /// 实体自动生成
+            /// 实体自动生成，默认为 True
             /// </summary>
             public bool AutoGenerate { get; set; }
 
             /// <summary>
-            /// 实体类命名规范
+            /// 实体类命名规范，默认帕斯卡命名（表名使用小写+下划线命名）
             /// </summary>
-            public ClassNameCase EntityClassNameCase { get; set; }
+            public NameCase EntityClassNameCase { get; set; }
         }
 
         private static void OpenEntityAutoGenerate()
         {
-            var logger = LogFactory.GetLogger("entity");
+            var logger = LoggerFactory.GetLogger("entity");
             var manager = EntityManagerFactory.GetManager();
             var dialect = manager.DbClient.Driver;
             var entityList = ServiceContainer.ResolveAll<IEntity>();
@@ -85,7 +89,7 @@ namespace Sixpence.ORM.Extensions
     /// <summary>
     /// 类命名规范
     /// </summary>
-    public enum ClassNameCase
+    public enum NameCase
     {
         /// <summary>
         /// 帕斯卡命名（UserInfo）

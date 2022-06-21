@@ -18,9 +18,9 @@ namespace Sixpence.ORM.EntityManager
         public static IEntityManager GetManager()
         {
             var dbConfig = DBSourceConfig.Config;
-            AssertUtil.CheckBoolean<SpException>(dbConfig == null, "未找到数据库配置", "AD4BC4F2-CF8D-4A4E-ACE8-F68EBD89DE42");
-            AssertUtil.CheckIsNullOrEmpty<SpException>(dbConfig.ConnectionString, "数据库连接字符串为空", "AD4BC4F2-CF8D-4A4E-ACE8-F68EBD89DE42");
-            AssertUtil.CheckBoolean<SpException>(!Enum.TryParse<DriverType>(dbConfig.DriverType, out var driverType), "数据库类型错误", "AD4BC4F2-CF8D-4A4E-ACE8-F68EBD89DE42");
+            AssertUtil.IsNull(dbConfig, "未找到数据库配置");
+            AssertUtil.IsNullOrEmpty(dbConfig.ConnectionString, "数据库连接字符串为空");
+            AssertUtil.IsFalse(Enum.TryParse<DriverType>(dbConfig.DriverType, out var driverType), "数据库类型错误");
             return new EntityManager(dbConfig.ConnectionString, Enum.Parse<DriverType>(dbConfig.DriverType));
         }
 

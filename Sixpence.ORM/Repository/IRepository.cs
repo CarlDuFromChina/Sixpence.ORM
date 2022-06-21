@@ -13,11 +13,11 @@ namespace Sixpence.ORM.Repository
         string Save(E entity);
         void Delete(string id);
         void Delete(IEnumerable<string> ids);
-        IEnumerable<E> Find(IDictionary<string, object> conditions = null);
+        IEnumerable<E> Find(object conditions = null);
         IEnumerable<E> FindByIds(string ids);
         E FindOne(string id);
-        E FindOne(IDictionary<string, object> conditions = null);
-        IEnumerable<E> Query(string sql, IDictionary<string, object> paramList = null);
+        E FindOne(object conditions = null);
+        IEnumerable<E> Query(string sql, object param = null);
         void Update(E entity);
         void Clear();
     }

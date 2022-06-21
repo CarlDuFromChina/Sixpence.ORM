@@ -1,7 +1,6 @@
 ﻿using Sixpence.Common;
 using Sixpence.Common.IoC;
 using Sixpence.Common.Utils;
-using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.DbClient;
 using Sixpence.ORM.Driver;
 using Sixpence.ORM.Entity;
@@ -48,7 +47,7 @@ namespace Sixpence.ORM.EntityManager
                     .Each(item => item.Execute(context));
                 if (usePlugin)
                 {
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -72,7 +71,7 @@ namespace Sixpence.ORM.EntityManager
                 if (usePlugin)
                 {
                     context.Action = EntityAction.PostCreate;
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -89,20 +88,20 @@ namespace Sixpence.ORM.EntityManager
         /// <returns></returns>
         public int Delete(string entityName, string id)
         {
-            var entity = ServiceContainer.Resolve<IEntity>(key => MatchEntity.CompareEntityName(key, entityName)) as BaseEntity;
-            AssertUtil.CheckNull<SpException>(entity, $"未找到实体：{entityName}", "FB2369B2-6B3E-471D-986A-7719330DBF5E");
-            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new Dictionary<string, object>() { { "@id", id } });
+            var entity = ServiceContainer.Resolve<IEntity>(key => EntityCommon.CompareEntityName(key, entityName)) as BaseEntity;
+            AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
+            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new { id });
 
             if (dataList.Rows.Count == 0) return 0;
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
-            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName));
+            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName));
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
 
             var sql = "DELETE FROM {0} WHERE {1} = @id";
             sql = string.Format(sql, entityName, entity.PrimaryKey.Name);
-            int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", id } });
+            int result = this.Execute(sql, new { id });
 
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
             return result;
@@ -117,11 +116,11 @@ namespace Sixpence.ORM.EntityManager
         {
             return this.ExecuteTransaction(() =>
             {
-                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName));
+                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName));
                 plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreDelete });
                 var sql = "DELETE FROM {0} WHERE {1} = @id";
                 sql = string.Format(sql, entity.EntityName, entity.PrimaryKey.Name);
-                int result = this.Execute(sql, new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } });
+                int result = this.Execute(sql, new { id = entity.PrimaryKey.Value });
                 plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PostDelete });
                 return result;
             });
@@ -165,7 +164,7 @@ namespace Sixpence.ORM.EntityManager
 SELECT * FROM {entity.EntityName}
 WHERE {entity.PrimaryKey.Name} = @id;
 ";
-            var dataList = this.Query(sql, new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } });
+            var dataList = this.Query(sql, new { id = entity.PrimaryKey.Value });
 
             if (dataList != null && dataList.Rows.Count > 0)
                 Update(entity);
@@ -189,7 +188,7 @@ WHERE {entity.PrimaryKey.Name} = @id;
                 ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
 
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                     .Each(item => item.Execute(context));
                 #endregion
 
@@ -217,7 +216,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
 
                 #region 更新后 Plugin
                 context.Action = EntityAction.PostUpdate;
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => MatchEntity.MatchEntityManagerPlugin(item, entity.EntityName))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
                     .Each(item => item.Execute(context));
                 #endregion
                 return result;
@@ -305,7 +304,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         public T QueryFirst<T>(string id) where T : BaseEntity, new()
         {
             var sql = $"SELECT * FROM {new T().EntityName} WHERE {new T().PrimaryKey.Name} =@id";
-            return QueryFirst<T>(sql, new Dictionary<string, object>() { { "@id", id } });
+            return QueryFirst<T>(sql, new { id });
         }
 
         /// <summary>
@@ -315,9 +314,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public T QueryFirst<T>(string sql, IDictionary<string, object> paramList) where T : BaseEntity, new()
+        public T QueryFirst<T>(string sql, object param = null) where T : BaseEntity, new()
         {
-            return DbClient.QueryFirst<T>(sql, paramList);
+            return DbClient.QueryFirst<T>(sql, param);
         }
 
         /// <summary>
@@ -326,9 +325,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public DataTable Query(string sql, IDictionary<string, object> paramList = null)
+        public DataTable Query(string sql, object param = null)
         {
-            return DbClient.Query(sql, paramList);
+            return DbClient.Query(sql, param);
         }
 
         /// <summary>
@@ -338,9 +337,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public int QueryCount(string sql, IDictionary<string, object> paramList = null)
+        public int QueryCount(string sql, object param = null)
         {
-            return ConvertUtil.ConToInt(this.ExecuteScalar(sql, paramList));
+            return ConvertUtil.ConToInt(this.ExecuteScalar(sql, param));
         }
 
         /// <summary>
@@ -350,9 +349,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList = null)
+        public IEnumerable<T> Query<T>(string sql, object param = null)
         {
-            return DbClient.Query<T>(sql, paramList);
+            return DbClient.Query<T>(sql, param);
         }
 
         /// <summary>
@@ -365,7 +364,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="pageSize"></param>
         /// <param name="pageIndex"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(string sql, object param, string orderby, int pageSize, int pageIndex) where T : BaseEntity, new()
         {
             if (!string.IsNullOrEmpty(orderby))
             {
@@ -376,7 +375,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
             }
 
             DbClient.Driver.AddLimit(ref sql, pageIndex, pageSize);
-            return Query<T>(sql, paramList);
+            return Query<T>(sql, param);
         }
 
         /// <summary>
@@ -390,11 +389,11 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <param name="pageIndex"></param>
         /// <param name="recordCount"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, IDictionary<string, object> paramList, string orderby, int pageSize, int pageIndex, out int recordCount) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(string sql, object param, string orderby, int pageSize, int pageIndex, out int recordCount) where T : BaseEntity, new()
         {
             var recordCountSql = $"SELECT COUNT(1) FROM ({sql}) AS table1";
-            recordCount = Convert.ToInt32(this.ExecuteScalar(recordCountSql, paramList));
-            var data = Query<T>(sql, paramList, orderby, pageSize, pageIndex);
+            recordCount = Convert.ToInt32(this.ExecuteScalar(recordCountSql, param));
+            var data = Query<T>(sql, param, orderby, pageSize, pageIndex);
             return data;
         }
 
@@ -432,9 +431,9 @@ WHERE
         /// <param name="manager"></param>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
-        public int Execute(string sql, IDictionary<string, object> paramList = null)
+        public int Execute(string sql, object param = null)
         {
-            return DbClient.Execute(sql, paramList);
+            return DbClient.Execute(sql, param);
         }
 
         /// <summary>
@@ -444,9 +443,9 @@ WHERE
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string sql, IDictionary<string, object> paramList = null)
+        public object ExecuteScalar(string sql, object param = null)
         {
-            return DbClient.ExecuteScalar(sql, paramList);
+            return DbClient.ExecuteScalar(sql, param);
         }
 
         /// <summary>
@@ -461,7 +460,7 @@ WHERE
             int sqlCount = 0, errorCount = 0;
             if (!File.Exists(sqlFile))
             {
-                LogUtils.Error($"文件({sqlFile})不存在");
+                LogUtil.Error($"文件({sqlFile})不存在");
                 return -1;
             }
             using (StreamReader sr = new StreamReader(sqlFile))
@@ -492,7 +491,7 @@ WHERE
                         catch (Exception ex)
                         {
                             errorCount++;
-                            LogUtils.Error(sql + newLIne + ex.Message, ex);
+                            LogUtil.Error(sql + newLIne + ex.Message, ex);
                         }
                         sql = string.Empty;
                     }
@@ -512,6 +511,171 @@ WHERE
             else if (sqlCount == errorCount)
                 returnValue = -2;
             return returnValue;
+        }
+        #endregion
+
+        #region Bulk CRUD
+        /// <summary>
+        /// 批量创建
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="dataList"></param>
+        public void BulkCreate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty()) return;
+
+            var t = new TEntity();
+            var tableName = t.EntityName;
+            var primaryKey = t.PrimaryKey.Name;
+
+            ExecuteTransaction(() =>
+            {
+                var dt = Query($"select * from {tableName}");
+
+                // 1. 创建临时表
+                var tempName = DbClient.CreateTemporaryTable(tableName);
+
+                // 2. 拷贝数据到临时表
+                DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempName);
+
+                // 3. 将临时表数据插入到目标表中
+                DbClient.Execute(string.Format("INSERT INTO {0} SELECT * FROM {1} WHERE NOT EXISTS(SELECT 1 FROM {0} WHERE {0}.{2} = {1}.{2})", tableName, tempName, primaryKey));
+
+                // 4. 删除临时表
+                DbClient.DropTable(tempName);
+            });
+        }
+
+        /// <summary>
+        /// 批量更新
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="dataList"></param>
+        public void BulkUpdate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty()) return;
+
+            var t = new TEntity();
+            var mainKeyName = t.PrimaryKey.Name; // 主键
+            var tableName = t.EntityName; // 表名
+
+            ExecuteTransaction(() =>
+            {
+                // 1. 创建临时表
+                var tempTableName = DbClient.CreateTemporaryTable(tableName);
+
+                // 2. 查询临时表结构
+                var dt = DbClient.Query($"SELECT * FROM {tempTableName}");
+
+                // 3. 拷贝数据到临时表
+                DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempTableName);
+
+                // 4. 获取更新字段
+                var updateFieldList = new List<string>();
+                foreach (DataColumn column in dt.Columns)
+                {
+                    // 主键去除
+                    if (!column.ColumnName.Equals(mainKeyName, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        updateFieldList.Add(column.ColumnName);
+                    }
+                }
+
+                // 5. 拼接Set语句
+                var updateFieldSql = updateFieldList.Select(item => string.Format(" {1} = {0}.{1} ", tempTableName, item)).Aggregate((a, b) => a + " , " + b);
+
+                // 6. 更新
+                DbClient.Execute($@"
+UPDATE {tableName}
+SET {updateFieldSql} FROM {tempTableName}
+WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName}
+AND {tempTableName}.{mainKeyName} IS NOT NULL
+");
+
+                // 7. 删除临时表
+                DbClient.DropTable(tempTableName);
+            });
+        }
+
+        /// <summary>
+        /// 批量创建或更新
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="dataList"></param>
+        /// <param name="updateFieldList"></param>
+        public void BulkCreateOrUpdate<TEntity>(List<TEntity> dataList, List<string> updateFieldList = null) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty()) return;
+
+            var mainKeyName = new TEntity().PrimaryKey.Name; // 主键
+            var tableName = new TEntity().EntityName; // 表名
+
+            // 1. 创建临时表
+            var tempTableName = DbClient.CreateTemporaryTable(tableName);
+
+            // 2. 查询临时表结构
+            var dt = DbClient.Query($"SELECT * FROM {tempTableName}");
+
+            // 3. 拷贝数据到临时表
+            DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempTableName);
+
+            // 4. 获取更新字段
+            if (updateFieldList.IsEmpty())
+            {
+                updateFieldList = new List<string>();
+                foreach (DataColumn column in dt.Columns)
+                {
+                    // 主键去除
+                    if (!column.ColumnName.Equals(mainKeyName, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        updateFieldList.Add(column.ColumnName);
+                    }
+                }
+            }
+
+            // 5. 拼接Set语句
+            var updateFieldSql = updateFieldList.Select(item => string.Format(" {1} = {0}.{1} ", tempTableName, item)).Aggregate((a, b) => a + " , " + b);
+
+            // 6. 更新
+            DbClient.Execute($@"
+UPDATE {tableName}
+SET {updateFieldSql} FROM {tempTableName}
+WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName}
+AND {tempTableName}.{mainKeyName} IS NOT NULL
+");
+            // 7. 新增
+            DbClient.Execute($@"
+INSERT INTO {tableName}
+SELECT * FROM {tempTableName}
+WHERE NOT EXISTS(SELECT 1 FROM {tableName} WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName})
+AND {tempTableName}.{mainKeyName} IS NOT NULL
+");
+
+            // 8. 删除临时表
+            DbClient.DropTable(tempTableName);
+        }
+
+        /// <summary>
+        /// 批量删除
+        /// </summary>
+        /// <param name="entities"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        public void BulkDelete<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new()
+        {
+            if (dataList.IsEmpty())
+            {
+                return;
+            }
+
+            var t  = new TEntity();
+            var tableName = t.EntityName;
+            var primaryKeyName = t.PrimaryKey.Name;
+            var ids = string.Join(",", dataList.Select(item => "'" + item.PrimaryKey.Value + "'"));
+
+            ExecuteTransaction(() =>
+            {
+                DbClient.Execute($"DELETE FROM {tableName} WHERE {primaryKeyName} IN ({ids})");
+            });
         }
         #endregion
     }
