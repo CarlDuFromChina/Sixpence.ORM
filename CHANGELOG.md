@@ -1,3 +1,9 @@
+## 2.2.0
+
+### Features
+
++ 强化了`EntityManager`的批量操作，支持`DataTable`
+
 ## 2.1.0
 
 ### Features
