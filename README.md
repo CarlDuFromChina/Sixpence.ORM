@@ -32,7 +32,7 @@
 Sixpence.ORM 是一个[NuGet library](https://www.nuget.org/packages/Dapper)，你可以在通过`Nuget`安装
 
 ```shell
-Install-Package Sixpence.ORM -Version 2.0.0
+Install-Package Sixpence.ORM -Version 2.2.0
 ```
 
 ## 特性
@@ -88,7 +88,7 @@ public class Startup
 
 ### 实体类定义（Entity）
 
-实体类必须要继承`BaseEntity`基类，此外还要注意特性声明
+实体类**必须**要继承`BaseEntity`基类，此外还要注意特性声明
 
 + EntityAttribute：定义实体表名和逻辑名
 + KeyAttributes：定义唯一键
@@ -98,15 +98,18 @@ public class Startup
 ```csharp
 namespace Blog
 {
-    [Entity("test", "测试")]
+    [Entity]
     [KeyAttributes("code不能重复", "code")]
     public class test : BaseEntity
     {
         [PrimaryColumn]
         public string id { get; set; }
 
-        [Column("code", "编码", DataType.Varchar, 100)]
+        [Column]
         public string code { get; set; }
+      
+      	[Column]
+      	public DateTime? birthday { get; set; }
     }
 }
 ```
@@ -120,23 +123,28 @@ public class TestService
 {
     private Repository<Test> testRepository = new Repository<Test>(); // 实例化
 
-    public void CreateData(Test test) {
+    public void CreateData(Test test)
+    {
         testRepository.Create(test); // 创建
     }
 
-    public void UpdateData(Test test) {
+    public void UpdateData(Test test)
+    {
         testRepository.Update(test); // 更新
     }
 
-    public Test QueryById(string id) {
+    public Test QueryById(string id)
+    {
         return testRepository.FindOne(id); // 查询单个记录
     }
     
-    public IList<Test> Query(string ids) {
+    public IList<Test> Query(string ids)
+    {
         return testRepository.FindByIds(ids); // 根据多个id查询
     }
     
-    public Test QueryByName(string name) {
+    public Test QueryByName(string name)
+    {
         return testRepository.FindOne(new Dictionary<string, Object>() { { "name", name } }); // 条件查询
     }
 }
