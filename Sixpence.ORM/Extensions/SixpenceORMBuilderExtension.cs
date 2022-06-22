@@ -66,11 +66,16 @@ namespace Sixpence.ORM.Extensions
                     {
                         ServiceContainer.Resolve<IPreCreateEntity>()?.Execute(manager, item); // 创建前
 
-                        var attrSql = item
-                            .GetColumns()
+                        var attrSql = EntityCommon
+                            .GetColumns(item, dialect)
                             .Select(e =>
                             {
-                                return $"{e.Name} {e.Type.GetDescription()}{(e.Length != null ? $"({e.Length.Value})" : "")} {(e.IsRequire.HasValue && e.IsRequire.Value ? "NOT NULL" : "")}{(e.Name == $"{item.GetPrimaryKey()}" ? " PRIMARY KEY" : "")}";
+                                var lengthSQL = e.Length != null ? $"({e.Length})" : "";
+                                var requireSQL = e.IsRequire == true ? " NOT NULL" : "";
+                                var defaultValueSQL = e.DefaultValue == null ? "" : e.DefaultValue is string ? $"DEFAULT '{e.DefaultValue}'" : $"DEFAULT {e.DefaultValue}";
+                                var primaryKeySQL = e.Name == item.GetPrimaryColumn().Name ? "PRIMARY KEY" : "";
+
+                                return $"{e.Name} {e.Type}{lengthSQL} {requireSQL} {primaryKeySQL} {defaultValueSQL}";
                             })
                             .Aggregate((a, b) => a + ",\r\n" + b);
                         manager.Execute($@"CREATE TABLE public.{item.GetEntityName()} ({attrSql})");

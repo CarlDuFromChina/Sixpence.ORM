@@ -32,9 +32,9 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual string Create(E entity)
         {
-            if (string.IsNullOrEmpty(entity.PrimaryKey.Value))
+            if (string.IsNullOrEmpty(entity.GetPrimaryColumn().Value))
             {
-                entity.SetAttributeValue(entity.PrimaryKey.Name, entity.NewId());
+                entity.SetAttributeValue(entity.GetPrimaryColumn().Name, entity.NewId());
             }
             var id = Manager.Create(entity);
             return id;
@@ -48,7 +48,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual string Save(E entity)
         {
-            var id = entity.PrimaryKey.Value ?? entity.NewId();
+            var id = entity.GetPrimaryColumn().Value ?? entity.NewId();
             var isExist = FindOne(id) != null;
             if (isExist)
             {
@@ -67,7 +67,7 @@ namespace Sixpence.ORM.Repository
         /// <param name="id"></param>
         public virtual void Delete(string id)
         {
-            Manager.Delete(new E().EntityName, id);
+            Manager.Delete(new E().GetEntityName(), id);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual IEnumerable<E> Find(object conditions = null)
         {
-            var sql = $"SELECT * FROM {new E().EntityName}";
+            var sql = $"SELECT * FROM {new E().GetEntityName()}";
 
             if (conditions == null)
                 return Manager.Query<E>(sql);
@@ -104,10 +104,10 @@ namespace Sixpence.ORM.Repository
         public virtual IEnumerable<E> FindByIds(string ids)
         {
             var paramList = new Dictionary<string, object>();
-            var sql = $"SELECT * FROM {new E().EntityName} WHERE 1 = 1";
+            var sql = $"SELECT * FROM {new E().GetEntityName()} WHERE 1 = 1";
             if (!string.IsNullOrEmpty(ids))
             {
-                sql += $" AND {new E().PrimaryKey.Name} IN (in@ids)";
+                sql += $" AND {new E().GetPrimaryColumn().Name} IN (in@ids)";
                 paramList.Add("in@ids", ids);
             }
             return Query(sql, paramList);
@@ -131,7 +131,7 @@ namespace Sixpence.ORM.Repository
         /// <param name="entity"></param>
         public virtual void Update(E entity)
         {
-            if (string.IsNullOrEmpty(entity?.PrimaryKey.Value))
+            if (string.IsNullOrEmpty(entity?.GetPrimaryColumn().Value))
             {
                 return;
             }
@@ -157,7 +157,7 @@ namespace Sixpence.ORM.Repository
         public E FindOne(object conditions = null)
         {
             var result = ParseConditions(conditions?.ToDictionary());
-            var sql = $"SELECT * FROM {new E().EntityName} WHERE 1 = 1 {result.WhereSQL}";
+            var sql = $"SELECT * FROM {new E().GetEntityName()} WHERE 1 = 1 {result.WhereSQL}";
             return Manager.QueryFirst<E>(sql, result.ParamList);
         }
 
@@ -186,7 +186,7 @@ namespace Sixpence.ORM.Repository
         /// </summary>
         public void Clear()
         {
-            Manager.Execute($"TRUNCATE TABLE {new E().EntityName}");
+            Manager.Execute($"TRUNCATE TABLE {new E().GetEntityName()}");
         }
     }
 }

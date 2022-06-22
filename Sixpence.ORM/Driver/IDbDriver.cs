@@ -72,7 +72,7 @@ namespace Sixpence.ORM.Driver
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        string GetAddColumnSql(string tableName, List<Column> columns);
+        string GetAddColumnSql(string tableName, List<ColumnOptions> columns);
 
         /// <summary>
         /// 获取列删除语句
@@ -80,7 +80,7 @@ namespace Sixpence.ORM.Driver
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        string GetDropColumnSql(string tableName, List<Column> columns);
+        string GetDropColumnSql(string tableName, List<ColumnOptions> columns);
 
         /// <summary>
         /// 获取临时表创建语句
@@ -112,5 +112,12 @@ namespace Sixpence.ORM.Driver
         /// <param name="tableName"></param>
         /// <returns></returns>
         string TableExsit(string tableName);
+
+        /// <summary>
+        /// 获取数据库字段类型
+        /// </summary>
+        /// <param name="propertyType"></param>
+        /// <returns></returns>
+        string GetColumnType(Type propertyType);
     }
 }

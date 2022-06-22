@@ -1,7 +1,4 @@
 ﻿using Sixpence.ORM.Entity;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sixpence.ORM.Test.Entity
 {
@@ -11,7 +8,10 @@ namespace Sixpence.ORM.Test.Entity
         [PrimaryColumn]
         public string id { get; set; }
 
-        [Column("code", "编码", DataType.Varchar, 100, false)]
+        [Column]
         public string code { get; set; }
+
+        [Column]
+        public bool is_admin { get; set; }
     }
 }

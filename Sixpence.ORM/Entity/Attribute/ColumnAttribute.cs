@@ -12,44 +12,37 @@ namespace Sixpence.ORM.Entity
     [AttributeUsage(AttributeTargets.Property)]
     public class ColumnAttribute : Attribute
     {
-        internal ColumnAttribute()
+        public ColumnAttribute()
         {
-
+            Options = new ColumnOptions();
         }
 
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="name">字段名</param>
-        /// <param name="logicalName">字段逻辑名</param>
         /// <param name="type">字段类型</param>
         /// <param name="length">字段长度</param>
         /// <param name="isRequire">是否必填</param>
-        public ColumnAttribute(string name, string logicalName, DataType type, int length, bool isRequire = false, object defaultValue = null)
+        public ColumnAttribute(string name = "", string type = "", int length = 0, bool isRequire = false, object defaultValue = null)
         {
-            this.Column = new Column()
+            Options = new ColumnOptions()
             {
                 Name = name,
-                LogicalName = logicalName,
-                Type = type,
-                Length = length,
-                IsRequire = isRequire,
-                DefaultValue = defaultValue
-            };
-        }
-
-        public ColumnAttribute(string name, string logicalName, DataType type, bool isRequire = false, object defaultValue = null)
-        {
-            this.Column = new Column()
-            {
-                Name = name,
-                LogicalName = logicalName,
                 Type = type,
                 IsRequire = isRequire,
                 DefaultValue = defaultValue
             };
+            if (length == 0)
+            {
+                Options.Length = null;
+            }
+            else
+            {
+                Options.Length = length;
+            }
         }
 
-        public Column Column { get; set; }
+        public ColumnOptions Options { get; set; }
     }
 }

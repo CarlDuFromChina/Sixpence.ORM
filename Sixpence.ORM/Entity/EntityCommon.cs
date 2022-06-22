@@ -1,6 +1,10 @@
-﻿using Sixpence.ORM.Extensions;
+﻿using Sixpence.ORM.Driver;
+using Sixpence.ORM.Extensions;
+using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -89,6 +93,36 @@ namespace Sixpence.ORM.Entity
                 formatName.Append(temp);
             }
             return formatName.ToString();
+        }
+
+        /// <summary>
+        /// 获取实体所有字段设置
+        /// </summary>
+        /// <returns></returns>
+        public static List<ColumnOptions> GetColumns(IEntity entity, IDbDriver driver)
+        {
+            return entity
+                .GetType()
+                .GetProperties()
+                .Where(item => item.IsDefined(typeof(ColumnAttribute), false))
+                .Select(item =>
+                {
+                    var column = (item.GetCustomAttributes(typeof(ColumnAttribute), true).FirstOrDefault() as ColumnAttribute).Options;
+                    if (string.IsNullOrEmpty(column.Name))
+                    {
+                        column.Name = item.Name;
+                    }
+                    if (string.IsNullOrEmpty(column.Type))
+                    {
+                        column.Type = driver.GetColumnType(item.PropertyType);
+                    }
+                    if (item.IsDefined(typeof(DescriptionAttribute), false))
+                    {
+                        column.LogicalName = (item.GetCustomAttributes(typeof(DescriptionAttribute), true).FirstOrDefault() as DescriptionAttribute)?.Description;
+                    }
+                    return column;
+                })
+                .ToList();
         }
     }
 }

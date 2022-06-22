@@ -51,7 +51,7 @@ namespace Sixpence.ORM.Driver
             return $"DROP User {name}";
         }
 
-        public string GetAddColumnSql(string tableName, List<Column> columns)
+        public string GetAddColumnSql(string tableName, List<ColumnOptions> columns)
         {
             var sql = new StringBuilder();
             var tempSql = $@"ALTER TABLE {tableName}";
@@ -59,10 +59,8 @@ namespace Sixpence.ORM.Driver
             {
                 var require = item.IsRequire == true ? " NOT NULL" : "";
                 var length = item.Length != null ? $"({item.Length})" : "";
-                var type = item.Type.ToString().ToLower();
                 var defaultValue = item.DefaultValue == null ? "" : item.DefaultValue is string ? $"DEFAULT '{item.DefaultValue}'" : $"DEFAULT {item.DefaultValue}";
-                var itemSql = $"{tempSql} ADD COLUMN IF NOT EXISTS {item.Name} {type}{length} {require} {defaultValue};\r\n";
-                sql.Append(itemSql);
+                sql.Append($"{tempSql} ADD COLUMN IF NOT EXISTS {item.Name} {item.Type}{length} {require} {defaultValue};\r\n");
             }
             return sql.ToString();
         }
@@ -75,7 +73,7 @@ FROM pg_catalog.pg_database u where u.datname='{name}';
 ";
         }
 
-        public string GetDropColumnSql(string tableName, List<Column> columns)
+        public string GetDropColumnSql(string tableName, List<ColumnOptions> columns)
         {
             var sql = $@"
 ALTER TABLE {tableName}
@@ -124,10 +122,20 @@ WHERE rolname = '{name}'";
                         }
                         else
                         {
-                            if (dataTable.Columns[columnName].DataType == typeof(int) || dataTable.Columns[columnName].DataType == typeof(long))
+                            var dataType = dataTable.Columns[columnName].DataType;
+
+                            if (dataType == typeof(bool))
+                                writer.Write(ConvertUtil.ConToBoolean(dr[columnName]));
+                            else if (dataType == typeof(int))
                                 writer.Write(ConvertUtil.ConToInt(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Integer);
-                            else if (dataTable.Columns[columnName].DataType == typeof(decimal))
+                            else if (dataType == typeof(long))
+                                writer.Write(ConvertUtil.ConToInt(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Bigint);
+                            else if (dataType == typeof(short))
+                                writer.Write(ConvertUtil.ConToInt(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Int2Vector);
+                            else if (dataType == typeof(decimal))
                                 writer.Write(ConvertUtil.ConToDecimal(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Numeric);
+                            else if (dataTable.Columns[columnName].DataType == typeof(bool))
+                                writer.Write(ConvertUtil.ConToDecimal(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Boolean);
                             else if (dataTable.Columns[columnName].DataType == typeof(DateTime))
                                 writer.Write(ConvertUtil.ConToDateTime(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Timestamp);
                             else if (dataTable.Columns[columnName].DataType == typeof(JToken))
@@ -151,6 +159,28 @@ WHERE rolname = '{name}'";
             {
                 sql += $" LIMIT {size}";
             }
+        }
+
+        public string GetColumnType(Type propertyType)
+        {
+            if (propertyType == typeof(bool) || propertyType == typeof(bool?))
+                return "bool";
+            else if (propertyType == typeof(int) || propertyType == typeof(int?))
+                return "int4";
+            else if (propertyType == typeof(long) || propertyType == typeof(long?))
+                return "int8";
+            else if (propertyType == typeof(short) || propertyType == typeof(short?))
+                return "int2vector";
+            else if (propertyType == typeof(decimal) || propertyType == typeof(decimal?))
+                return "numeric";
+            else if (propertyType == typeof(DateTime) || propertyType == typeof(DateTime?))
+                return "timestamp";
+            else if (propertyType == typeof(JToken))
+                return "jsonb";
+            else if (propertyType == typeof(string))
+                return "text";
+            else
+                throw new NotSupportedException($"Postgres不支持{propertyType.Name}类型");
         }
     }
 }
