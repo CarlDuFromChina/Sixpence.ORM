@@ -161,7 +161,7 @@ WHERE rolname = '{name}'";
             }
         }
 
-        public string GetColumnType(Type propertyType)
+        public string Convert2DbType(Type propertyType)
         {
             if (propertyType == typeof(bool) || propertyType == typeof(bool?))
                 return "bool";
@@ -181,6 +181,31 @@ WHERE rolname = '{name}'";
                 return "text";
             else
                 throw new NotSupportedException($"Postgres不支持{propertyType.Name}类型");
+        }
+
+        public Type Convert2CSharpType(string columnType)
+        {
+            switch (columnType)
+            {
+                case "bool":
+                    return typeof(bool);
+                case "int4":
+                    return typeof(int?);
+                case "int8":
+                    return typeof(long?);
+                case "int2vector":
+                    return typeof(short?);
+                case "numeric":
+                    return typeof(decimal?);
+                case "timestamp":
+                    return typeof(DateTime?);
+                case "jsonb":
+                    return typeof(JToken);
+                case "text":
+                    return typeof(string);
+                default:
+                    throw new NotSupportedException($"C#不支持{columnType}类型");
+            }
         }
     }
 }
