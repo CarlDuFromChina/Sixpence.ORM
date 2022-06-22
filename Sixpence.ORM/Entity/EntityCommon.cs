@@ -114,7 +114,7 @@ namespace Sixpence.ORM.Entity
                     }
                     if (string.IsNullOrEmpty(column.Type))
                     {
-                        column.Type = driver.GetColumnType(item.PropertyType);
+                        column.Type = driver.Convert2DbType(item.PropertyType);
                     }
                     if (item.IsDefined(typeof(DescriptionAttribute), false))
                     {

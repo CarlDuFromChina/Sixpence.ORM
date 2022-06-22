@@ -114,10 +114,17 @@ namespace Sixpence.ORM.Driver
         string TableExsit(string tableName);
 
         /// <summary>
-        /// 获取数据库字段类型
+        /// 转换C#数据类型为数据库字段类型
         /// </summary>
         /// <param name="propertyType"></param>
         /// <returns></returns>
-        string GetColumnType(Type propertyType);
+        string Convert2DbType(Type propertyType);
+
+        /// <summary>
+        /// 转换数据库数据类型为C#数据类型
+        /// </summary>
+        /// <param name="columnType"></param>
+        /// <returns></returns>
+        Type Convert2CSharpType(string columnType);
     }
 }
