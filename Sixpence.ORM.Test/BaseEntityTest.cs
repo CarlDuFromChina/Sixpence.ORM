@@ -19,7 +19,7 @@ namespace Sixpence.ORM.Test
         [SetUp]
         public void SetUp()
         {
-            test = new Test() { code = "A001", name = "Test", id = Guid.NewGuid().ToString() };
+            test = new Test() { code = "A001", name = "Test", id = Guid.NewGuid().ToString(), is_super = true };
             IServiceCollection services = new ServiceCollection();
             services.AddServiceContainer(options =>
             {

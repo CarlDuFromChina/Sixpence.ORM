@@ -76,7 +76,7 @@ namespace Sixpence.ORM.EntityManager
                    var sqlParam = new List<string>() { $" AND {entity.GetPrimaryColumn().Name} <> @id" }; // 排除自身
                    item.AttributeList.Distinct().Each(attr =>
                    {
-                       var keyValue = ParseSqlUtil.GetSpecialValue($"@{attr}", entity[attr]);
+                       var keyValue = manager.Driver.HandleNameValue($"@{attr}", entity[attr]);
                        sqlParam.Add($" AND {attr} = {keyValue.name}");
                        paramList.Add(keyValue.name, keyValue.value);
                    });

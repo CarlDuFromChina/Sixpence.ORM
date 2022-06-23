@@ -59,7 +59,7 @@ namespace Sixpence.ORM.EntityManager
                 foreach (var attr in entity.GetAttributes())
                 {
                     var attrName = attr.Key; // 列名
-                    var keyValue = ParseSqlUtil.GetSpecialValue($"@{attrName}", attr.Value); // 值
+                    var keyValue = Driver.HandleNameValue($"@{attrName}", attr.Value); // 值
                     attrs.Add(attrName);
                     values.Add(keyValue.name);
                     paramList.Add(attrName, keyValue.value);
@@ -204,7 +204,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
                 {
                     if (item.Key != "id" && item.Key != entity.GetPrimaryColumn().Name)
                     {
-                        var keyValue = ParseSqlUtil.GetSpecialValue($"@param{count}", item.Value);
+                        var keyValue = Driver.HandleNameValue($"@param{count}", item.Value);
                         paramList.Add($"@param{count}", keyValue.value);
                         attributes.Add($"{ item.Key} = {keyValue.name}");
                         count++;

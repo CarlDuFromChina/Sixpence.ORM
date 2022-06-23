@@ -41,7 +41,7 @@ namespace Sixpence.ORM.Test
         public void Check_Entity_Create()
         {
             var manager = EntityManagerFactory.GetManager();
-            var entity = new Test() { code = "A001", name = "Test", id = "123" };
+            var entity = new Test() { code = "A001", name = "Test", id = "123", is_super = true };
             var result = manager.Create(entity);
             Assert.IsNotEmpty(result);
         }

@@ -49,43 +49,5 @@ namespace Sixpence.ORM.EntityManager
                     return ("", new Dictionary<string, object>() { });
             }
         }
-
-        /// <summary>
-        /// 格式化特殊类型
-        /// </summary>
-        /// <param name="originName"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static (string name, object value) GetSpecialValue(string name, object value)
-        {
-            if (value == null)
-            {
-                return (name, null);
-            }
-
-            if (value is JToken)
-            {
-                var _value = value as JToken;
-                if (_value.Type == JTokenType.Null)
-                {
-                    return (name + "::jsonb", null);
-                }
-                return (name + "::jsonb", Regex.Replace(_value.ToString(), @"\s", "")); // 替换JArray的换行和空格
-            }
-            else if (value is bool)
-            {
-                return (name, (bool)value ? 1 : 0);
-            }
-            else if (value is string)
-            {
-                var _value = value.ToString();
-                if (string.IsNullOrEmpty(_value))
-                {
-                    return (name, null);
-                }
-                return (name, _value);
-            }
-            return (name, value);
-        }
     }
 }
