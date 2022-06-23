@@ -18,5 +18,8 @@ namespace Sixpence.ORM.Test
 
         [Column]
         public string code { get; set; }
+
+        [Column]
+        public bool? is_super { get; set; }
     }
 }

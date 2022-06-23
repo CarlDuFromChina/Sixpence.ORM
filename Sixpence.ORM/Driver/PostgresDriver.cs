@@ -4,6 +4,7 @@ using Npgsql;
 using Sixpence.Common;
 using Sixpence.Common.Utils;
 using Sixpence.ORM.DbClient;
+using Sixpence.ORM.Entity;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Sixpence.ORM.Driver
@@ -206,6 +208,38 @@ WHERE rolname = '{name}'";
                 default:
                     throw new NotSupportedException($"C#不支持{columnType}类型");
             }
+        }
+
+        public (string name, object value) HandleNameValue(string name, object value)
+        {
+            if (value is JToken)
+            {
+                var _value = value as JToken;
+                if (_value.Type == JTokenType.Null)
+                {
+                    return (name + "::jsonb", null);
+                }
+                return (name + "::jsonb", Regex.Replace(_value.ToString(), @"\s", "")); // 替换JArray的换行和空格
+            }
+
+            return (name, value);
+        }
+
+        public List<EntityAttr> GetEntityAttributes(IDbConnection conn, string tableName)
+        {
+            var sql = @"
+SELECT 
+	A.attname AS NAME,
+	A.attnotnull AS IsNotNull,
+	format_type ( A.atttypid, A.atttypmod ) AS TYPE
+FROM
+	pg_class AS C,
+	pg_attribute AS A 
+WHERE
+	C.relname = 'test' 
+	AND A.attrelid = C.oid 
+	AND A.attnum > 0";
+            return conn.Query<EntityAttr>(sql).ToList();
         }
     }
 }

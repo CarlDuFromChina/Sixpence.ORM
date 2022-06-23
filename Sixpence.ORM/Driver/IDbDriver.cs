@@ -1,14 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Sixpence.Common;
-using Sixpence.Common.IoC;
-using Sixpence.ORM.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Sixpence.Common.IoC;
+using Sixpence.ORM.Models;
 
 namespace Sixpence.ORM.Driver
 {
@@ -126,5 +121,20 @@ namespace Sixpence.ORM.Driver
         /// <param name="columnType"></param>
         /// <returns></returns>
         Type Convert2CSharpType(string columnType);
+
+        /// <summary>
+        /// 处理数据库写入字段名称和值
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        (string name, object value) HandleNameValue(string name, object value);
+
+        /// <summary>
+        /// 查询表的字段
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        List<EntityAttr> GetEntityAttributes(IDbConnection conn, string tableName);
     }
 }
