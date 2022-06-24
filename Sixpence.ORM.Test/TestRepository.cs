@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Sixpence.Common;
 using Sixpence.Common.Current;
@@ -36,7 +37,7 @@ namespace Sixpence.ORM.Test
         [Order(1)]
         public void Check_Repository_Insert()
         {
-            testRepository.Create(new Test() { code = "A001", name = "Test", id = "124" });
+            testRepository.Create(new Test() { code = "A001", name = "Test", id = "124", is_super = true });
             var data = testRepository.FindOne("124");
             Assert.IsNotNull(data);
         }
@@ -61,6 +62,7 @@ namespace Sixpence.ORM.Test
         {
             var data = testRepository.FindOne("124");
             data.name = "test";
+            data.tags = new JArray() { "t1", "t2" };
             testRepository.Update(data);
             data = testRepository.FindOne("124");
             Assert.IsTrue(data.name.Equals("test"));

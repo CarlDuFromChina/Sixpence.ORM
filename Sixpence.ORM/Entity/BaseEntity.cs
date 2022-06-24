@@ -1,4 +1,5 @@
-﻿using Sixpence.Common;
+﻿using Newtonsoft.Json.Linq;
+using Sixpence.Common;
 using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Models;
 using System;
@@ -128,7 +129,11 @@ namespace Sixpence.ORM.Entity
         {
             if (ContainKey(name))
             {
-                return this.GetType().GetProperty(name).GetValue(this) as T;
+                var property = this.GetType().GetProperty(name);
+                if (property?.GetGetMethod() != null)
+                {
+                    return property.GetValue(this) as T;
+                }
             }
             return null;
         }
@@ -137,7 +142,18 @@ namespace Sixpence.ORM.Entity
         {
             if (ContainKey(name))
             {
-                this.GetType().GetProperty(name).SetValue(this, value);
+                var property = this.GetType().GetProperty(name);
+                if (property?.GetSetMethod() != null)
+                {
+                    if (property.PropertyType == typeof(JToken) && !string.IsNullOrEmpty(value?.ToString()))
+                    {
+                        property.SetValue(this, JToken.Parse(value?.ToString()));
+                    }
+                    else
+                    {
+                        property.SetValue(this, value);
+                    }
+                }
             }
         }
 
