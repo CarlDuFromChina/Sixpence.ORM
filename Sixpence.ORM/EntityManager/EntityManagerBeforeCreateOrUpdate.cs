@@ -98,9 +98,10 @@ namespace Sixpence.ORM.EntityManager
                 .Where(item => item.Value is bool)
                 .Each(item =>
                 {
-                    if (entity.GetType().GetProperties().Where(p => p.Name == $"{item.Key}_name").FirstOrDefault() != null)
+                    var keyName = $"{item.Key}_name";
+                    if (entity.ContainKey(keyName))
                     {
-                        dic.Add($"{item.Key}_name", (bool)item.Value ? "是" : "否");
+                        dic.Add(keyName, (bool)item.Value ? "是" : "否");
                     }
                 });
 
