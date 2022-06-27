@@ -20,13 +20,11 @@ namespace Sixpence.ORM.Entity
         {
             this.Name = name;
             this.Type = primaryType;
-            this.Column = new Column()
+            this.Options = new ColumnOptions()
             {
                 IsRequire = true,
-                Length = 100,
                 Name = name,
                 LogicalName = name,
-                Type = DataType.Varchar
             };
         }
     }

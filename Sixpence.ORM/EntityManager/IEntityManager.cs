@@ -170,10 +170,26 @@ namespace Sixpence.ORM.EntityManager
         public void BulkCreate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new();
 
         /// <summary>
+        /// 批量创建
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="primaryKeyName"></param>
+        /// <param name="dataTable"></param>
+        public void BulkCreate(string tableName, string primaryKeyName, DataTable dataTable);
+
+        /// <summary>
         /// 批量更新
         /// </summary>
         /// <param name="dataList"></param>
         public void BulkUpdate<TEntity>(List<TEntity> dataList) where TEntity : BaseEntity, new();
+
+        /// <summary>
+        /// 批量更新
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="primaryKeyName"></param>
+        /// <param name="dataTable"></param>
+        public void BulkUpdate(string tableName, string primaryKeyName, DataTable dataTable);
 
         /// <summary>
         /// 批量删除
@@ -187,6 +203,15 @@ namespace Sixpence.ORM.EntityManager
         /// <typeparam name="TEntity"></typeparam>
         /// <param name="dataList"></param>
         public void BulkCreateOrUpdate<TEntity>(List<TEntity> dataList, List<string> updateFieldList = null) where TEntity : BaseEntity, new();
+
+        /// <summary>
+        /// 批量创建或更新
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="dt"></param>
+        /// <param name=""></param>
+        /// <param name="updateFieldList"></param>
+        public void BulkCreateOrUpdate(string tableName, string primaryKeyName, DataTable dataTable, List<string> updateFieldList = null);
         #endregion
     }
 }

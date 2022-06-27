@@ -1,4 +1,5 @@
-﻿using Sixpence.ORM.Entity;
+﻿using Newtonsoft.Json.Linq;
+using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -8,15 +9,26 @@ namespace Sixpence.ORM.Test
 {
     [Entity]
     [KeyAttributes("code不能重复", "code")]
-    public class Test : BaseEntity
+    public partial class Test : BaseEntity
     {
         [PrimaryColumn]
         public string id { get; set; }
 
-        [Column("name", "名称", DataType.Varchar, 100)]
+        [Column]
         public string name { get; set; }
 
-        [Column("code", "编码", DataType.Varchar, 100)]
+        [Column]
         public string code { get; set; }
+
+        [Column]
+        public bool? is_super { get; set; }
+
+        [Column]
+        public JToken tags { get; set; }
+    }
+
+    public partial class Test
+    {
+        public string is_super_name { get; }
     }
 }

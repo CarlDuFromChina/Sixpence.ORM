@@ -1,9 +1,11 @@
-﻿using Sixpence.Common;
+﻿using Newtonsoft.Json.Linq;
+using Sixpence.Common;
 using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -15,52 +17,6 @@ namespace Sixpence.ORM.Entity
     public abstract class BaseEntity : IEntity
     {
         private static readonly ConcurrentDictionary<string, string> _entityNameCache = new ConcurrentDictionary<string, string>();
-        public BaseEntity() { }
-        public BaseEntity(string entityName) { this._entityName = entityName; }
-
-        private string _entityName;
-
-        /// <summary>
-        /// 实体名
-        /// </summary>
-        public string EntityName
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_entityName))
-                {
-                    var type = GetType();
-                    _entityName = _entityNameCache.GetOrAdd(type.FullName, (key) =>
-                    {
-                        var attr = Attribute.GetCustomAttribute(type, typeof(EntityAttribute)) as EntityAttribute;
-                        if (attr == null)
-                        {
-                            throw new SpException("获取实体名失败，请检查是否定义实体名");
-                        }
-
-                        // 若未设置自定义表名，则根据类名去格式化
-                        if (string.IsNullOrEmpty(attr.TableName))
-                        {
-                            var name = this.GetType().Name;
-                            switch (SixpenceORMBuilderExtension.Options.EntityClassNameCase)
-                            {
-                                case NameCase.UnderScore:
-                                    return name.ToLower();
-                                case NameCase.Pascal:
-                                default:
-                                    return EntityCommon.UpperChartToLowerUnderLine(name);
-                            }
-                        }
-                        return attr.TableName;
-                    });
-                }
-                return _entityName;
-            }
-            set
-            {
-                _entityName = value;
-            }
-        }
 
         /// <summary>
         /// 是否是系统实体
@@ -71,59 +27,42 @@ namespace Sixpence.ORM.Entity
             return attribute != null && attribute.IsSystemEntity;
         }
 
-        /// <summary>
-        /// 主键
-        /// </summary>
-        public (string Name, string Value, PrimaryType Type) PrimaryKey
-        {
-            get
-            {
-                var primaryColumn = GetPrimaryColumn();
-                var keyName = primaryColumn.Name;
-                var type = primaryColumn.Type;
-                var value = GetAttributeValue<string>(keyName);
-                return (Name: keyName, Value: value, Type: type);
-            }
-        }
-
-        public string GetPrimaryKey() => this.PrimaryKey.Name;
-
         #region 实体基础字段
         /// <summary>
         /// 创建人
         /// </summary>
-        [DataMember, Column("created_by", "创建人id", DataType.Varchar, 100, true)]
+        [DataMember, Column(isRequire: true), Description("创建人id")]
         public string created_by { get; set; }
 
         /// <summary>
         /// 创建人
         /// </summary>
-        [DataMember, Column("created_by_name", "创建人名称", DataType.Varchar, 100, true)]
+        [DataMember, Column(isRequire: true), Description("创建人名称")]
         public string created_by_name { get; set; }
 
         /// <summary>
         /// 创建日期
         /// </summary>
-        [DataMember, Column("created_at", "创建时间", DataType.Timestamp, 6, true)]
+        [DataMember, Column(isRequire: true), Description("创建时间")]
         public DateTime? created_at { get; set; }
 
         /// <summary>
         /// 修改人
         /// </summary>
-        [DataMember, Column("updated_by", "修改人id", DataType.Varchar, 100, true)]
+        [DataMember, Column(isRequire: true), Description("修改人")]
         public string updated_by { get; set; }
 
         /// <summary>
         /// 修改人
         /// </summary>
-        [DataMember, Column("updated_by_name", "修改人名称", DataType.Varchar, 100, true)]
+        [DataMember, Column(isRequire: true), Description("修改人姓名")]
         public string updated_by_name { get; set; }
 
 
         /// <summary>
         /// 修改日期
         /// </summary>
-        [DataMember, Column("updated_at", "修改时间", DataType.Timestamp, 6, true)]
+        [DataMember, Column(isRequire: true), Description("修改时间")]
         public DateTime? updated_at { get; set; }
 
         #endregion
@@ -140,7 +79,7 @@ namespace Sixpence.ORM.Entity
         }
 
         #region Methods
-        public PrimaryColumnAttribute GetPrimaryColumn()
+        public PrimaryColumnAttribute GetPrimaryColumnAttribute()
         {
             return this.GetType()
                     .GetProperties()
@@ -190,7 +129,11 @@ namespace Sixpence.ORM.Entity
         {
             if (ContainKey(name))
             {
-                return this.GetType().GetProperty(name).GetValue(this) as T;
+                var property = this.GetType().GetProperty(name);
+                if (property?.GetGetMethod() != null)
+                {
+                    return property.GetValue(this) as T;
+                }
             }
             return null;
         }
@@ -199,7 +142,18 @@ namespace Sixpence.ORM.Entity
         {
             if (ContainKey(name))
             {
-                this.GetType().GetProperty(name).SetValue(this, value);
+                var property = this.GetType().GetProperty(name);
+                if (property?.GetSetMethod() != null)
+                {
+                    if (property.PropertyType == typeof(JToken) && !string.IsNullOrEmpty(value?.ToString()))
+                    {
+                        property.SetValue(this, JToken.Parse(value?.ToString()));
+                    }
+                    else
+                    {
+                        property.SetValue(this, value);
+                    }
+                }
             }
         }
 
@@ -209,20 +163,30 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public string GetEntityName()
         {
-            return this.EntityName;
-        }
+            var type = GetType();
+            return _entityNameCache.GetOrAdd(type.FullName, (key) =>
+            {
+                var attr = Attribute.GetCustomAttribute(type, typeof(EntityAttribute)) as EntityAttribute;
+                if (attr == null)
+                {
+                    throw new SpException("获取实体名失败，请检查是否定义实体名");
+                }
 
-        /// <summary>
-        /// 获取实体所有字段
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<Column> GetColumns()
-        {
-            return this.GetType()
-                .GetProperties()
-                .Where(item => item.IsDefined(typeof(ColumnAttribute), false))
-                .Select(item => (item.GetCustomAttributes(typeof(ColumnAttribute), true).FirstOrDefault() as ColumnAttribute).Column)
-                .ToList();
+                // 若未设置自定义表名，则根据类名去格式化
+                if (string.IsNullOrEmpty(attr.TableName))
+                {
+                    var name = this.GetType().Name;
+                    switch (SixpenceORMBuilderExtension.Options.EntityClassNameCase)
+                    {
+                        case NameCase.UnderScore:
+                            return name.ToLower();
+                        case NameCase.Pascal:
+                        default:
+                            return EntityCommon.UpperChartToLowerUnderLine(name);
+                    }
+                }
+                return attr.TableName;
+            });
         }
 
         /// <summary>
@@ -245,7 +209,20 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public string NewId()
         {
-            return EntityCommon.GenerateID(this.PrimaryKey.Type).ToString();
+            return EntityCommon.GenerateID(GetPrimaryColumn().Type).ToString();
+        }
+
+        /// <summary>
+        /// 获取主键
+        /// </summary>
+        /// <returns></returns>
+        public (string Name, string Value, PrimaryType Type) GetPrimaryColumn()
+        {
+            var primaryColumn = GetPrimaryColumnAttribute();
+            var keyName = primaryColumn.Name;
+            var type = primaryColumn.Type;
+            var value = GetAttributeValue<string>(keyName);
+            return (Name: keyName, Value: value, Type: type);
         }
         #endregion
     }

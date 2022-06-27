@@ -41,7 +41,7 @@ namespace Sixpence.ORM.Test
         public void Check_Entity_Create()
         {
             var manager = EntityManagerFactory.GetManager();
-            var entity = new Test() { code = "A001", name = "Test", id = "123" };
+            var entity = new Test() { code = "A001", name = "Test", id = "123", is_super = true };
             var result = manager.Create(entity);
             Assert.IsNotEmpty(result);
         }
@@ -104,9 +104,9 @@ namespace Sixpence.ORM.Test
         {
             var dataList = new List<Test>()
             {
-                new Test() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-                new Test() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-                new Test() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+                new Test() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user", is_super = true },
+                new Test() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user", is_super = false },
+                new Test() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user", is_super = false },
             };
             var manager = EntityManagerFactory.GetManager();
             manager.BulkCreate(dataList);

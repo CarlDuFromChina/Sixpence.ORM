@@ -24,10 +24,10 @@ namespace Sixpence.ORM.Entity
         string GetLogicalName();
 
         /// <summary>
-        /// 获取主键字段名
+        /// 获取主键列
         /// </summary>
         /// <returns></returns>
-        string GetPrimaryKey();
+        (string Name, string Value, PrimaryType Type) GetPrimaryColumn();
 
         /// <summary>
         /// 获取属性值
@@ -73,11 +73,5 @@ namespace Sixpence.ORM.Entity
         /// </summary>
         /// <returns></returns>
         bool IsSystemEntity();
-
-        /// <summary>
-        /// 获取实体所有字段
-        /// </summary>
-        /// <returns></returns>
-        IEnumerable<Column> GetColumns();
     }
 }

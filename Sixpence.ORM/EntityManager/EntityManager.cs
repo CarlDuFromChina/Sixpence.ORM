@@ -42,12 +42,12 @@ namespace Sixpence.ORM.EntityManager
             return this.ExecuteTransaction(() =>
             {
                 #region 创建前 Plugin
-                var context = new EntityManagerPluginContext() { Entity = entity, EntityManager = this, Action = EntityAction.PreCreate, EntityName = entity.EntityName };
+                var context = new EntityManagerPluginContext() { Entity = entity, EntityManager = this, Action = EntityAction.PreCreate, EntityName = entity.GetEntityName() };
                 ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
                 if (usePlugin)
                 {
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -59,24 +59,24 @@ namespace Sixpence.ORM.EntityManager
                 foreach (var attr in entity.GetAttributes())
                 {
                     var attrName = attr.Key; // 列名
-                    var keyValue = ParseSqlUtil.GetSpecialValue($"@{attrName}", attr.Value); // 值
+                    var keyValue = Driver.HandleNameValue($"@{attrName}", attr.Value); // 值
                     attrs.Add(attrName);
                     values.Add(keyValue.name);
                     paramList.Add(attrName, keyValue.value);
                 }
-                sql = string.Format(sql, entity.EntityName, string.Join(",", attrs), string.Join(",", values));
+                sql = string.Format(sql, entity.GetEntityName(), string.Join(",", attrs), string.Join(",", values));
                 this.Execute(sql, paramList);
 
                 #region 创建后 Plugin
                 if (usePlugin)
                 {
                     context.Action = EntityAction.PostCreate;
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
+                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
 
-                return entity.PrimaryKey.Value;
+                return entity.GetPrimaryColumn().Value;
             });
         }
 
@@ -90,17 +90,17 @@ namespace Sixpence.ORM.EntityManager
         {
             var entity = ServiceContainer.Resolve<IEntity>(key => EntityCommon.CompareEntityName(key, entityName)) as BaseEntity;
             AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
-            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryKey.Name} = @id", new { id });
+            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = @id", new { id });
 
             if (dataList.Rows.Count == 0) return 0;
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
-            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName));
+            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()));
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
 
             var sql = "DELETE FROM {0} WHERE {1} = @id";
-            sql = string.Format(sql, entityName, entity.PrimaryKey.Name);
+            sql = string.Format(sql, entityName, entity.GetPrimaryColumn().Name);
             int result = this.Execute(sql, new { id });
 
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
@@ -116,12 +116,12 @@ namespace Sixpence.ORM.EntityManager
         {
             return this.ExecuteTransaction(() =>
             {
-                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName));
-                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreDelete });
+                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()));
+                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreDelete });
                 var sql = "DELETE FROM {0} WHERE {1} = @id";
-                sql = string.Format(sql, entity.EntityName, entity.PrimaryKey.Name);
-                int result = this.Execute(sql, new { id = entity.PrimaryKey.Value });
-                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PostDelete });
+                sql = string.Format(sql, entity.GetEntityName(), entity.GetPrimaryColumn().Name);
+                int result = this.Execute(sql, new { id = entity.GetPrimaryColumn().Value });
+                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PostDelete });
                 return result;
             });
         }
@@ -161,17 +161,17 @@ namespace Sixpence.ORM.EntityManager
         public string Save(BaseEntity entity)
         {
             var sql = $@"
-SELECT * FROM {entity.EntityName}
-WHERE {entity.PrimaryKey.Name} = @id;
+SELECT * FROM {entity.GetEntityName()}
+WHERE {entity.GetPrimaryColumn().Name} = @id;
 ";
-            var dataList = this.Query(sql, new { id = entity.PrimaryKey.Value });
+            var dataList = this.Query(sql, new { id = entity.GetPrimaryColumn().Value });
 
             if (dataList != null && dataList.Rows.Count > 0)
                 Update(entity);
             else
                 Create(entity);
 
-            return entity.PrimaryKey.Value;
+            return entity.GetPrimaryColumn().Value;
         }
 
         /// <summary>
@@ -184,39 +184,39 @@ WHERE {entity.PrimaryKey.Name} = @id;
             return this.ExecuteTransaction(() =>
             {
                 #region 更新前 Plugin
-                var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityName, Action = EntityAction.PreUpdate };
+                var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreUpdate };
                 ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
 
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
                     .Each(item => item.Execute(context));
                 #endregion
 
                 var sql = @"
 UPDATE {0} SET {1} WHERE {2} = @id;
 ";
-                var paramList = new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } };
+                var paramList = new Dictionary<string, object>() { { "@id", entity.GetPrimaryColumn().Value } };
 
                 #region 处理属性
                 var attributes = new List<string>();
                 int count = 0;
                 foreach (var item in entity.GetAttributes())
                 {
-                    if (item.Key != "id" && item.Key != entity.PrimaryKey.Name)
+                    if (item.Key != "id" && item.Key != entity.GetPrimaryColumn().Name)
                     {
-                        var keyValue = ParseSqlUtil.GetSpecialValue($"@param{count}", item.Value);
+                        var keyValue = Driver.HandleNameValue($"@param{count}", item.Value);
                         paramList.Add($"@param{count}", keyValue.value);
                         attributes.Add($"{ item.Key} = {keyValue.name}");
                         count++;
                     }
                 }
                 #endregion
-                sql = string.Format(sql, entity.EntityName, string.Join(",", attributes), entity.PrimaryKey.Name);
+                sql = string.Format(sql, entity.GetEntityName(), string.Join(",", attributes), entity.GetPrimaryColumn().Name);
                 var result = this.Execute(sql, paramList);
 
                 #region 更新后 Plugin
                 context.Action = EntityAction.PostUpdate;
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.EntityName))
+                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
                     .Each(item => item.Execute(context));
                 #endregion
                 return result;
@@ -303,7 +303,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <returns></returns>
         public T QueryFirst<T>(string id) where T : BaseEntity, new()
         {
-            var sql = $"SELECT * FROM {new T().EntityName} WHERE {new T().PrimaryKey.Name} =@id";
+            var sql = $"SELECT * FROM {new T().GetEntityName()} WHERE {new T().GetPrimaryColumn().Name} =@id";
             return QueryFirst<T>(sql, new { id });
         }
 
@@ -409,9 +409,9 @@ UPDATE {0} SET {1} WHERE {2} = @id;
 SELECT
 	*
 FROM
-	{new T().EntityName}
+	{new T().GetEntityName()}
 WHERE 
-	{new T().PrimaryKey.Name} IN (@ids)";
+	{new T().GetPrimaryColumn().Name} IN (@ids)";
             var parmas = new Dictionary<string, object>();
             var count = 0;
             ids.ToList().ForEach(item =>
@@ -525,21 +525,36 @@ WHERE
             if (dataList.IsEmpty()) return;
 
             var t = new TEntity();
-            var tableName = t.EntityName;
-            var primaryKey = t.PrimaryKey.Name;
+            var tableName = t.GetEntityName();
+            var primaryKey = t.GetPrimaryColumn().Name;
+            var dt = Query($"select * from {tableName} WHERE 1 <> 1");
+
+            BulkCreate(tableName, primaryKey, dataList.ToDataTable(dt.Columns));
+        }
+
+        /// <summary>
+        /// 批量创建
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="primaryKeyName">主键名</param>
+        /// <param name="dataTable">数据</param>
+        public void BulkCreate(string tableName, string primaryKeyName, DataTable dataTable)
+        {
+            if (dataTable.IsEmpty())
+            {
+                return;
+            }
 
             ExecuteTransaction(() =>
             {
-                var dt = Query($"select * from {tableName}");
-
                 // 1. 创建临时表
                 var tempName = DbClient.CreateTemporaryTable(tableName);
 
                 // 2. 拷贝数据到临时表
-                DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempName);
+                DbClient.BulkCopy(dataTable, tempName);
 
                 // 3. 将临时表数据插入到目标表中
-                DbClient.Execute(string.Format("INSERT INTO {0} SELECT * FROM {1} WHERE NOT EXISTS(SELECT 1 FROM {0} WHERE {0}.{2} = {1}.{2})", tableName, tempName, primaryKey));
+                DbClient.Execute(string.Format("INSERT INTO {0} SELECT * FROM {1} WHERE NOT EXISTS(SELECT 1 FROM {0} WHERE {0}.{2} = {1}.{2})", tableName, tempName, primaryKeyName));
 
                 // 4. 删除临时表
                 DbClient.DropTable(tempName);
@@ -556,43 +571,57 @@ WHERE
             if (dataList.IsEmpty()) return;
 
             var t = new TEntity();
-            var mainKeyName = t.PrimaryKey.Name; // 主键
-            var tableName = t.EntityName; // 表名
+            var mainKeyName = t.GetPrimaryColumn().Name; // 主键
+            var tableName = t.GetEntityName(); // 表名
+            var dt = DbClient.Query($"SELECT * FROM {tableName} WHERE 1 <> 1");
+
+            BulkUpdate(tableName, mainKeyName, dataList.ToDataTable(dt.Columns));
+        }
+
+        /// <summary>
+        /// 批量更新
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="primaryKeyName"></param>
+        /// <param name="dataTable"></param>
+        public void BulkUpdate(string tableName, string primaryKeyName, DataTable dataTable)
+        {
+            if (dataTable.IsEmpty())
+            {
+                return;
+            }
 
             ExecuteTransaction(() =>
             {
                 // 1. 创建临时表
                 var tempTableName = DbClient.CreateTemporaryTable(tableName);
 
-                // 2. 查询临时表结构
-                var dt = DbClient.Query($"SELECT * FROM {tempTableName}");
+                // 2. 拷贝数据到临时表
+                DbClient.BulkCopy(dataTable, tempTableName);
 
-                // 3. 拷贝数据到临时表
-                DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempTableName);
-
-                // 4. 获取更新字段
+                // 3. 获取更新字段
                 var updateFieldList = new List<string>();
-                foreach (DataColumn column in dt.Columns)
+                foreach (DataColumn column in dataTable.Columns)
                 {
                     // 主键去除
-                    if (!column.ColumnName.Equals(mainKeyName, StringComparison.InvariantCultureIgnoreCase))
+                    if (!column.ColumnName.Equals(primaryKeyName, StringComparison.InvariantCultureIgnoreCase))
                     {
                         updateFieldList.Add(column.ColumnName);
                     }
                 }
 
-                // 5. 拼接Set语句
+                // 4. 拼接Set语句
                 var updateFieldSql = updateFieldList.Select(item => string.Format(" {1} = {0}.{1} ", tempTableName, item)).Aggregate((a, b) => a + " , " + b);
 
-                // 6. 更新
+                // 5. 更新
                 DbClient.Execute($@"
 UPDATE {tableName}
 SET {updateFieldSql} FROM {tempTableName}
-WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName}
-AND {tempTableName}.{mainKeyName} IS NOT NULL
+WHERE {tableName}.{primaryKeyName} = {tempTableName}.{primaryKeyName}
+AND {tempTableName}.{primaryKeyName} IS NOT NULL
 ");
 
-                // 7. 删除临时表
+                // 6. 删除临时表
                 DbClient.DropTable(tempTableName);
             });
         }
@@ -607,51 +636,63 @@ AND {tempTableName}.{mainKeyName} IS NOT NULL
         {
             if (dataList.IsEmpty()) return;
 
-            var mainKeyName = new TEntity().PrimaryKey.Name; // 主键
-            var tableName = new TEntity().EntityName; // 表名
+            var primaryKeyName = new TEntity().GetPrimaryColumn().Name; // 主键
+            var tableName = new TEntity().GetEntityName(); // 表名
+            var dt = DbClient.Query($"SELECT * FROM {tableName} WHERE 1 <> 1");
+
+            BulkCreateOrUpdate(tableName, primaryKeyName, dataList.ToDataTable(dt.Columns), updateFieldList);
+        }
+
+        /// <summary>
+        /// 批量创建或更新
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="primaryKeyName"></param>
+        /// <param name="dataTable"></param>
+        /// <param name="updateFieldList"></param>
+        public void BulkCreateOrUpdate(string tableName, string primaryKeyName, DataTable dataTable, List<string> updateFieldList = null)
+        {
+            if (dataTable.IsEmpty()) return;
 
             // 1. 创建临时表
             var tempTableName = DbClient.CreateTemporaryTable(tableName);
 
-            // 2. 查询临时表结构
-            var dt = DbClient.Query($"SELECT * FROM {tempTableName}");
+            // 2. 拷贝数据到临时表
+            DbClient.BulkCopy(dataTable, tempTableName);
 
-            // 3. 拷贝数据到临时表
-            DbClient.BulkCopy(dataList.ToDataTable(dt.Columns), tempTableName);
-
-            // 4. 获取更新字段
+            // 3. 获取更新字段
             if (updateFieldList.IsEmpty())
             {
                 updateFieldList = new List<string>();
-                foreach (DataColumn column in dt.Columns)
+                foreach (DataColumn column in dataTable.Columns)
                 {
                     // 主键去除
-                    if (!column.ColumnName.Equals(mainKeyName, StringComparison.InvariantCultureIgnoreCase))
+                    if (!column.ColumnName.Equals(primaryKeyName, StringComparison.InvariantCultureIgnoreCase))
                     {
                         updateFieldList.Add(column.ColumnName);
                     }
                 }
             }
 
-            // 5. 拼接Set语句
+            // 4. 拼接Set语句
             var updateFieldSql = updateFieldList.Select(item => string.Format(" {1} = {0}.{1} ", tempTableName, item)).Aggregate((a, b) => a + " , " + b);
 
-            // 6. 更新
+            // 5. 更新
             DbClient.Execute($@"
 UPDATE {tableName}
 SET {updateFieldSql} FROM {tempTableName}
-WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName}
-AND {tempTableName}.{mainKeyName} IS NOT NULL
+WHERE {tableName}.{primaryKeyName} = {tempTableName}.{primaryKeyName}
+AND {tempTableName}.{primaryKeyName} IS NOT NULL
 ");
-            // 7. 新增
+            // 6. 新增
             DbClient.Execute($@"
 INSERT INTO {tableName}
 SELECT * FROM {tempTableName}
-WHERE NOT EXISTS(SELECT 1 FROM {tableName} WHERE {tableName}.{mainKeyName} = {tempTableName}.{mainKeyName})
-AND {tempTableName}.{mainKeyName} IS NOT NULL
+WHERE NOT EXISTS(SELECT 1 FROM {tableName} WHERE {tableName}.{primaryKeyName} = {tempTableName}.{primaryKeyName})
+AND {tempTableName}.{primaryKeyName} IS NOT NULL
 ");
 
-            // 8. 删除临时表
+            // 7. 删除临时表
             DbClient.DropTable(tempTableName);
         }
 
@@ -667,10 +708,10 @@ AND {tempTableName}.{mainKeyName} IS NOT NULL
                 return;
             }
 
-            var t  = new TEntity();
-            var tableName = t.EntityName;
-            var primaryKeyName = t.PrimaryKey.Name;
-            var ids = string.Join(",", dataList.Select(item => "'" + item.PrimaryKey.Value + "'"));
+            var t = new TEntity();
+            var tableName = t.GetEntityName();
+            var primaryKeyName = t.GetPrimaryColumn().Name;
+            var ids = string.Join(",", dataList.Select(item => "'" + item.GetPrimaryColumn().Value + "'"));
 
             ExecuteTransaction(() =>
             {

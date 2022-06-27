@@ -5,12 +5,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Models
+namespace Sixpence.ORM
 {
     /// <summary>
     /// 字段
     /// </summary>
-    public class Column
+    public class ColumnOptions
     {
         /// <summary>
         /// 字段名
@@ -23,9 +23,9 @@ namespace Sixpence.ORM.Models
         public string LogicalName { get; set; }
 
         /// <summary>
-        /// 字段类型
+        /// 字段类型（数据库字段类型）
         /// </summary>
-        public DataType Type { get; set; }
+        public string Type { get; set; }
 
         /// <summary>
         /// 字段长度

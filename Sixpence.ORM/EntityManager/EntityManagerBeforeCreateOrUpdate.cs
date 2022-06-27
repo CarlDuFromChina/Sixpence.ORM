@@ -72,16 +72,16 @@ namespace Sixpence.ORM.EntityManager
                {
                    if (item.AttributeList == null || item.AttributeList.Count == 0) return;
 
-                   var paramList = new Dictionary<string, object>() { { "@id", entity.PrimaryKey.Value } };
-                   var sqlParam = new List<string>() { $" AND {entity.PrimaryKey.Name} <> @id" }; // 排除自身
+                   var paramList = new Dictionary<string, object>() { { "@id", entity.GetPrimaryColumn().Value } };
+                   var sqlParam = new List<string>() { $" AND {entity.GetPrimaryColumn().Name} <> @id" }; // 排除自身
                    item.AttributeList.Distinct().Each(attr =>
                    {
-                       var keyValue = ParseSqlUtil.GetSpecialValue($"@{attr}", entity[attr]);
+                       var keyValue = manager.Driver.HandleNameValue($"@{attr}", entity[attr]);
                        sqlParam.Add($" AND {attr} = {keyValue.name}");
                        paramList.Add(keyValue.name, keyValue.value);
                    });
 
-                   var sql = string.Format(@"SELECT {0} FROM {1} WHERE 1 = 1 ",  entity.PrimaryKey.Name, entity.EntityName) + string.Join("", sqlParam);
+                   var sql = string.Format(@"SELECT {0} FROM {1} WHERE 1 = 1 ",  entity.GetPrimaryColumn().Name, entity.GetEntityName()) + string.Join("", sqlParam);
                    AssertUtil.IsTrue(manager.Query<string>(sql, paramList)?.Count() > 0, item.RepeatMessage);
                });
         }
@@ -98,9 +98,10 @@ namespace Sixpence.ORM.EntityManager
                 .Where(item => item.Value is bool)
                 .Each(item =>
                 {
-                    if (entity.GetType().GetProperties().Where(p => p.Name == $"{item.Key}_name").FirstOrDefault() != null)
+                    var keyName = $"{item.Key}_name";
+                    if (entity.ContainKey(keyName))
                     {
-                        dic.Add($"{item.Key}_name", (bool)item.Value ? "是" : "否");
+                        dic.Add(keyName, (bool)item.Value ? "是" : "否");
                     }
                 });
 

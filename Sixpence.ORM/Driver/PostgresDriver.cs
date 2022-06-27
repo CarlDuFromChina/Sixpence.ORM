@@ -4,6 +4,7 @@ using Npgsql;
 using Sixpence.Common;
 using Sixpence.Common.Utils;
 using Sixpence.ORM.DbClient;
+using Sixpence.ORM.Entity;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Sixpence.ORM.Driver
@@ -51,7 +53,7 @@ namespace Sixpence.ORM.Driver
             return $"DROP User {name}";
         }
 
-        public string GetAddColumnSql(string tableName, List<Column> columns)
+        public string GetAddColumnSql(string tableName, List<ColumnOptions> columns)
         {
             var sql = new StringBuilder();
             var tempSql = $@"ALTER TABLE {tableName}";
@@ -59,10 +61,8 @@ namespace Sixpence.ORM.Driver
             {
                 var require = item.IsRequire == true ? " NOT NULL" : "";
                 var length = item.Length != null ? $"({item.Length})" : "";
-                var type = item.Type.ToString().ToLower();
                 var defaultValue = item.DefaultValue == null ? "" : item.DefaultValue is string ? $"DEFAULT '{item.DefaultValue}'" : $"DEFAULT {item.DefaultValue}";
-                var itemSql = $"{tempSql} ADD COLUMN IF NOT EXISTS {item.Name} {type}{length} {require} {defaultValue};\r\n";
-                sql.Append(itemSql);
+                sql.Append($"{tempSql} ADD COLUMN IF NOT EXISTS {item.Name} {item.Type}{length} {require} {defaultValue};\r\n");
             }
             return sql.ToString();
         }
@@ -75,7 +75,7 @@ FROM pg_catalog.pg_database u where u.datname='{name}';
 ";
         }
 
-        public string GetDropColumnSql(string tableName, List<Column> columns)
+        public string GetDropColumnSql(string tableName, List<ColumnOptions> columns)
         {
             var sql = $@"
 ALTER TABLE {tableName}
@@ -124,16 +124,26 @@ WHERE rolname = '{name}'";
                         }
                         else
                         {
-                            if (dataTable.Columns[columnName].DataType == typeof(int) || dataTable.Columns[columnName].DataType == typeof(long))
+                            var dataType = dataTable.Columns[columnName].DataType;
+
+                            if (dataType == typeof(bool) || dataType == typeof(bool?))
+                                writer.Write(ConvertUtil.ConToBoolean(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Boolean);
+                            else if (dataType == typeof(int) || dataType == typeof(int?))
                                 writer.Write(ConvertUtil.ConToInt(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Integer);
-                            else if (dataTable.Columns[columnName].DataType == typeof(decimal))
+                            else if (dataType == typeof(long) || dataType == typeof(long?))
+                                writer.Write(ConvertUtil.ConToInt(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Bigint);
+                            else if (dataType == typeof(short) || dataType == typeof(short?))
+                                writer.Write(ConvertUtil.ConToInt(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Int2Vector);
+                            else if (dataType == typeof(decimal) || dataType == typeof(decimal?))
                                 writer.Write(ConvertUtil.ConToDecimal(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Numeric);
-                            else if (dataTable.Columns[columnName].DataType == typeof(DateTime))
+                            else if (dataType == typeof(DateTime) || dataType == typeof(DateTime?))
                                 writer.Write(ConvertUtil.ConToDateTime(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Timestamp);
-                            else if (dataTable.Columns[columnName].DataType == typeof(JToken))
+                            else if (dataType == typeof(JToken))
                                 writer.Write(dr[columnName].ToString(), NpgsqlTypes.NpgsqlDbType.Jsonb);
-                            else
+                            else if (dataType == typeof(string))
                                 writer.Write(dr[columnName].ToString());
+                            else
+                                throw new NotSupportedException($"Postgres不支持{dataType.Name}类型");
                         }
                     }
                 }
@@ -151,6 +161,86 @@ WHERE rolname = '{name}'";
             {
                 sql += $" LIMIT {size}";
             }
+        }
+
+        public string Convert2DbType(Type propertyType)
+        {
+            if (propertyType == typeof(bool) || propertyType == typeof(bool?))
+                return "bool";
+            else if (propertyType == typeof(int) || propertyType == typeof(int?))
+                return "int4";
+            else if (propertyType == typeof(long) || propertyType == typeof(long?))
+                return "int8";
+            else if (propertyType == typeof(short) || propertyType == typeof(short?))
+                return "int2vector";
+            else if (propertyType == typeof(decimal) || propertyType == typeof(decimal?))
+                return "numeric";
+            else if (propertyType == typeof(DateTime) || propertyType == typeof(DateTime?))
+                return "timestamp";
+            else if (propertyType == typeof(JToken))
+                return "jsonb";
+            else if (propertyType == typeof(string))
+                return "text";
+            else
+                throw new NotSupportedException($"Postgres不支持{propertyType.Name}类型");
+        }
+
+        public Type Convert2CSharpType(string columnType)
+        {
+            switch (columnType)
+            {
+                case "bool":
+                    return typeof(bool);
+                case "int4":
+                    return typeof(int?);
+                case "int8":
+                    return typeof(long?);
+                case "int2vector":
+                    return typeof(short?);
+                case "numeric":
+                    return typeof(decimal?);
+                case "timestamp":
+                    return typeof(DateTime?);
+                case "jsonb":
+                    return typeof(JToken);
+                case "text":
+                    return typeof(string);
+                default:
+                    throw new NotSupportedException($"C#不支持{columnType}类型");
+            }
+        }
+
+        public (string name, object value) HandleNameValue(string name, object value)
+        {
+            if (value is JToken)
+            {
+                var _value = value as JToken;
+                if (_value.Type == JTokenType.Null)
+                {
+                    return (name + "::jsonb", null);
+                }
+                return (name + "::jsonb", Regex.Replace(_value.ToString(), @"\s", "")); // 替换JArray的换行和空格
+            }
+
+            return (name, value);
+        }
+
+        public List<EntityAttr> GetEntityAttributes(IDbConnection conn, string tableName)
+        {
+            var sql = @"
+SELECT 
+	A.attname AS NAME,
+	A.attnotnull AS IsNotNull,
+	format_type ( A.atttypid, A.atttypmod ) AS TYPE
+FROM
+	pg_class AS C,
+	pg_attribute AS A 
+WHERE
+	C.relname = 'test' 
+	AND A.attrelid = C.oid 
+	AND A.attnum > 0
+	AND A.atttypid <> 0";
+            return conn.Query<EntityAttr>(sql).ToList();
         }
     }
 }
