@@ -99,22 +99,38 @@ namespace Sixpence.ORM.Extensions
                     }
                     else
                     {
-                        var attributes = driver.GetEntityAttributes(manager.DbClient.DbConnection, tableName); // 查询表现有字段
-                        var columns = new List<ColumnOptions>();
+                        var tableAttrs = driver.GetEntityAttributes(manager.DbClient.DbConnection, tableName); // 查询表现有字段
+                        var entityAttrs = EntityCommon.GetColumns(item, driver); // 查询实体现有字段
+                        var addColumns = new List<ColumnOptions>(); // 表需要添加的字段
+                        var removeColumns = new List<ColumnOptions>(); // 表需要删除的字段
 
-                        EntityCommon.GetColumns(item, driver).Each(attr =>
+                        // 循环实体字段
+                        entityAttrs.Each(attr =>
                         {
-                            if (!attributes.Exists(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase)))
+                            var _attr = tableAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
+                            if (_attr == null)
                             {
-                                columns.Add(attr);
+                                addColumns.Add(attr);
                             }
                         });
 
-                        if (!columns.IsEmpty())
+                        // 循环表字段
+                        tableAttrs.Each(attr =>
                         {
-                            var sql = driver.GetAddColumnSql(tableName, columns);
-                            manager.Execute(sql);
-                        }
+                            var _attr = entityAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
+                            if (_attr == null)
+                            {
+                                removeColumns.Add(new ColumnOptions() { Name = attr.Name });
+                            }
+                        });
+
+                        // 删除字段
+                        if (removeColumns.IsNotEmpty())
+                            manager.Execute(driver.GetDropColumnSql(tableName, removeColumns));
+
+                        // 新增字段
+                        if (addColumns.IsNotEmpty())
+                            manager.Execute(driver.GetAddColumnSql(tableName, addColumns));
                     }
                 });
 

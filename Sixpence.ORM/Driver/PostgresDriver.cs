@@ -238,7 +238,8 @@ FROM
 WHERE
 	C.relname = 'test' 
 	AND A.attrelid = C.oid 
-	AND A.attnum > 0";
+	AND A.attnum > 0
+	AND A.atttypid <> 0";
             return conn.Query<EntityAttr>(sql).ToList();
         }
     }
