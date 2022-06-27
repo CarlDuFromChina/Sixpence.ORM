@@ -26,3 +26,4 @@ jobs:
       with:
        PROJECT_FILE_PATH: Sixpence.ORM/Sixpence.ORM.csproj
        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+       VERSION_REGEX: ^\s*<ReleaseVersion>(.*)<\/ReleaseVersion>\s*$
