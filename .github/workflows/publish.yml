@@ -2,7 +2,8 @@ name: .NET
 
 on:
   push:
-    branches: [ "master" ]
+    tags:
+    - "v[0-9]+.[0-9]+.[0-9]"
 
 jobs:
   build:
@@ -17,12 +18,11 @@ jobs:
         dotnet-version: 3.1.x
     - name: Restore dependencies
       run: dotnet restore
+    - name: Set VERSION variable from tag
+      run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --configuration Release /p:Version=${VERSION}
     - name: Pack
-      run: |
-          cd Sixpence.ORM
-          dotnet pack
+      run: dotnet pack ./Sixpence.ORM/Sixpence.ORM.csproj -c Release /p:Version=${VERSION} -o .
     - name: Publish
-      run: 
-          dotnet nuget push *.nupkg -k ${{secrets.NUGET_API_KEY}}
+      run: dotnet nuget push Sixpence.ORM.${VERSION}.nupkg -k ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
