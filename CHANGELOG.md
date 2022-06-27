@@ -3,6 +3,10 @@
 ### Features
 
 + 强化了`EntityManager`的批量操作，支持`DataTable`
++ 实体自动生成
++ `BaseEntity`的`api`优化
++ `DbDriver`的`api`加强
++ 实体字段特性`ColumnAttribute`优化传入参数
 
 ## 2.1.0
 
@@ -17,6 +21,6 @@
 
 ### Features
 
-- 添加`Repository`仓储模式
-- 添加`EntityManager`实体管理器
-- 添加`UseORM`方法，控制实体自动生成开关以及实体命名
++ 添加`Repository`仓储模式
++ 添加`EntityManager`实体管理器
++ 添加`UseORM`方法，控制实体自动生成开关以及实体命名
