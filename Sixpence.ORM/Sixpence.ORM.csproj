@@ -5,8 +5,11 @@
     <Authors>Karl Du</Authors>
     <Company>Sixpence</Company>
     <Description>基于 Dapper 的 ORM 框架，仅支持 PostgreSql</Description>
+    <ReleaseVersion>2.2.0-beta.7</ReleaseVersion>
+    <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="log4net" Version="2.0.13" />
