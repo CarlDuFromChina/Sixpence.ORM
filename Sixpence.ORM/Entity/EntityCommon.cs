@@ -118,7 +118,7 @@ namespace Sixpence.ORM.Entity
                     }
                     if (item.IsDefined(typeof(DescriptionAttribute), false))
                     {
-                        column.LogicalName = (item.GetCustomAttributes(typeof(DescriptionAttribute), true).FirstOrDefault() as DescriptionAttribute)?.Description;
+                        column.Remark = (item.GetCustomAttributes(typeof(DescriptionAttribute), true).FirstOrDefault() as DescriptionAttribute)?.Description;
                     }
                     return column;
                 })

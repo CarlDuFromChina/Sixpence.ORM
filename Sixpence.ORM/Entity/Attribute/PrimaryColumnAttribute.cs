@@ -5,10 +5,19 @@ using System.Text;
 
 namespace Sixpence.ORM.Entity
 {
+    /// <summary>
+    /// 实体主键
+    /// </summary>
     public class PrimaryColumnAttribute : ColumnAttribute
     {
+        /// <summary>
+        /// 类型
+        /// </summary>
         public PrimaryType Type { get; set; }
 
+        /// <summary>
+        /// 主键名
+        /// </summary>
         public string Name { get; set; }
 
         /// <summary>
@@ -24,7 +33,6 @@ namespace Sixpence.ORM.Entity
             {
                 IsRequire = true,
                 Name = name,
-                LogicalName = name,
             };
         }
     }

@@ -8,15 +8,20 @@ namespace Sixpence.ORM.Entity
     [AttributeUsage(AttributeTargets.Class)]
     public sealed class EntityAttribute : Attribute
     {
-        public EntityAttribute(string tableName = "", string logicalName = "", bool isSystemEntity = false)
+        public EntityAttribute(string tableName = "", string remark = "")
         {
             this.TableName = tableName;
-            this.LogicalName = logicalName;
-            this.IsSystemEntity = isSystemEntity;
+            this.Remark = remark;
         }
 
+        /// <summary>
+        /// 表名
+        /// </summary>
         public string TableName { get; set; }
-        public string LogicalName { get; set; }
-        public bool IsSystemEntity { get; set; }
+
+        /// <summary>
+        /// 描述
+        /// </summary>
+        public string Remark { get; set; }
     }
 }

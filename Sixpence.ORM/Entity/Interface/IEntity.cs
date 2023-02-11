@@ -21,7 +21,7 @@ namespace Sixpence.ORM.Entity
         /// 获取逻辑名
         /// </summary>
         /// <returns></returns>
-        string GetLogicalName();
+        string GetRemark();
 
         /// <summary>
         /// 获取主键列
@@ -67,11 +67,5 @@ namespace Sixpence.ORM.Entity
         /// <param name="name"></param>
         /// <returns></returns>
         bool ContainKey(string name);
-
-        /// <summary>
-        /// 是否是系统实体
-        /// </summary>
-        /// <returns></returns>
-        bool IsSystemEntity();
     }
 }
