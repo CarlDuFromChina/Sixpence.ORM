@@ -18,14 +18,14 @@ namespace Sixpence.ORM
         public string Name { get; set; }
 
         /// <summary>
-        /// 逻辑名
-        /// </summary>
-        public string LogicalName { get; set; }
-
-        /// <summary>
         /// 字段类型（数据库字段类型）
         /// </summary>
         public string Type { get; set; }
+
+        /// <summary>
+        /// 备注信息
+        /// </summary>
+        public string Remark { get; set; }
 
         /// <summary>
         /// 字段长度

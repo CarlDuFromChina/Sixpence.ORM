@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 namespace Sixpence.ORM.Entity
 {
     /// <summary>
-    /// 主键自定义属性
-    /// TODO：使用 Plugin 方式做主键唯一性检查
+    /// 实体主键
     /// </summary>
     [AttributeUsage(AttributeTargets.Class,  AllowMultiple = true)]
     public sealed class KeyAttributesAttribute : Attribute
@@ -27,7 +26,7 @@ namespace Sixpence.ORM.Entity
         public string RepeatMessage { get; }
 
         /// <summary>
-        /// 字段
+        /// 主键
         /// </summary>
         public IList<string> AttributeList { get; }
     }

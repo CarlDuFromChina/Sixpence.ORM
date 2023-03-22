@@ -95,7 +95,7 @@ namespace Sixpence.ORM.Extensions
 
                         ServiceContainer.Resolve<IPostCreateEntity>()?.Execute(manager, item); // 创建后
 
-                        logger.Info($"实体{item.GetLogicalName()}（{tableName}）创建成功");
+                        logger.Info($"实体 {tableName} 创建成功");
                     }
                     else
                     {

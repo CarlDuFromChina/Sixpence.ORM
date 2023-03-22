@@ -18,15 +18,6 @@ namespace Sixpence.ORM.Entity
     {
         private static readonly ConcurrentDictionary<string, string> _entityNameCache = new ConcurrentDictionary<string, string>();
 
-        /// <summary>
-        /// 是否是系统实体
-        /// </summary>
-        public bool IsSystemEntity()
-        {
-            var attribute = Attribute.GetCustomAttribute(GetType(), typeof(EntityAttribute)) as EntityAttribute;
-            return attribute != null && attribute.IsSystemEntity;
-        }
-
         #region 实体基础字段
         /// <summary>
         /// 创建人
@@ -193,14 +184,14 @@ namespace Sixpence.ORM.Entity
         /// 获取逻辑名
         /// </summary>
         /// <returns></returns>
-        public string GetLogicalName()
+        public string GetRemark()
         {
             var attr = Attribute.GetCustomAttribute(GetType(), typeof(EntityAttribute)) as EntityAttribute;
             if (attr == null)
             {
                 return string.Empty;
             }
-            return attr.LogicalName;
+            return attr.Remark;
         }
 
         /// <summary>
