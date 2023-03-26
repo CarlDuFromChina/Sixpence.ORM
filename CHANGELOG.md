@@ -1,3 +1,8 @@
+## 3.1.0
+
++ `IEntityManager`实现了`IDisposable`
++ `IDbClient`实现了`IDisposable`
+
 # 3.0
 
 ### Features

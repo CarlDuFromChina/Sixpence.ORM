@@ -32,7 +32,7 @@
 Sixpence.ORM 是一个[NuGet library](https://www.nuget.org/packages/Dapper)，你可以在通过`Nuget`安装
 
 ```shell
-Install-Package Sixpence.ORM -Version 3.0.0
+Install-Package Sixpence.ORM -Version 3.1.0
 ```
 
 ## 特性
