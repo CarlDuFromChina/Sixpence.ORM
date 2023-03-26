@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM.EntityManager
 {
-    public interface IEntityManager
+    public interface IEntityManager : IDisposable
     {
         IDbClient DbClient { get; }
         IDbDriver Driver { get; }

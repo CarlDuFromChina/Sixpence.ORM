@@ -16,7 +16,7 @@ namespace Sixpence.ORM.DbClient
     /// <summary>
     /// 数据库实例
     /// </summary>
-    internal sealed class DbClient : IDbClient, IDisposable
+    internal sealed class DbClient : IDbClient
     {
 
         /// <summary>

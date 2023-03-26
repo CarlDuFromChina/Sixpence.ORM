@@ -61,81 +61,83 @@ namespace Sixpence.ORM.Extensions
         private static void OpenEntityAutoGenerate()
         {
             var logger = LoggerFactory.GetLogger("entity");
-            var manager = EntityManagerFactory.GetManager();
-            var driver = manager.DbClient.Driver;
-            var entityList = ServiceContainer.ResolveAll<IEntity>();
-
-            manager.ExecuteTransaction(() =>
+            using(var manager = EntityManagerFactory.GetManager())
             {
-                ServiceContainer.Resolve<IPreCreateEntities>()?.Execute(manager, entityList);
+                var driver = manager.DbClient.Driver;
+                var entityList = ServiceContainer.ResolveAll<IEntity>();
 
-                entityList.Each(item =>
+                manager.ExecuteTransaction(() =>
                 {
-                    var tableName = item.GetEntityName();
-                    var tableExsit = ConvertUtil.ConToBoolean(manager.ExecuteScalar(driver.TableExsit(item.GetEntityName())));
+                    ServiceContainer.Resolve<IPreCreateEntities>()?.Execute(manager, entityList);
 
-                    // 表未创建则创建，否则自动添加字段
-                    if (!tableExsit)
+                    entityList.Each(item =>
                     {
-                        ServiceContainer.Resolve<IPreCreateEntity>()?.Execute(manager, item); // 创建前
+                        var tableName = item.GetEntityName();
+                        var tableExsit = ConvertUtil.ConToBoolean(manager.ExecuteScalar(driver.TableExsit(item.GetEntityName())));
 
-                        var attrSql = EntityCommon
-                            .GetColumns(item, driver)
-                            .Select(e =>
-                            {
-                                var lengthSQL = e.Length != null ? $"({e.Length})" : "";
-                                var requireSQL = e.IsRequire == true ? " NOT NULL" : "";
-                                var defaultValueSQL = e.DefaultValue == null ? "" : e.DefaultValue is string ? $"DEFAULT '{e.DefaultValue}'" : $"DEFAULT {e.DefaultValue}";
-                                var primaryKeySQL = e.Name == item.GetPrimaryColumn().Name ? "PRIMARY KEY" : "";
-
-                                return $"{e.Name} {e.Type}{lengthSQL} {requireSQL} {primaryKeySQL} {defaultValueSQL}";
-                            })
-                            .Aggregate((a, b) => a + ",\r\n" + b);
-                        manager.Execute($@"CREATE TABLE public.{tableName} ({attrSql})");
-
-                        ServiceContainer.Resolve<IPostCreateEntity>()?.Execute(manager, item); // 创建后
-
-                        logger.Info($"实体 {tableName} 创建成功");
-                    }
-                    else
-                    {
-                        var tableAttrs = driver.GetEntityAttributes(manager.DbClient.DbConnection, tableName); // 查询表现有字段
-                        var entityAttrs = EntityCommon.GetColumns(item, driver); // 查询实体现有字段
-                        var addColumns = new List<ColumnOptions>(); // 表需要添加的字段
-                        var removeColumns = new List<ColumnOptions>(); // 表需要删除的字段
-
-                        // 循环实体字段
-                        entityAttrs.Each(attr =>
+                        // 表未创建则创建，否则自动添加字段
+                        if (!tableExsit)
                         {
-                            var _attr = tableAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
-                            if (_attr == null)
-                            {
-                                addColumns.Add(attr);
-                            }
-                        });
+                            ServiceContainer.Resolve<IPreCreateEntity>()?.Execute(manager, item); // 创建前
 
-                        // 循环表字段
-                        tableAttrs.Each(attr =>
+                            var attrSql = EntityCommon
+                                .GetColumns(item, driver)
+                                .Select(e =>
+                                {
+                                    var lengthSQL = e.Length != null ? $"({e.Length})" : "";
+                                    var requireSQL = e.IsRequire == true ? " NOT NULL" : "";
+                                    var defaultValueSQL = e.DefaultValue == null ? "" : e.DefaultValue is string ? $"DEFAULT '{e.DefaultValue}'" : $"DEFAULT {e.DefaultValue}";
+                                    var primaryKeySQL = e.Name == item.GetPrimaryColumn().Name ? "PRIMARY KEY" : "";
+
+                                    return $"{e.Name} {e.Type}{lengthSQL} {requireSQL} {primaryKeySQL} {defaultValueSQL}";
+                                })
+                                .Aggregate((a, b) => a + ",\r\n" + b);
+                            manager.Execute($@"CREATE TABLE public.{tableName} ({attrSql})");
+
+                            ServiceContainer.Resolve<IPostCreateEntity>()?.Execute(manager, item); // 创建后
+
+                            logger.Info($"实体 {tableName} 创建成功");
+                        }
+                        else
                         {
-                            var _attr = entityAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
-                            if (_attr == null)
+                            var tableAttrs = driver.GetEntityAttributes(manager.DbClient.DbConnection, tableName); // 查询表现有字段
+                            var entityAttrs = EntityCommon.GetColumns(item, driver); // 查询实体现有字段
+                            var addColumns = new List<ColumnOptions>(); // 表需要添加的字段
+                            var removeColumns = new List<ColumnOptions>(); // 表需要删除的字段
+
+                            // 循环实体字段
+                            entityAttrs.Each(attr =>
                             {
-                                removeColumns.Add(new ColumnOptions() { Name = attr.Name });
-                            }
-                        });
+                                var _attr = tableAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
+                                if (_attr == null)
+                                {
+                                    addColumns.Add(attr);
+                                }
+                            });
 
-                        // 删除字段
-                        if (removeColumns.IsNotEmpty())
-                            manager.Execute(driver.GetDropColumnSql(tableName, removeColumns));
+                            // 循环表字段
+                            tableAttrs.Each(attr =>
+                            {
+                                var _attr = entityAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
+                                if (_attr == null)
+                                {
+                                    removeColumns.Add(new ColumnOptions() { Name = attr.Name });
+                                }
+                            });
 
-                        // 新增字段
-                        if (addColumns.IsNotEmpty())
-                            manager.Execute(driver.GetAddColumnSql(tableName, addColumns));
-                    }
+                            // 删除字段
+                            if (removeColumns.IsNotEmpty())
+                                manager.Execute(driver.GetDropColumnSql(tableName, removeColumns));
+
+                            // 新增字段
+                            if (addColumns.IsNotEmpty())
+                                manager.Execute(driver.GetAddColumnSql(tableName, addColumns));
+                        }
+                    });
+
+                    ServiceContainer.Resolve<IPostCreateEntities>()?.Execute(manager, entityList);
                 });
-
-                ServiceContainer.Resolve<IPostCreateEntities>()?.Execute(manager, entityList);
-            });
+            }
         }
     }
 

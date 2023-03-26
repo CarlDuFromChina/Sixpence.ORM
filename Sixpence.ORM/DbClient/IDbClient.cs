@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM.DbClient
 {
-    public interface IDbClient
+    public interface IDbClient : IDisposable
     {
         /// <summary>
         /// 初始化数据库的连接
