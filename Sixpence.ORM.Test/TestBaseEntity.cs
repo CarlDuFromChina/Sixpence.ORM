@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using Sixpence.Common;
-using Sixpence.Common.IoC;
+using Sixpence.ORM.Common;
+using Sixpence.ORM.Common.IoC;
 using Sixpence.ORM.Entity;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Extensions;
@@ -12,7 +12,7 @@ using System.Text;
 namespace Sixpence.ORM.Test
 {
     [TestFixture]
-    internal class BaseEntityTest
+    internal class TestBaseEntity
     {
         private Test test;
 

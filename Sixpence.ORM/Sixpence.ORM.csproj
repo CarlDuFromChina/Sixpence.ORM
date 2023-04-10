@@ -17,10 +17,13 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="Npgsql" Version="7.0.1" />
     <PackageReference Include="NUnit" Version="3.13.3" />
-    <PackageReference Include="Sixpence.Common" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.aspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sixpence.ORM.Common\Sixpence.ORM.Common.csproj" />
   </ItemGroup>
 </Project>

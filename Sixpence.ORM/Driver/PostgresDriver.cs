@@ -1,8 +1,8 @@
 ﻿using Dapper;
 using Newtonsoft.Json.Linq;
 using Npgsql;
-using Sixpence.Common;
-using Sixpence.Common.Utils;
+using Sixpence.ORM.Common;
+using Sixpence.ORM.Common.Utils;
 using Sixpence.ORM.DbClient;
 using Sixpence.ORM.Entity;
 using Sixpence.ORM.Models;

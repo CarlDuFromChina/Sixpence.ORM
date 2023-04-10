@@ -1,4 +1,4 @@
-﻿using Sixpence.Common.IoC;
+﻿using Sixpence.ORM.Common.IoC;
 using Sixpence.ORM.EntityManager;
 using System;
 using System.Collections.Generic;

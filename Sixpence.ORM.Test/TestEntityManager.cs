@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using Sixpence.Common;
-using Sixpence.Common.Current;
-using Sixpence.Common.Utils;
+using Sixpence.ORM.Common;
+using Sixpence.ORM.Common.Current;
+using Sixpence.ORM.Common.Utils;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Extensions;
 using System;
@@ -13,7 +13,7 @@ using System.Text;
 namespace Sixpence.ORM.Test
 {
     [TestFixture]
-    internal class EntityManagerTest
+    internal class TestEntityManager
     {
         [SetUp]
         public void SetUp()

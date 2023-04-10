@@ -10,16 +10,16 @@
 
 核心类：
 
-+ BaseEntity：实体基类，所有实体都应继承于该基类
-+ EntityManager：通过此类，可以管理（CRUD）任何实体， `EntityManager` 就像放一个实体存储库的集合的地方
-+ Repository：`Repository` 就像 `EntityManager` 一样，但其操作仅限于具体实体
++ **BaseEntity**：实体基类，所有实体都应继承于该基类
++ **EntityManager**：通过此类，可以管理（CRUD）任何实体， `EntityManager` 就像放一个实体存储库的集合的地方
++ **Repository**：`Repository` 就像 `EntityManager` 一样，但其操作仅限于具体实体
 
 实体特性：
 
-+ ColumnAttribute：标注属性对应数据库中的列，必须指定列名、类型等
-+ EntityAttribute：标注类是一个实体类，可以指定表名，逻辑名
-+ KeyAttributesAttribute：标注实体类唯一键，可以是组合主键。插入或更新时会检查重复项
-+ PrimaryColumnAttribute：标注属性是主键，可以指定列名、类型
++ **ColumnAttribute**：标注属性对应数据库中的列，必须指定列名、类型等
++ **EntityAttribute**：标注类是一个实体类，可以指定表名，逻辑名
++ **KeyAttributesAttribute**：标注实体类唯一键，可以是组合主键。插入或更新时会检查重复项
++ **PrimaryColumnAttribute**：标注属性是主键，可以指定列名、类型
 
 ### 链接
 
@@ -268,6 +268,218 @@ public void Transcation(Test test, User user)
         testRepository.Create(test);
         userRepository.Create(user);
     });
+}
+```
+
+### 日志（Logger）
+
+`3.2.0`版本后移除了默认的`log4net`，支持自定义日志插件
+
+`log4net`日志插件实现如下：
+
+1、实现一个 log4net 的 Logger
+
+```c#
+using log4net;
+using Sixpence.ORM.Common.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Sixpence.ORM.Test.Logging
+{
+    public class Log4netLogger : ILogger
+    {
+        private readonly ILog _logger;
+        public Log4netLogger(ILog logger)
+        {
+            _logger = logger;
+        }
+
+        public void Debug(string message)
+        {
+            _logger.Debug(message);
+        }
+
+        public void Error(string message)
+        {
+            _logger.Error(message);
+        }
+
+        public void Error(string message, Exception ex)
+        {
+            _logger.Error(message, ex);
+        }
+
+        public void Error(Exception ex)
+        {
+            _logger.Error(ex);
+        }
+
+        public void Info(string message)
+        {
+            _logger.Info(message);
+        }
+
+        public void Warn(string message)
+        {
+            _logger.Warn(message);
+        }
+    }
+}
+```
+
+2、实现一个日志工厂类
+
+```c#
+using log4net;
+using log4net.Appender;
+using log4net.Config;
+using log4net.Core;
+using log4net.Filter;
+using log4net.Layout;
+using log4net.Repository;
+using Sixpence.ORM.Common.Logging;
+using Sixpence.ORM.Test.Logging;
+using Sixpence.ORM.Test.Utils;
+using System;
+using System.ComponentModel;
+using System.IO;
+
+namespace Sixpence.Common.Logging
+{
+    /// <summary>
+    /// 日志工厂类
+    /// </summary>
+    public class LoggerFactory : ILoggerFactory
+    {
+        private static readonly Object lockObject = new object();
+
+        static LoggerFactory()
+        {
+            XmlConfigurator.Configure(new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log4net.config")));
+        }
+
+        /// <summary>
+        /// 获取日志记录器（自定义）
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static ILog GetLogger(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+
+            if (MemoryCacheUtil.Contains(name))
+            {
+                return MemoryCacheUtil.GetCacheItem<ILog>(name);
+            }
+            else
+            {
+                lock (lockObject)
+                {
+                    if (MemoryCacheUtil.Contains(name))
+                    {
+                        return MemoryCacheUtil.GetCacheItem<ILog>(name);
+                    }
+                    var logger = CreateLoggerInstance(name);
+                    var now = DateTime.Now.AddDays(1);
+                    var expireDate = new DateTime(now.Year, now.Month, now.Day); // 晚上0点过期
+                    MemoryCacheUtil.Set(name, logger, expireDate);
+                    return logger;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取日志记录器（默认实现）
+        /// </summary>
+        /// <param name="logType"></param>
+        /// <returns></returns>
+        public static ILog GetLogger(LogType logType = LogType.All)
+        {
+            switch (logType)
+            {
+                case LogType.Error:
+                    return LogManager.GetLogger("Error");
+                case LogType.All:
+                default:
+                    return LogManager.GetLogger("All");
+            }
+        }
+
+        /// <summary>
+        /// 创建日志实例
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        private static ILog CreateLoggerInstance(string name)
+        {
+            // Pattern Layout
+            PatternLayout layout = new PatternLayout("[%logger][%date]%message\r\n");
+            // Level Filter
+            LevelMatchFilter filter = new LevelMatchFilter();
+            filter.LevelToMatch = Level.All;
+            filter.ActivateOptions();
+            // File Appender
+            RollingFileAppender appender = new RollingFileAppender();
+            // 目录
+            appender.File = $"log{Path.AltDirectorySeparatorChar}{name}.log";
+            // 立即写入磁盘
+            appender.ImmediateFlush = true;
+            // true：追加到文件；false：覆盖文件
+            appender.AppendToFile = true;
+            // 新的日期或者文件大小达到上限，新建一个文件
+            appender.RollingStyle = RollingFileAppender.RollingMode.Once;
+            // 文件大小达到上限，新建文件时，文件编号放到文件后缀前面
+            appender.PreserveLogFileNameExtension = true;
+            // 最小锁定模型以允许多个进程可以写入同一个文件
+            appender.LockingModel = new FileAppender.MinimalLock();
+            appender.Name = $"{name}Appender";
+            appender.AddFilter(filter);
+            appender.Layout = layout;
+            appender.ActivateOptions();
+            // 设置无限备份=-1 ，最大备份数为30
+            appender.MaxSizeRollBackups = 30;
+            appender.StaticLogFileName = true;
+            string repositoryName = $"{name}Repository";
+            try
+            {
+                LoggerManager.GetRepository(repositoryName);
+            }
+            catch
+            {
+                ILoggerRepository repository = LoggerManager.CreateRepository(repositoryName);
+                BasicConfigurator.Configure(repository, appender);
+            }
+            var logger = LogManager.GetLogger(repositoryName, name);
+            return logger;
+        }
+
+        ORM.Common.Logging.ILogger ILoggerFactory.GetLogger()
+        {
+            var logger = GetLogger(LogType.All);
+            return new Log4netLogger(logger);
+        }
+
+        ORM.Common.Logging.ILogger ILoggerFactory.GetLogger(string name)
+        {
+            var logger = GetLogger(name);
+            return new Log4netLogger(logger);
+        }
+    }
+
+    /// <summary>
+    /// 日志类型
+    /// </summary>
+    public enum LogType
+    {
+        [Description("报错信息")]
+        Error,
+        [Description("信息")]
+        All
+    }
 }
 ```
 

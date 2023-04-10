@@ -1,5 +1,5 @@
 ﻿using System;
-using Sixpence.Common.Utils;
+using Sixpence.ORM.Common.Utils;
 using Sixpence.ORM.Driver;
 
 namespace Sixpence.ORM.EntityManager

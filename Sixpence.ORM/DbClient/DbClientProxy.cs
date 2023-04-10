@@ -1,7 +1,7 @@
-﻿using Sixpence.Common;
+﻿using Sixpence.ORM.Common;
 using Sixpence.ORM.Driver;
-using Sixpence.Common.Logging;
-using Sixpence.Common.Utils;
+using Sixpence.ORM.Common.Logging;
+using Sixpence.ORM.Common.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;

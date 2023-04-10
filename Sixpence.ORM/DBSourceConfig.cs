@@ -1,4 +1,4 @@
-﻿using Sixpence.Common.Config;
+﻿using Sixpence.ORM.Common.Config;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

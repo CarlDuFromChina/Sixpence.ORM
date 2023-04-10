@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using Sixpence.Common;
-using Sixpence.Common.Current;
+using Sixpence.ORM.Common;
+using Sixpence.ORM.Common.Current;
 using Sixpence.ORM.Entity;
 using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Repository;

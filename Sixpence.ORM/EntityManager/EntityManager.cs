@@ -1,6 +1,6 @@
-﻿using Sixpence.Common;
-using Sixpence.Common.IoC;
-using Sixpence.Common.Utils;
+﻿using Sixpence.ORM.Common;
+using Sixpence.ORM.Common.IoC;
+using Sixpence.ORM.Common.Utils;
 using Sixpence.ORM.DbClient;
 using Sixpence.ORM.Driver;
 using Sixpence.ORM.Entity;
@@ -10,8 +10,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
 using System.IO;
-using Sixpence.Common.Logging;
 using Sixpence.ORM.Extensions;
+using Sixpence.ORM.Common.Logging;
+using Sixpence.ORM.Common.Extensions;
 
 namespace Sixpence.ORM.EntityManager
 {

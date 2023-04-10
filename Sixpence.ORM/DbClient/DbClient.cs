@@ -1,8 +1,8 @@
 ﻿using Dapper;
 using Npgsql;
-using Sixpence.Common;
-using Sixpence.Common.IoC;
-using Sixpence.Common.Utils;
+using Sixpence.ORM.Common;
+using Sixpence.ORM.Common.IoC;
+using Sixpence.ORM.Common.Utils;
 using Sixpence.ORM.Driver;
 using System;
 using System.Collections.Generic;
