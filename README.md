@@ -32,7 +32,7 @@
 Sixpence.ORM 是一个[NuGet library](https://www.nuget.org/packages/Dapper)，你可以在通过`Nuget`安装
 
 ```shell
-Install-Package Sixpence.ORM -Version 3.2.0
+Install-Package Sixpence.ORM -Version 3.2.1
 ```
 
 ## 特性
@@ -273,7 +273,7 @@ public void Transcation(Test test, User user)
 
 ### 日志（Logger）
 
-`3.2.0`版本后移除了默认的`log4net`，支持自定义日志插件
+`3.2.1`版本后移除了默认的`log4net`，支持自定义日志插件
 
 `log4net`日志插件实现如下：
 

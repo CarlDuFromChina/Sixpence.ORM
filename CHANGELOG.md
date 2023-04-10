@@ -1,4 +1,4 @@
-## 3.2.0
+## 3.2.1
 
 + 移除`Sixpence.Common`引用
 + 添加`ILogger`接口
