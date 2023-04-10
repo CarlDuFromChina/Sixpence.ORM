@@ -1,3 +1,9 @@
+## 3.2.0
+
++ 移除`Sixpence.Common`引用
++ 添加`ILogger`接口
++ 添加`ILoggerFactory`接口
+
 ## 3.1.0
 
 + `IEntityManager`实现了`IDisposable`

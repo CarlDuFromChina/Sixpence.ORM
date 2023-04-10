@@ -5,7 +5,7 @@
     <Authors>Karl Du</Authors>
     <Company>Sixpence</Company>
     <Description>基于 Dapper 的 ORM 框架，仅支持 PostgreSql</Description>
-    <ReleaseVersion>3.1.0</ReleaseVersion>
+    <ReleaseVersion>3.2.0</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
