@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using Sixpence.ORM.Common;
+using Sixpence.Common;
 using Sixpence.ORM.Common.Current;
-using Sixpence.ORM.Common.Utils;
+using Sixpence.Common.Utils;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Extensions;
 using System;

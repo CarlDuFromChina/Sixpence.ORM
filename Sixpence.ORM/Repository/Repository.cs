@@ -1,4 +1,4 @@
-﻿using Sixpence.ORM.Common;
+﻿using Sixpence.Common;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Entity;
 using System;

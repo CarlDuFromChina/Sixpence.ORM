@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
-using Sixpence.ORM.Common;
+using Sixpence.Common;
 using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Models;
 using System;

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Sixpence.ORM.Common;
-using Sixpence.ORM.Common.IoC;
-using Sixpence.ORM.Common.Logging;
+using Sixpence.Common;
+using Sixpence.Common.IoC;
+using Sixpence.Common.Logging;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Entity;
 using System;
@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Sixpence.ORM.Driver;
-using Sixpence.ORM.Common.Utils;
+using Sixpence.Common.Utils;
 
 namespace Sixpence.ORM.Extensions
 {

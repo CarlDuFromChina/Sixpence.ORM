@@ -1,5 +1,5 @@
 ﻿using log4net;
-using Sixpence.ORM.Common.Logging;
+using Sixpence.Common.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,5 +1,5 @@
-﻿using Sixpence.ORM.Common;
-using Sixpence.ORM.Common.IoC;
+﻿using Sixpence.Common;
+using Sixpence.Common.IoC;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;

@@ -1,6 +1,6 @@
-﻿using Sixpence.ORM.Common;
-using Sixpence.ORM.Common.Current;
-using Sixpence.ORM.Common.Utils;
+﻿using Sixpence.Common;
+using Sixpence.Common.Current;
+using Sixpence.Common.Utils;
 using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;

@@ -281,7 +281,7 @@ public void Transcation(Test test, User user)
 
 ```c#
 using log4net;
-using Sixpence.ORM.Common.Logging;
+using Sixpence.Common.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -341,7 +341,7 @@ using log4net.Core;
 using log4net.Filter;
 using log4net.Layout;
 using log4net.Repository;
-using Sixpence.ORM.Common.Logging;
+using Sixpence.Common.Logging;
 using Sixpence.ORM.Test.Logging;
 using Sixpence.ORM.Test.Utils;
 using System;

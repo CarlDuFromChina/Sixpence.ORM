@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Sixpence.ORM.Common;
-using Sixpence.ORM.Common.IoC;
-using Sixpence.ORM.Common.Utils;
+using Sixpence.Common;
+using Sixpence.Common.IoC;
+using Sixpence.Common.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;

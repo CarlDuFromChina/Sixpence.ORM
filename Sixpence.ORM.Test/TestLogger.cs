@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Sixpence.ORM.Common.Current;
-using Sixpence.ORM.Common.Logging;
+using Sixpence.Common.Logging;
 using Sixpence.ORM.Extensions;
 using Sixpence.ORM.Repository;
 using System;

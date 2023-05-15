@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using Sixpence.ORM.Common.IoC;
+using Sixpence.Common.IoC;
 using Sixpence.ORM.Models;
 
 namespace Sixpence.ORM.Driver
