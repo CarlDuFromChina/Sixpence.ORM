@@ -136,5 +136,16 @@ namespace Sixpence.ORM.Driver
         /// <param name="tableName"></param>
         /// <returns></returns>
         List<EntityAttr> GetEntityAttributes(IDbConnection conn, string tableName);
+
+        /// <summary>
+        /// 创建或更新SQL
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="updatedColumns"></param>
+        /// <param name="values"></param>
+        /// <param name="primaryKeys"></param>
+        /// <param name="updatedValues"></param>
+        /// <returns></returns>
+        string GetCreateOrUpdateSQL(string tableName, string updatedColumns, string values, string primaryKeys, string updatedValues);
     }
 }

@@ -242,5 +242,12 @@ WHERE
 	AND A.atttypid <> 0";
             return conn.Query<EntityAttr>(sql).ToList();
         }
+
+        public string GetCreateOrUpdateSQL(string tableName, string updatedColumns, string values, string primaryKeys, string updatedValues)
+        {
+            var templateSQL = $@"INSERT INTO {tableName} ({updatedColumns}) VALUES ({values})
+ON CONFLICT ({primaryKeys}) DO UPDATE SET {updatedValues};";
+            return templateSQL;
+        }
     }
 }

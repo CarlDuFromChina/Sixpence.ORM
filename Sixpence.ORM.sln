@@ -14,8 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixpence.ORM.Common", "Sixpence.ORM.Common\Sixpence.ORM.Common.csproj", "{FF406DD4-6A1A-4434-8586-5BEDA218925A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,10 +28,6 @@ Global
 		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FF406DD4-6A1A-4434-8586-5BEDA218925A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FF406DD4-6A1A-4434-8586-5BEDA218925A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FF406DD4-6A1A-4434-8586-5BEDA218925A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FF406DD4-6A1A-4434-8586-5BEDA218925A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -42,6 +36,6 @@ Global
 		SolutionGuid = {52846A72-077A-424B-B504-C7B1C3E3A8C1}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		version = 3.2.1
+		version = 3.3.0
 	EndGlobalSection
 EndGlobal

@@ -1,3 +1,8 @@
+## 3.3.0
+
++ 合并了`Sixpence.ORM.Common`项目
++ `IDbDriver`添加了`GetCreateOrUpdateSQL`方法
+
 ## 3.2.1
 
 + 移除`Sixpence.Common`引用

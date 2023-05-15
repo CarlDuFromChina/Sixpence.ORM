@@ -23,14 +23,18 @@ namespace Sixpence.ORM.EntityManager
     {
         internal EntityManager(string connectionString, DriverType driverType = DriverType.Postgresql)
         {
+            _driverType = driverType;
             _dbClient = new DbClientProxy();
             _dbClient.Initialize(connectionString, driverType);
         }
 
         public IDbDriver Driver => DbClient.Driver;
 
-        IDbClient _dbClient;
+        private IDbClient _dbClient;
         public IDbClient DbClient => _dbClient;
+
+        private DriverType _driverType;
+        public DriverType DriverType => _driverType;
 
         #region CRUD
         /// <summary>
