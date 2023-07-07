@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Interface
+namespace Sixpence.ORM
 {
     [ServiceRegister]
     public interface IDbDialect

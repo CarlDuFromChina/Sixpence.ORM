@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using Sixpence.Common.IoC;
-using Sixpence.ORM.Interface;
 using Sixpence.ORM.Models;
 
 namespace Sixpence.ORM

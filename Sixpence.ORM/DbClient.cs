@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using Sixpence.Common.Logging;
 using Sixpence.Common;
-using Sixpence.ORM.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data;

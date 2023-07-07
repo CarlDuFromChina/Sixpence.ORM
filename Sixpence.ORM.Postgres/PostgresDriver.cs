@@ -1,5 +1,4 @@
 ﻿using Npgsql;
-using Sixpence.ORM.Interface;
 using System.Data.Common;
 
 namespace Sixpence.ORM.PostgreSql

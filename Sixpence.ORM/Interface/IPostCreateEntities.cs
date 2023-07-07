@@ -1,16 +1,16 @@
 ﻿using Sixpence.Common.IoC;
-using Sixpence.ORM.Interface;
+using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sixpence.ORM.Entity
+namespace Sixpence.ORM
 {
     /// <summary>
-    /// 创建所有实体前
+    /// 创建所有实体后
     /// </summary>
     [ServiceRegister]
-    public interface IPreCreateEntities
+    public interface IPostCreateEntities
     {
         void Execute(IEntityManager manager, IEnumerable<IEntity> entities);
     }

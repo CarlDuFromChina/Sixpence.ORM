@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using System.Data;
 using System.IO;
 using Sixpence.Common.Logging;
-using Sixpence.ORM.Interface;
 
 namespace Sixpence.ORM.EntityManager
 {

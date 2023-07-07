@@ -1,10 +1,9 @@
 ﻿using Sixpence.Common.IoC;
-using Sixpence.ORM.Interface;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sixpence.ORM.Entity
+namespace Sixpence.ORM
 {
     /// <summary>
     /// 创建实体前

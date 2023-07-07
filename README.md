@@ -65,13 +65,9 @@ public class Startup
 
     public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHttpContextAccessor accessor)
     {
-        app.UseORM(options => 
-            {
-                options.EntityClassNameCase = ClassNameCase.UnderScore; // 实体下划线命名
-                options.AutoGenerate = true; // 自动生成实体
-            })
-            .UsePostgres()
-            .UseMigrateDB();
+        app.UseORM()
+           .UsePostgres()
+           .UseMigrateDB();
     }
 }
 ```

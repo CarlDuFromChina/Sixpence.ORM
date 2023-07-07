@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Interface
+namespace Sixpence.ORM
 {
     /// <summary>
     /// 数据库批量操作

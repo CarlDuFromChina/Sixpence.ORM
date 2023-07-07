@@ -2,7 +2,6 @@
 using Sixpence.Common.Current;
 using Sixpence.Common.Utils;
 using Sixpence.ORM.Entity;
-using Sixpence.ORM.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
