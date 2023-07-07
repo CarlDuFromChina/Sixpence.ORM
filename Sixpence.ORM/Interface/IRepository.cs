@@ -1,10 +1,10 @@
 ﻿using Sixpence.ORM.Entity;
-using Sixpence.ORM.EntityManager;
+using Sixpence.ORM.Interface;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sixpence.ORM.Repository
+namespace Sixpence.ORM
 {
     public interface IRepository<E> where E : BaseEntity, new()
     {

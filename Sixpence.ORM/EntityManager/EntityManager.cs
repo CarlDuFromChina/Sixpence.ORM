@@ -1,8 +1,6 @@
 ﻿using Sixpence.Common;
 using Sixpence.Common.IoC;
 using Sixpence.Common.Utils;
-using Sixpence.ORM.DbClient;
-using Sixpence.ORM.Driver;
 using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
@@ -11,6 +9,7 @@ using System.Threading.Tasks;
 using System.Data;
 using System.IO;
 using Sixpence.Common.Logging;
+using Sixpence.ORM.Interface;
 
 namespace Sixpence.ORM.EntityManager
 {
@@ -19,20 +18,14 @@ namespace Sixpence.ORM.EntityManager
     /// </summary>
     internal class EntityManager : IEntityManager, IDisposable
     {
-        internal EntityManager(string connectionString, DriverType driverType = DriverType.Postgresql)
+        internal EntityManager(string connectionString, IDbDriver dbDriver)
         {
-            _driverType = driverType;
-            _dbClient = new DbClientProxy();
-            _dbClient.Initialize(connectionString, driverType);
+            _dbClient = new DbClient(dbDriver, connectionString, DBSourceConfig.Config.CommandTimeOut);
         }
 
-        public IDbDriver Driver => DbClient.Driver;
-
-        private IDbClient _dbClient;
-        public IDbClient DbClient => _dbClient;
-
-        private DriverType _driverType;
-        public DriverType DriverType => _driverType;
+        public IDbDriver Driver => _dbClient.Driver;
+        private DbClient _dbClient;
+        public DbClient DbClient => _dbClient;
 
         #region CRUD
         /// <summary>
@@ -62,7 +55,7 @@ namespace Sixpence.ORM.EntityManager
                 foreach (var attr in entity.GetAttributes())
                 {
                     var attrName = attr.Key; // 列名
-                    var keyValue = Driver.HandleNameValue($"@{attrName}", attr.Value); // 值
+                    var keyValue = Driver.Dialect.HandleParameter($"{Driver.Dialect.ParameterPrefix}{attrName}", attr.Value); // 值
                     attrs.Add(attrName);
                     values.Add(keyValue.name);
                     paramList.Add(attrName, keyValue.value);
@@ -93,7 +86,7 @@ namespace Sixpence.ORM.EntityManager
         {
             var entity = ServiceContainer.Resolve<IEntity>(key => EntityCommon.CompareEntityName(key, entityName)) as BaseEntity;
             AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
-            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = @id", new { id });
+            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id", new { id });
 
             if (dataList.Rows.Count == 0) return 0;
 
@@ -102,8 +95,7 @@ namespace Sixpence.ORM.EntityManager
             var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()));
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
 
-            var sql = "DELETE FROM {0} WHERE {1} = @id";
-            sql = string.Format(sql, entityName, entity.GetPrimaryColumn().Name);
+            var sql = $"DELETE FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
             int result = this.Execute(sql, new { id });
 
             plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
@@ -121,8 +113,7 @@ namespace Sixpence.ORM.EntityManager
             {
                 var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()));
                 plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreDelete });
-                var sql = "DELETE FROM {0} WHERE {1} = @id";
-                sql = string.Format(sql, entity.GetEntityName(), entity.GetPrimaryColumn().Name);
+                var sql = $"DELETE FROM {entity.GetEntityName()} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
                 int result = this.Execute(sql, new { id = entity.GetPrimaryColumn().Value });
                 plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PostDelete });
                 return result;
@@ -165,7 +156,7 @@ namespace Sixpence.ORM.EntityManager
         {
             var sql = $@"
 SELECT * FROM {entity.GetEntityName()}
-WHERE {entity.GetPrimaryColumn().Name} = @id;
+WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
 ";
             var dataList = this.Query(sql, new { id = entity.GetPrimaryColumn().Value });
 
@@ -195,10 +186,8 @@ WHERE {entity.GetPrimaryColumn().Name} = @id;
                     .Each(item => item.Execute(context));
                 #endregion
 
-                var sql = @"
-UPDATE {0} SET {1} WHERE {2} = @id;
-";
-                var paramList = new Dictionary<string, object>() { { "@id", entity.GetPrimaryColumn().Value } };
+                var sql = @"UPDATE {0} SET {1} WHERE {2} = {3}id;";
+                var paramList = new Dictionary<string, object>() { { $"{Driver.Dialect.ParameterPrefix}id", entity.GetPrimaryColumn().Value } };
 
                 #region 处理属性
                 var attributes = new List<string>();
@@ -207,14 +196,14 @@ UPDATE {0} SET {1} WHERE {2} = @id;
                 {
                     if (item.Key != "id" && item.Key != entity.GetPrimaryColumn().Name)
                     {
-                        var keyValue = Driver.HandleNameValue($"@param{count}", item.Value);
-                        paramList.Add($"@param{count}", keyValue.value);
+                        var keyValue = Driver.Dialect.HandleParameter($"{Driver.Dialect.ParameterPrefix}param{count}", item.Value);
+                        paramList.Add($"{Driver.Dialect.ParameterPrefix}param{count}", keyValue.value);
                         attributes.Add($"{ item.Key} = {keyValue.name}");
                         count++;
                     }
                 }
                 #endregion
-                sql = string.Format(sql, entity.GetEntityName(), string.Join(",", attributes), entity.GetPrimaryColumn().Name);
+                sql = string.Format(sql, entity.GetEntityName(), string.Join(",", attributes), entity.GetPrimaryColumn().Name, Driver.Dialect.ParameterPrefix);
                 var result = this.Execute(sql, paramList);
 
                 #region 更新后 Plugin
@@ -306,7 +295,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
         /// <returns></returns>
         public T QueryFirst<T>(string id) where T : BaseEntity, new()
         {
-            var sql = $"SELECT * FROM {new T().GetEntityName()} WHERE {new T().GetPrimaryColumn().Name} =@id";
+            var sql = $"SELECT * FROM {new T().GetEntityName()} WHERE {new T().GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
             return QueryFirst<T>(sql, new { id });
         }
 
@@ -377,7 +366,7 @@ UPDATE {0} SET {1} WHERE {2} = @id;
                     sql += $" {orderby}";
             }
 
-            DbClient.Driver.AddLimit(ref sql, pageIndex, pageSize);
+            sql += $" {DbClient.Driver.Dialect.GetPageSql(pageIndex, pageSize)}";
             return Query<T>(sql, param);
         }
 
@@ -419,7 +408,7 @@ WHERE
             var count = 0;
             ids.ToList().ForEach(item =>
             {
-                parmas.Add($"@id{++count}", ids[count - 1]);
+                parmas.Add($"{Driver.Dialect.ParameterPrefix}id{++count}", ids[count - 1]);
             });
             sql = sql.Replace("@ids", string.Join(",", parmas.Keys));
             var data = Query<T>(sql, parmas);

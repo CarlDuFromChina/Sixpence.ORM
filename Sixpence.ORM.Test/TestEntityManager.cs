@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Sixpence.Common;
-using Sixpence.ORM.Common.Current;
 using Sixpence.Common.Utils;
 using Sixpence.ORM.EntityManager;
-using Sixpence.ORM.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Sixpence.ORM.Interface;
+using Sixpence.Common.Current;
 
 namespace Sixpence.ORM.Test
 {
@@ -33,7 +33,7 @@ namespace Sixpence.ORM.Test
             SixpenceORMBuilderExtension.UseORM(null);
             using(IEntityManager manager = EntityManagerFactory.GetManager())
             {
-                var result = manager.ExecuteScalar(manager.DbClient.Driver.TableExsit("test"));
+                var result = manager.ExecuteScalar(manager.DbClient.Driver.Dialect.GetTableExsitSql("test"));
                 Assert.IsTrue(ConvertUtil.ConToBoolean(result));
             }
         }

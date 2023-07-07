@@ -2,6 +2,7 @@
 using Sixpence.Common.Current;
 using Sixpence.Common.Utils;
 using Sixpence.ORM.Entity;
+using Sixpence.ORM.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -67,16 +68,19 @@ namespace Sixpence.ORM.EntityManager
             var attrs = entity.GetType().GetCustomAttributes(typeof(KeyAttributesAttribute), false);
             if (attrs.Length == 0) return;
 
+            var dialect = manager.Driver.Dialect;
+            var parameterPrefix = dialect.ParameterPrefix;
+
             attrs.Select(item => item as KeyAttributesAttribute)
                .Each(item =>
                {
                    if (item.AttributeList == null || item.AttributeList.Count == 0) return;
 
-                   var paramList = new Dictionary<string, object>() { { "@id", entity.GetPrimaryColumn().Value } };
-                   var sqlParam = new List<string>() { $" AND {entity.GetPrimaryColumn().Name} <> @id" }; // 排除自身
+                   var paramList = new Dictionary<string, object>() { { $"{parameterPrefix}id", entity.GetPrimaryColumn().Value } };
+                   var sqlParam = new List<string>() { $" AND {entity.GetPrimaryColumn().Name} <> {parameterPrefix}id" }; // 排除自身
                    item.AttributeList.Distinct().Each(attr =>
                    {
-                       var keyValue = manager.Driver.HandleNameValue($"@{attr}", entity[attr]);
+                       var keyValue = dialect.HandleParameter($"{parameterPrefix}{attr}", entity[attr]);
                        sqlParam.Add($" AND {attr} = {keyValue.name}");
                        paramList.Add(keyValue.name, keyValue.value);
                    });

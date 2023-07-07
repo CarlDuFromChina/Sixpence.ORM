@@ -2,10 +2,9 @@
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Sixpence.Common;
+using Sixpence.Common.Current;
 using Sixpence.ORM.Common.Current;
 using Sixpence.ORM.Entity;
-using Sixpence.ORM.Extensions;
-using Sixpence.ORM.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

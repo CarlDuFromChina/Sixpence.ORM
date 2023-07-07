@@ -1,17 +1,15 @@
-﻿using Sixpence.ORM.DbClient;
-using Sixpence.ORM.Driver;
-using Sixpence.ORM.Entity;
+﻿using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.EntityManager
+namespace Sixpence.ORM
 {
     public interface IEntityManager : IDisposable
     {
-        IDbClient DbClient { get; }
+        DbClient DbClient { get; }
         IDbDriver Driver { get; }
 
         #region CRUD

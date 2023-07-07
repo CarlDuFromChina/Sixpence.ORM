@@ -24,7 +24,6 @@
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="Npgsql" Version="7.0.1" />
     <PackageReference Include="NUnit" Version="3.13.3" />
   </ItemGroup>
 

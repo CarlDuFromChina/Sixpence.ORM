@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Sixpence.ORM.Interface;
 
-namespace Sixpence.ORM.Repository
+namespace Sixpence.ORM
 {
     public class Repository<E> : IRepository<E>
         where E : BaseEntity, new()

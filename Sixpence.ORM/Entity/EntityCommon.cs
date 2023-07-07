@@ -1,5 +1,4 @@
-﻿using Sixpence.ORM.Driver;
-using Sixpence.ORM.Extensions;
+﻿using Sixpence.ORM.Interface;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
@@ -114,7 +113,14 @@ namespace Sixpence.ORM.Entity
                     }
                     if (string.IsNullOrEmpty(column.Type))
                     {
-                        column.Type = driver.Convert2DbType(item.PropertyType);
+                        if (driver.FieldMapping.GetFieldMappings().TryGetValue(item.PropertyType, out var type))
+                        {
+                            column.Type = type;
+                        }
+                        else
+                        {
+                            throw new Exception($"未找到类型 {item.PropertyType} 的映射");
+                        }
                     }
                     if (item.IsDefined(typeof(DescriptionAttribute), false))
                     {

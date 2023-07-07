@@ -1,9 +1,7 @@
 ﻿using Dapper;
-using Npgsql;
+using Sixpence.Common.Logging;
 using Sixpence.Common;
-using Sixpence.Common.IoC;
-using Sixpence.Common.Utils;
-using Sixpence.ORM.Driver;
+using Sixpence.ORM.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,33 +9,37 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.DbClient
+namespace Sixpence.ORM
 {
     /// <summary>
     /// 数据库实例
     /// </summary>
-    internal sealed class DbClient : IDbClient
+    public class DbClient
     {
-
-        /// <summary>
-        /// 数据库连接实例
-        /// </summary>
         public IDbConnection DbConnection { get; private set; }
 
         private IDbDriver driver;
         public IDbDriver Driver => driver;
+        public IDbDialect Dialect => driver.Dialect;
+        public IDbBatch Batch => driver.Batch;
 
-        private int commandTimeOut = DBSourceConfig.Config.CommandTimeOut;
+        private int? commandTimeout = 20;
+        public int? CommandTimeout => commandTimeout;
 
         /// <summary>
-        /// 初始化数据库连接
+        /// 是否日志 SQL
         /// </summary>
-        /// <param name="connectionString"></param>
-        public void Initialize(string connectionString, DriverType driverType)
+        private bool LogSql;
+
+        internal DbClient(IDbDriver dbDriver, string connectionString, int? commandTimeout, bool logSql = false)
         {
-            driver = ServiceContainer.ResolveAll<IDbDriver>()?.FirstOrDefault(item => item.Provider == driverType.GetDescription());
-            AssertUtil.IsNull(driver, $"未找到数据库驱动类型[{driver.Provider}]");
-            DbConnection = driver.GetDbConnection(connectionString);
+            driver = dbDriver;
+            DbConnection = dbDriver.GetDbConnection(connectionString);
+            if (commandTimeout != null)
+            {
+                this.commandTimeout = commandTimeout;
+            }
+            LogSql = logSql;
         }
 
         /// <summary>
@@ -141,7 +143,15 @@ namespace Sixpence.ORM.DbClient
         /// <param name="paramList"></param>
         /// <returns></returns>
         public int Execute(string sql, object param = null)
-            => DbConnection.Execute(sql, param, commandTimeout: commandTimeOut);
+        {
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+
+            if (LogSql)
+                LogUtil.Debug(sql + paramList.ToLogString());
+
+            return DbConnection.Execute(sql, param, commandTimeout: CommandTimeout);
+        }
 
         /// <summary>
         /// 执行SQL语句，并返回第一行第一列
@@ -150,7 +160,15 @@ namespace Sixpence.ORM.DbClient
         /// <param name="paramList"></param>
         /// <returns></returns>
         public object ExecuteScalar(string sql, object param = null)
-            => DbConnection.ExecuteScalar(sql, param, commandTimeout: commandTimeOut);
+        {
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+
+            if (LogSql)
+                LogUtil.Debug(sql + paramList.ToLogString());
+
+            return DbConnection.ExecuteScalar(sql, param, commandTimeout: CommandTimeout);
+        }
         #endregion
 
         #region Query
@@ -162,7 +180,15 @@ namespace Sixpence.ORM.DbClient
         /// <param name="param"></param>
         /// <returns></returns>
         public IEnumerable<T> Query<T>(string sql, object param = null)
-            => DbConnection.Query<T>(sql, param, commandTimeout: commandTimeOut);
+        {
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+
+            if (LogSql)
+                LogUtil.Debug(sql + paramList.ToLogString());
+
+            return DbConnection.Query<T>(sql, param, commandTimeout: CommandTimeout);
+        }
 
         /// <summary>
         /// 执行SQL语句，并返回查询结果
@@ -172,7 +198,15 @@ namespace Sixpence.ORM.DbClient
         /// <param name="paramList"></param>
         /// <returns></returns>
         public T QueryFirst<T>(string sql, object param = null)
-            => DbConnection.QueryFirstOrDefault<T>(sql, param, commandTimeout: commandTimeOut);
+        {
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+
+            if (LogSql)
+                LogUtil.Debug(sql + paramList.ToLogString());
+
+            return DbConnection.QueryFirstOrDefault<T>(sql, param, commandTimeout: CommandTimeout);
+        }
         #endregion
 
         #region DataTable
@@ -184,8 +218,14 @@ namespace Sixpence.ORM.DbClient
         /// <returns></returns>
         public DataTable Query(string sql, object param = null)
         {
+            var paramList = param?.ToDictionary();
+            sql = ConvertSqlToDialectSql(sql, paramList);
+
+            if (LogSql)
+                LogUtil.Debug(sql + paramList.ToLogString());
+
             DataTable dt = new DataTable();
-            var reader = DbConnection.ExecuteReader(sql, param, commandTimeout: commandTimeOut);
+            var reader = DbConnection.ExecuteReader(sql, param, commandTimeout: CommandTimeout);
             dt.Load(reader);
             return dt;
         }
@@ -197,7 +237,14 @@ namespace Sixpence.ORM.DbClient
         /// <param name="tableName"></param>
         /// <returns></returns>
         public string CreateTemporaryTable(string tableName)
-            => driver.CreateTemporaryTable(DbConnection, tableName);
+        {
+            var tempTableName = $"{tableName}_{DateTime.Now.ToString("yyyyMMddHHmmss")}";
+            var sql = Driver.Dialect.GetCreateTemporaryTableSql(tableName, tempTableName);
+            if (LogSql)
+                LogUtil.Debug(sql);
+            DbConnection.Execute(sql);
+            return tempTableName;
+        }
 
         /// <summary>
         /// 删除表
@@ -205,8 +252,10 @@ namespace Sixpence.ORM.DbClient
         /// <param name="tableName"></param>
         public void DropTable(string tableName)
         {
-            var sql = $"DROP TABLE IF EXISTS {tableName}";
-            DbConnection.Execute(sql, commandTimeout: commandTimeOut);
+            var sql = Dialect.GetDropTableSql(tableName);
+            if (LogSql)
+                LogUtil.Debug(sql);
+            DbConnection.Execute(sql, commandTimeout: CommandTimeout);
         }
 
         /// <summary>
@@ -221,6 +270,65 @@ namespace Sixpence.ORM.DbClient
         /// <param name="dataTable"></param>
         /// <param name="tableName"></param>
         public void BulkCopy(DataTable dataTable, string tableName)
-            => driver.BulkCopy(DbConnection, dataTable, tableName);
+            => Batch.BulkCopy(DbConnection, dataTable, tableName);
+
+        /// <summary>
+        /// 将SQL转换为本地化SQL
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public string ConvertSqlToDialectSql(string sql, object param)
+        {
+            var paramsList = param.ToDictionary();
+            if (paramsList == null || paramsList.Count == 0)
+            {
+                return sql;
+            }
+            if (sql.Contains("in@"))
+            {
+                var toRemovedParamNameList = new Dictionary<string, Dictionary<string, object>>();
+                var paramValueNullList = new List<string>(); // 记录传入的InList参数的Value如果为空或者没有值的特殊情况
+
+                foreach (var paramName in paramsList.Keys)
+                {
+                    if (!paramName.ToLower().StartsWith("in")) continue;
+                    var paramValue = paramsList[paramName]?.ToString();
+                    if (string.IsNullOrWhiteSpace(paramValue))
+                    {
+                        paramValueNullList.Add(paramName);
+                        continue;
+                    }
+
+                    toRemovedParamNameList.Add(paramName, new Dictionary<string, object>());
+                    var inListValues = paramValue.Split(',');
+                    for (var i = 0; i < inListValues.Length; i++)
+                    {
+                        toRemovedParamNameList[paramName].Add(paramName.Substring(2, paramName.Length - 2) + i, inListValues[i]);
+                    }
+                }
+
+                foreach (var paramNameRemoved in toRemovedParamNameList.Keys)
+                {
+                    paramsList.Remove(paramNameRemoved);
+                    foreach (var paramNameAdd in toRemovedParamNameList[paramNameRemoved].Keys)
+                    {
+                        paramsList.Add(paramNameAdd, toRemovedParamNameList[paramNameRemoved][paramNameAdd]);
+                    }
+
+                    var newParamNames = toRemovedParamNameList[paramNameRemoved].Keys.Aggregate((l, n) => l + "," + n);
+                    sql = sql.Replace(paramNameRemoved, newParamNames);
+                }
+
+                foreach (var paramValueNullName in paramValueNullList)
+                {
+                    paramsList.Remove(paramValueNullName);
+                    sql = sql.Replace(paramValueNullName, "null");
+                }
+
+                return sql;
+            }
+            return sql;
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Linq;
+using Sixpence.Common.IoC;
 using Sixpence.Common.Utils;
-using Sixpence.ORM.Driver;
 
 namespace Sixpence.ORM.EntityManager
 {
@@ -12,7 +13,6 @@ namespace Sixpence.ORM.EntityManager
         {
             AssertUtil.IsNull(DBSourceConfig, "未找到数据库配置");
             AssertUtil.IsNullOrEmpty(DBSourceConfig.ConnectionString, "数据库连接字符串为空");
-            AssertUtil.IsFalse(Enum.TryParse<DriverType>(DBSourceConfig.DriverType, out var driverType), "数据库类型错误");
         }
 
         /// <summary>
@@ -21,7 +21,8 @@ namespace Sixpence.ORM.EntityManager
         /// <returns></returns>
         public static IEntityManager GetManager()
         {
-            return new EntityManager(DBSourceConfig.ConnectionString, Enum.Parse<DriverType>(DBSourceConfig.DriverType));
+            var driver = ServiceContainer.ResolveAll<IDbDriver>().FirstOrDefault(item => item.Name.ToUpper() == DBSourceConfig.DriverType.ToUpper());
+            return new EntityManager(DBSourceConfig.ConnectionString, driver);
         }
 
 
@@ -31,9 +32,10 @@ namespace Sixpence.ORM.EntityManager
         /// <param name="connectionString">数据库连接字符串</param>
         /// <param name="driverType">数据库驱动类型</param>
         /// <returns></returns>
-        public static IEntityManager GetManager(string connectionString, DriverType driverType)
+        public static IEntityManager GetManager(string connectionString, string driverName)
         {
-            return new EntityManager(connectionString, driverType);
+            var driver = ServiceContainer.ResolveAll<IDbDriver>().FirstOrDefault(item => item.Name.ToUpper() == driverName);
+            return new EntityManager(connectionString, driver);
         }
     }
 }

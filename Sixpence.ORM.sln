@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixpence.ORM.PostgreSql", "Sixpence.ORM.Postgres\Sixpence.ORM.PostgreSql.csproj", "{613F3DD1-2EE2-4411-AABE-DFD0FDF2218C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,10 @@ Global
 		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{284EA750-BB3F-41C9-84E2-FECF43BE2E40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{613F3DD1-2EE2-4411-AABE-DFD0FDF2218C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{613F3DD1-2EE2-4411-AABE-DFD0FDF2218C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{613F3DD1-2EE2-4411-AABE-DFD0FDF2218C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{613F3DD1-2EE2-4411-AABE-DFD0FDF2218C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
