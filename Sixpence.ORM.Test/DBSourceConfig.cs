@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM
+namespace Sixpence.ORM.Test
 {
     public class DBSourceConfig : BaseAppConfig<DBSourceConfig>
     {

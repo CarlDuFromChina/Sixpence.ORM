@@ -14,25 +14,35 @@ namespace Sixpence.ORM
 {
     public static class SixpenceORMBuilderExtension
     {
-        internal static ORMOptions Options = new ORMOptions()
-        {
-            AutoGenerate = true,
-            EntityClassNameCase = NameCase.Pascal, // 类名用帕斯卡命名
-        };
+        public static ORMOptions Options;
 
         public static int EntityClassNameCase { get; internal set; }
 
+        /// <summary>
+        /// 使用 Sixpence.ORM，必须设置 ConnectionString 和 Driver
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="action"></param>
         public static IApplicationBuilder UseORM(this IApplicationBuilder app, Action<ORMOptions> action = null)
         {
+            Options = new ORMOptions()
+            {
+                EntityClassNameCase = NameCase.Pascal
+            };
+
             action?.Invoke(Options);
 
-            Options.Driver = EntityManagerFactory.GetManager().Driver;
+            return app;
+        }
 
-            if (Options.AutoGenerate)
-            {
-                OpenEntityAutoGenerate();
-            }
-
+        /// <summary>
+        /// 自动迁移实体类
+        /// </summary>
+        /// <param name="app"></param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseMigrateDB(this IApplicationBuilder app)
+        {
+            OpenEntityAutoGenerate();
             return app;
         }
 
@@ -42,11 +52,6 @@ namespace Sixpence.ORM
         public class ORMOptions
         {
             /// <summary>
-            /// 实体自动生成，默认为 True
-            /// </summary>
-            public bool AutoGenerate { get; set; }
-
-            /// <summary>
             /// 实体类命名规范，默认帕斯卡命名（表名使用小写+下划线命名）
             /// </summary>
             public NameCase EntityClassNameCase { get; set; }
@@ -55,6 +60,16 @@ namespace Sixpence.ORM
             /// 数据库驱动
             /// </summary>
             public IDbDriver Driver { get; set; }
+
+            /// <summary>
+            /// 数据库连接字符串
+            /// </summary>
+            public string ConnectionString { get; set; }
+
+            /// <summary>
+            /// 超时时间
+            /// </summary>
+            public int CommandTimeout { get; set; }
         }
 
         private static void OpenEntityAutoGenerate()

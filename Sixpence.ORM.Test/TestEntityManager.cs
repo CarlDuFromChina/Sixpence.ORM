@@ -7,8 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Sixpence.ORM.Interface;
 using Sixpence.Common.Current;
+using Sixpence.ORM.Postgres;
 
 namespace Sixpence.ORM.Test
 {
@@ -24,13 +24,16 @@ namespace Sixpence.ORM.Test
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
             CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
+            SixpenceORMBuilderExtension
+                .UseORM(null)
+                .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut);
         }
 
         [Test]
         [Order(1)]
         public void Check_Entity_AutoGenerate()
         {
-            SixpenceORMBuilderExtension.UseORM(null);
+            SixpenceORMBuilderExtension.UseMigrateDB(null);
             using(IEntityManager manager = EntityManagerFactory.GetManager())
             {
                 var result = manager.ExecuteScalar(manager.DbClient.Driver.Dialect.GetTableExsitSql("test"));

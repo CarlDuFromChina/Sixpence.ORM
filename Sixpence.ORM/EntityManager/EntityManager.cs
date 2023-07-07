@@ -18,9 +18,9 @@ namespace Sixpence.ORM.EntityManager
     /// </summary>
     internal class EntityManager : IEntityManager, IDisposable
     {
-        internal EntityManager(string connectionString, IDbDriver dbDriver)
+        internal EntityManager(string connectionString, IDbDriver dbDriver, int commandTimeout)
         {
-            _dbClient = new DbClient(dbDriver, connectionString, DBSourceConfig.Config.CommandTimeOut);
+            _dbClient = new DbClient(dbDriver, connectionString, commandTimeout);
         }
 
         public IDbDriver Driver => _dbClient.Driver;
@@ -397,22 +397,14 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
         /// <returns></returns>
         public IEnumerable<T> Query<T>(IList<string> ids) where T : BaseEntity, new()
         {
-            var sql = $@"
-SELECT
-	*
-FROM
-	{new T().GetEntityName()}
-WHERE 
-	{new T().GetPrimaryColumn().Name} IN (@ids)";
-            var parmas = new Dictionary<string, object>();
+            var paramList = new Dictionary<string, object>();
+            var tableName = new T().GetEntityName();
+            var primaryKey = new T().GetPrimaryColumn().Name;
+            var inClause = string.Join(",", ids.Select((id, index) => $"{Driver.Dialect.ParameterPrefix}id" + index));
+            var sql = $"SELECT * FROM {tableName} WHERE {primaryKey} IN ({inClause})";
             var count = 0;
-            ids.ToList().ForEach(item =>
-            {
-                parmas.Add($"{Driver.Dialect.ParameterPrefix}id{++count}", ids[count - 1]);
-            });
-            sql = sql.Replace("@ids", string.Join(",", parmas.Keys));
-            var data = Query<T>(sql, parmas);
-            return data;
+            ids.Each((id) => paramList.Add($"{Driver.Dialect.ParameterPrefix}id{count++}", id));
+            return Query<T>(sql, paramList);
         }
         #endregion
 

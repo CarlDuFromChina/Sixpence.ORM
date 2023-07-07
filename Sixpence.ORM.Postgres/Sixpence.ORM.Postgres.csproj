@@ -4,11 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ReleaseVersion>3.3.0</ReleaseVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Include="D:\code\Sixpence.ORM\Sixpence.ORM.PostgreSql\PostgresDriver.cs" Link="PostgresDriver.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Npgsql" Version="7.0.1" />

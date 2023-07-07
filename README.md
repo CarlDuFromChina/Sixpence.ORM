@@ -50,19 +50,7 @@ Install-Package Sixpence.ORM -Version 3.3.0
 
 ### 配置
 
-1、我们需要在`appsettings.json`里配置数据库连接
-
-```json
-{
-  "DBSource": {
-    "DriverType": "Postgresql",
-    "ConnectionString": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;",
-    "CommandTimeOut": 5
-  }
-}
-```
-
-2、我们在启动类`startup.cs`里注册服务
+在启动类`startup.cs`里注册服务
 
 ```csharp
 public class Startup
@@ -78,10 +66,12 @@ public class Startup
     public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHttpContextAccessor accessor)
     {
         app.UseORM(options => 
-        {
-            options.EntityClassNameCase = ClassNameCase.UnderScore; // 实体下划线命名
-            options.AutoGenerate = true; // 自动生成实体
-        });
+            {
+                options.EntityClassNameCase = ClassNameCase.UnderScore; // 实体下划线命名
+                options.AutoGenerate = true; // 自动生成实体
+            })
+            .UsePostgres()
+            .UseMigrateDB();
     }
 }
 ```

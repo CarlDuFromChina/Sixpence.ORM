@@ -17,12 +17,10 @@ namespace Sixpence.ORM
     public class DbClient
     {
         public IDbConnection DbConnection { get; private set; }
-
         private IDbDriver driver;
-        public IDbDriver Driver => driver;
-        public IDbDialect Dialect => driver.Dialect;
-        public IDbBatch Batch => driver.Batch;
-
+        public IDbDriver Driver => driver; // 数据库驱动
+        public IDbDialect Dialect => driver.Dialect; // 数据库方言
+        public IDbBatch Batch => driver.Batch; // 数据库批量操作
         private int? commandTimeout = 20;
         public int? CommandTimeout => commandTimeout;
 
@@ -145,7 +143,6 @@ namespace Sixpence.ORM
         public int Execute(string sql, object param = null)
         {
             var paramList = param?.ToDictionary();
-            sql = ConvertSqlToDialectSql(sql, paramList);
 
             if (LogSql)
                 LogUtil.Debug(sql + paramList.ToLogString());
@@ -162,7 +159,6 @@ namespace Sixpence.ORM
         public object ExecuteScalar(string sql, object param = null)
         {
             var paramList = param?.ToDictionary();
-            sql = ConvertSqlToDialectSql(sql, paramList);
 
             if (LogSql)
                 LogUtil.Debug(sql + paramList.ToLogString());
@@ -182,7 +178,6 @@ namespace Sixpence.ORM
         public IEnumerable<T> Query<T>(string sql, object param = null)
         {
             var paramList = param?.ToDictionary();
-            sql = ConvertSqlToDialectSql(sql, paramList);
 
             if (LogSql)
                 LogUtil.Debug(sql + paramList.ToLogString());
@@ -200,7 +195,6 @@ namespace Sixpence.ORM
         public T QueryFirst<T>(string sql, object param = null)
         {
             var paramList = param?.ToDictionary();
-            sql = ConvertSqlToDialectSql(sql, paramList);
 
             if (LogSql)
                 LogUtil.Debug(sql + paramList.ToLogString());
@@ -219,7 +213,6 @@ namespace Sixpence.ORM
         public DataTable Query(string sql, object param = null)
         {
             var paramList = param?.ToDictionary();
-            sql = ConvertSqlToDialectSql(sql, paramList);
 
             if (LogSql)
                 LogUtil.Debug(sql + paramList.ToLogString());
@@ -271,64 +264,5 @@ namespace Sixpence.ORM
         /// <param name="tableName"></param>
         public void BulkCopy(DataTable dataTable, string tableName)
             => Batch.BulkCopy(DbConnection, dataTable, tableName);
-
-        /// <summary>
-        /// 将SQL转换为本地化SQL
-        /// </summary>
-        /// <param name="sql"></param>
-        /// <param name="param"></param>
-        /// <returns></returns>
-        public string ConvertSqlToDialectSql(string sql, object param)
-        {
-            var paramsList = param.ToDictionary();
-            if (paramsList == null || paramsList.Count == 0)
-            {
-                return sql;
-            }
-            if (sql.Contains("in@"))
-            {
-                var toRemovedParamNameList = new Dictionary<string, Dictionary<string, object>>();
-                var paramValueNullList = new List<string>(); // 记录传入的InList参数的Value如果为空或者没有值的特殊情况
-
-                foreach (var paramName in paramsList.Keys)
-                {
-                    if (!paramName.ToLower().StartsWith("in")) continue;
-                    var paramValue = paramsList[paramName]?.ToString();
-                    if (string.IsNullOrWhiteSpace(paramValue))
-                    {
-                        paramValueNullList.Add(paramName);
-                        continue;
-                    }
-
-                    toRemovedParamNameList.Add(paramName, new Dictionary<string, object>());
-                    var inListValues = paramValue.Split(',');
-                    for (var i = 0; i < inListValues.Length; i++)
-                    {
-                        toRemovedParamNameList[paramName].Add(paramName.Substring(2, paramName.Length - 2) + i, inListValues[i]);
-                    }
-                }
-
-                foreach (var paramNameRemoved in toRemovedParamNameList.Keys)
-                {
-                    paramsList.Remove(paramNameRemoved);
-                    foreach (var paramNameAdd in toRemovedParamNameList[paramNameRemoved].Keys)
-                    {
-                        paramsList.Add(paramNameAdd, toRemovedParamNameList[paramNameRemoved][paramNameAdd]);
-                    }
-
-                    var newParamNames = toRemovedParamNameList[paramNameRemoved].Keys.Aggregate((l, n) => l + "," + n);
-                    sql = sql.Replace(paramNameRemoved, newParamNames);
-                }
-
-                foreach (var paramValueNullName in paramValueNullList)
-                {
-                    paramsList.Remove(paramValueNullName);
-                    sql = sql.Replace(paramValueNullName, "null");
-                }
-
-                return sql;
-            }
-            return sql;
-        }
     }
 }

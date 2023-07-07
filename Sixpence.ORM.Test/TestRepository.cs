@@ -3,8 +3,7 @@ using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Sixpence.Common;
 using Sixpence.Common.Current;
-using Sixpence.ORM.Common.Current;
-using Sixpence.ORM.Entity;
+using Sixpence.ORM.Postgres;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +26,9 @@ namespace Sixpence.ORM.Test
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
             CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
-            SixpenceORMBuilderExtension.UseORM(null);
+            SixpenceORMBuilderExtension
+                .UseORM(null)
+                .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut);
             testRepository = new Repository<Test>();
             testGuidNumerRepository = new Repository<TestGuidNumber>();
         }

@@ -41,6 +41,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sixpence.ORM\Sixpence.ORM.csproj" />
+    <ProjectReference Include="..\Sixpence.ORM.Postgres\Sixpence.ORM.Postgres.csproj" />
   </ItemGroup>
 
 </Project>

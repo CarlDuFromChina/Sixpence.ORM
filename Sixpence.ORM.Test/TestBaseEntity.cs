@@ -5,6 +5,7 @@ using Sixpence.Common.IoC;
 using Sixpence.ORM.Entity;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Interface;
+using Sixpence.ORM.Postgres;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -25,11 +26,13 @@ namespace Sixpence.ORM.Test
             {
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
-            SixpenceORMBuilderExtension.UseORM(null, options =>
-            {
-                options.AutoGenerate = true;
-                options.EntityClassNameCase = NameCase.Pascal;
-            });
+            SixpenceORMBuilderExtension
+                .UseORM(null, options =>
+                {
+                    options.EntityClassNameCase = NameCase.Pascal;
+                })
+                .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut)
+                .UseMigrateDB();
         }
 
         [Test]

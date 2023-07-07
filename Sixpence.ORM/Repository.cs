@@ -98,19 +98,23 @@ namespace Sixpence.ORM
         }
 
         /// <summary>
-        /// 根据id查询
+        /// 根据id查询，多个id用逗号分隔
         /// </summary>
         /// <param name="ids"></param>
         /// <returns></returns>
         public virtual IEnumerable<E> FindByIds(string ids)
         {
             var paramList = new Dictionary<string, object>();
-            var sql = $"SELECT * FROM {new E().GetEntityName()} WHERE 1 = 1";
-            if (!string.IsNullOrEmpty(ids))
-            {
-                sql += $" AND {new E().GetPrimaryColumn().Name} IN (in@ids)";
-                paramList.Add("in@ids", ids);
-            }
+            var tableName = new E().GetEntityName();
+            var primaryKey = new E().GetPrimaryColumn().Name;
+            var inClause = string.Join(",", ids.Select((id, index) => $"{Manager.Driver.Dialect.ParameterPrefix}id" + index));
+            var sql = $"SELECT * FROM {tableName} WHERE {primaryKey} IN ({inClause})";
+            var count = 0;
+            ids.Split(',')
+                .Each((id) =>
+                {
+                    paramList.Add($"{Manager.Driver.Dialect.ParameterPrefix}id{count++}", id);
+                });
             return Query(sql, paramList);
         }
 
@@ -171,12 +175,13 @@ namespace Sixpence.ORM
         {
             string whereSQL = string.Empty;
             Dictionary<string, object> paramList = new Dictionary<string, object>();
+            var dialect = Manager.Driver.Dialect;
             if (!conditions.IsEmpty())
             {
                 conditions.Distinct().Each(item =>
                 {
-                    whereSQL += $" AND {item.Key} = @{item.Key}";
-                    paramList.Add($"@{item.Key}", item.Value);
+                    whereSQL += $" AND {item.Key} = {dialect.ParameterPrefix}{item.Key}";
+                    paramList.Add($"{dialect.ParameterPrefix}{item.Key}", item.Value);
                 });
             }
             return (whereSQL, paramList);
