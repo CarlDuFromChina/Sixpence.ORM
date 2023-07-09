@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.PostgreSql
+namespace Sixpence.ORM.Postgres
 {
     public class PostgresBatch : IDbBatch
     {

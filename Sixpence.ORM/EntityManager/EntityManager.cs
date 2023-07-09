@@ -17,7 +17,7 @@ namespace Sixpence.ORM.EntityManager
     /// </summary>
     internal class EntityManager : IEntityManager, IDisposable
     {
-        internal EntityManager(string connectionString, IDbDriver dbDriver, int commandTimeout)
+        internal EntityManager(string connectionString, IDbDriver dbDriver, int? commandTimeout)
         {
             _dbClient = new DbClient(dbDriver, connectionString, commandTimeout);
         }
@@ -414,7 +414,7 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
         /// <param name="manager"></param>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
-        public int Execute(string sql, object param = null)
+        public int Execute(string sql, object? param = null)
         {
             return DbClient.Execute(sql, param);
         }
@@ -443,7 +443,7 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
             int sqlCount = 0, errorCount = 0;
             if (!File.Exists(sqlFile))
             {
-                LogUtil.Error($"文件({sqlFile})不存在");
+                DbClient?.LogError($"文件({sqlFile})不存在", null);
                 return -1;
             }
             using (StreamReader sr = new StreamReader(sqlFile))
@@ -469,7 +469,7 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
                         try
                         {
                             sqlCount++;
-                            Execute(sql, null);
+                            Execute(sql);
                         }
                         catch (Exception ex)
                         {

@@ -7,6 +7,7 @@
     <Description>基于 Dapper 的 ORM 框架，仅支持 PostgreSql</Description>
     <ReleaseVersion>3.3.0</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />

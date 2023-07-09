@@ -4,8 +4,6 @@ using Sixpence.Common;
 using Sixpence.Common.IoC;
 using Sixpence.ORM.Entity;
 using Sixpence.ORM.EntityManager;
-using Sixpence.ORM.Interface;
-using Sixpence.ORM.Postgres;
 using System;
 using System.Collections.Generic;
 using System.Text;

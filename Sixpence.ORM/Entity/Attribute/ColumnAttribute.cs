@@ -20,7 +20,7 @@ namespace Sixpence.ORM.Entity
         /// <param name="type">字段类型</param>
         /// <param name="length">字段长度</param>
         /// <param name="isRequire">是否必填</param>
-        public ColumnAttribute(string name = "", string type = "", int length = 0, bool isRequire = false, object defaultValue = null)
+        public ColumnAttribute(string name = "", string type = "", int length = 0, bool isRequire = false, object? defaultValue = null)
         {
             Options = new ColumnOptions()
             {

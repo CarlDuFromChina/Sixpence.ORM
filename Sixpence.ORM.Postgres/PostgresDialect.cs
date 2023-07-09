@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.PostgreSql
+namespace Sixpence.ORM.Postgres
 {
     public class PostgresDialect : IDbDialect
     {

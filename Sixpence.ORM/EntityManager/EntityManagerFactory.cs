@@ -7,15 +7,15 @@ namespace Sixpence.ORM.EntityManager
 {
     public static class EntityManagerFactory
     {
-        private static IDbDriver Driver;
-        private static string ConnectionString;
-        private static int CommandTimeout;
+        private static IDbDriver? Driver;
+        private static string? ConnectionString;
+        private static int? CommandTimeout;
 
         static EntityManagerFactory()
         {
-            Driver = SixpenceORMBuilderExtension.Options.Driver;
-            ConnectionString = SixpenceORMBuilderExtension.Options.ConnectionString;
-            CommandTimeout = SixpenceORMBuilderExtension.Options.CommandTimeout;
+            Driver = SixpenceORMBuilderExtension.Options?.Driver;
+            ConnectionString = SixpenceORMBuilderExtension.Options?.ConnectionString;
+            CommandTimeout = SixpenceORMBuilderExtension.Options?.CommandTimeout;
         }
         
         /// <summary>
@@ -56,6 +56,12 @@ namespace Sixpence.ORM.EntityManager
             }
 
             var driver = ServiceContainer.ResolveAll<IDbDriver>().FirstOrDefault(item => item.Name.ToUpper() == driverName);
+
+            if (driver == null)
+            {
+                throw new Exception("数据库驱动未实现，请检查是否安装对应驱动");
+            }
+
             return new EntityManager(connectionString, driver, CommandTimeout);
         }
 

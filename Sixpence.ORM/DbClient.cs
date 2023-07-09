@@ -23,12 +23,10 @@ namespace Sixpence.ORM
         private int? commandTimeout = 20;
         public int? CommandTimeout => commandTimeout;
 
-        /// <summary>
-        /// 是否日志 SQL
-        /// </summary>
-        private bool LogSql;
+        internal Action<string>? LogDebug;
+        internal Action<string, Exception?>? LogError;
 
-        internal DbClient(IDbDriver dbDriver, string connectionString, int? commandTimeout, bool logSql = false)
+        internal DbClient(IDbDriver dbDriver, string connectionString, int? commandTimeout)
         {
             driver = dbDriver;
             DbConnection = dbDriver.GetDbConnection(connectionString);
@@ -36,7 +34,8 @@ namespace Sixpence.ORM
             {
                 this.commandTimeout = commandTimeout;
             }
-            LogSql = logSql;
+            LogDebug = SixpenceORMBuilderExtension.Options?.LogOptions?.LogDebug;
+            LogError = SixpenceORMBuilderExtension.Options?.LogOptions?.LogError;
         }
 
         /// <summary>
@@ -143,8 +142,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogSql)
-                LogUtil.Debug(sql + paramList.ToLogString());
+            if (LogDebug != null)
+                LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.Execute(sql, param, commandTimeout: CommandTimeout);
         }
@@ -159,8 +158,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogSql)
-                LogUtil.Debug(sql + paramList.ToLogString());
+            if (LogDebug != null)
+                LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.ExecuteScalar(sql, param, commandTimeout: CommandTimeout);
         }
@@ -178,8 +177,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogSql)
-                LogUtil.Debug(sql + paramList.ToLogString());
+            if (LogDebug != null)
+                LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.Query<T>(sql, param, commandTimeout: CommandTimeout);
         }
@@ -195,8 +194,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogSql)
-                LogUtil.Debug(sql + paramList.ToLogString());
+            if (LogDebug != null)
+                LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.QueryFirstOrDefault<T>(sql, param, commandTimeout: CommandTimeout);
         }
@@ -213,8 +212,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogSql)
-                LogUtil.Debug(sql + paramList.ToLogString());
+            if (LogDebug != null)
+                LogDebug(sql + paramList.ToLogString());
 
             DataTable dt = new DataTable();
             var reader = DbConnection.ExecuteReader(sql, param, commandTimeout: CommandTimeout);
@@ -232,8 +231,10 @@ namespace Sixpence.ORM
         {
             var tempTableName = $"{tableName}_{DateTime.Now.ToString("yyyyMMddHHmmss")}";
             var sql = Driver.Dialect.GetCreateTemporaryTableSql(tableName, tempTableName);
-            if (LogSql)
-                LogUtil.Debug(sql);
+
+            if (LogDebug != null)
+                LogDebug(sql);
+
             DbConnection.Execute(sql);
             return tempTableName;
         }
@@ -245,8 +246,10 @@ namespace Sixpence.ORM
         public void DropTable(string tableName)
         {
             var sql = Dialect.GetDropTableSql(tableName);
-            if (LogSql)
-                LogUtil.Debug(sql);
+
+            if (LogDebug != null)
+                LogDebug(sql);
+
             DbConnection.Execute(sql, commandTimeout: CommandTimeout);
         }
 
