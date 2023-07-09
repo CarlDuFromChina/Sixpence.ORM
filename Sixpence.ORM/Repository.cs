@@ -97,6 +97,17 @@ namespace Sixpence.ORM
         }
 
         /// <summary>
+        /// 获所有取实体记录
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public virtual IEnumerable<E> FindAll()
+        {
+            var sql = $"SELECT * FROM {new E().GetEntityName()}";
+            return Manager.Query<E>(sql);
+        }
+
+        /// <summary>
         /// 根据id查询，多个id用逗号分隔
         /// </summary>
         /// <param name="ids"></param>
