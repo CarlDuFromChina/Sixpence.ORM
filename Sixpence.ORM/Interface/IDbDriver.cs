@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using Sixpence.Common.IoC;
 using Sixpence.ORM.Models;
 
 namespace Sixpence.ORM
@@ -10,7 +9,6 @@ namespace Sixpence.ORM
     /// <summary>
     /// 数据库驱动接口
     /// </summary>
-    [ServiceRegister]
     public interface IDbDriver
     {
         /// <summary>

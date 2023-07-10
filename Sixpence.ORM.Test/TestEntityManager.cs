@@ -24,7 +24,7 @@ namespace Sixpence.ORM.Test
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
             CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
-            SixpenceORMBuilderExtension
+            SormAppBuilderExtensions
                 .UseORM(null)
                 .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut);
         }
@@ -33,7 +33,7 @@ namespace Sixpence.ORM.Test
         [Order(1)]
         public void Check_Entity_AutoGenerate()
         {
-            SixpenceORMBuilderExtension.UseMigrateDB(null);
+            SormAppBuilderExtensions.UseMigrateDB(null);
             using(IEntityManager manager = EntityManagerFactory.GetManager())
             {
                 var result = manager.ExecuteScalar(manager.DbClient.Driver.Dialect.GetTableExsitSql("test"));

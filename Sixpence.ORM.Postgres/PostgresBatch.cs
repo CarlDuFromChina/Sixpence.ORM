@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using Npgsql;
-using Sixpence.Common.Utils;
+using Sixpence.ORM.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;

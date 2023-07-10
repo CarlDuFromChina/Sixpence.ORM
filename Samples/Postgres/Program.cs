@@ -1,6 +1,6 @@
-﻿using Sixpence.ORM;
+﻿using Microsoft.AspNetCore.Builder;
+using Sixpence.ORM;
 using Sixpence.ORM.Postgres;
-using Sixpence.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,33 +8,39 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-var app = builder.Build();
-
-// 日志记录加载成功
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
-
-IServiceCollection services = new ServiceCollection();
-services.AddServiceContainer(options => {
-    options.Assembly.Add("Postgres");
+builder.Services.AddSorm(options =>
+{
+    options.EntityClassNameCase = NameCase.Pascal;
+    options.UsePostgres("Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;", 20);
 });
 
-app.UseORM(
-    options => {
-        options.EntityClassNameCase = NameCase.Pascal;
-        options.LogOptions = new LogOptions()
-        {
-            LogDebug = message => logger.LogDebug(message),
-            LogError = (message, exception) => logger.LogError(message, exception)
-        };
-    })
-   .UsePostgres("Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;", 20)
-   .UseMigrateDB();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() {  Title = "Postgres Demo 接口", Version = "v1"});
+});
+
+var app = builder.Build();
+
+app.UseSorm(options =>
+{
+    options.EnableLogging = true;
+    options.MigrateDb = true;
+});
 
 // Configure the HTTP request pipeline.
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapSwagger();
+
+app.UseSwagger();
+
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("v1/swagger.json", "My API V1");
+});
 
 app.Run();
 

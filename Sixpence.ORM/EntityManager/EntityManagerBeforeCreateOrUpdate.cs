@@ -1,7 +1,5 @@
-﻿using Sixpence.Common;
-using Sixpence.Common.Current;
-using Sixpence.Common.Utils;
-using Sixpence.ORM.Entity;
+﻿using Sixpence.ORM.Entity;
+using Sixpence.ORM.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,35 +17,16 @@ namespace Sixpence.ORM.EntityManager
             var entity = context.Entity;
             var manager = context.EntityManager;
 
-            var user = CallContext<CurrentUserModel>.GetData(CallContextType.User);
-
             switch (context.Action)
             {
                 case EntityAction.PreCreate:
                     {
-                        if ((!entity.GetAttributes().ContainsKey("created_by") || entity.GetAttributeValue("created_by") == null) && entity.GetType().GetProperty("created_by") != null)
-                        {
-                            entity.SetAttributeValue("created_by", user.Id);
-                            entity.SetAttributeValue("created_by_name", user.Name);
-                        }
-                        if ((!entity.GetAttributes().ContainsKey("created_at") || entity.GetAttributeValue("created_at") == null) && entity.GetType().GetProperty("created_at") != null)
-                        {
-                            entity.SetAttributeValue("created_at", DateTime.Now);
-                        }
-                        entity.SetAttributeValue("updated_by", user.Id);
-                        entity.SetAttributeValue("updated_by_name", user.Name);
-                        entity.SetAttributeValue("updated_at", DateTime.Now);
-
                         SetBooleanName(entity);
                         CheckDuplicate(entity, manager);
                     }
                     break;
                 case EntityAction.PreUpdate:
                     {
-                        entity.SetAttributeValue("updated_by", user.Id);
-                        entity.SetAttributeValue("updated_by_name", user.Name);
-                        entity.SetAttributeValue("updated_at", DateTime.Now);
-
                         SetBooleanName(entity);
                         CheckDuplicate(entity, manager);
                     }

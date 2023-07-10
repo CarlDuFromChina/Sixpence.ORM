@@ -1,5 +1,4 @@
-﻿using Sixpence.Common.IoC;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -11,7 +10,6 @@ namespace Sixpence.ORM
     /// <summary>
     /// 数据库批量操作
     /// </summary>
-    [ServiceRegister]
     public interface IDbBatch
     {
         /// <summary>

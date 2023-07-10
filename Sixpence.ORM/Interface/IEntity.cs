@@ -1,6 +1,4 @@
-﻿using Sixpence.Common;
-using Sixpence.Common.IoC;
-using Sixpence.ORM.Entity;
+﻿using Sixpence.ORM.Entity;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
@@ -9,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM
 {
-    [ServiceRegister]
     public interface IEntity
     {
         /// <summary>

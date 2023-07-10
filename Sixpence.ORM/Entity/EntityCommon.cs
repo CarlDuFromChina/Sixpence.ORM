@@ -49,7 +49,7 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public static bool CompareEntityName(string className, string tableName)
         {
-            switch (SixpenceORMBuilderExtension.Options.EntityClassNameCase)
+            switch (SormServiceCollectionExtensions.Options.EntityClassNameCase)
             {
                 case NameCase.Pascal:
                     return tableName.Replace("_", "").Equals(className, StringComparison.OrdinalIgnoreCase);

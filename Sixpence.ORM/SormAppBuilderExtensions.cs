@@ -1,33 +1,35 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Sixpence.Common;
-using Sixpence.Common.IoC;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Sixpence.Common.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Sixpence.ORM.Utils;
+using Microsoft.Extensions.Options;
 
 namespace Sixpence.ORM
 {
-    public static class SixpenceORMBuilderExtension
+    public static class SormAppBuilderExtensions
     {
-        public static BuilderOptions? Options;
+        internal static AppBuilderOptions BuilderOptions = new AppBuilderOptions();
 
         /// <summary>
-        /// 使用 Sixpence.ORM，必须设置 ConnectionString 和 Driver
+        /// 自动迁移实体类
         /// </summary>
         /// <param name="app"></param>
-        /// <param name="action"></param>
-        public static IApplicationBuilder UseORM(this IApplicationBuilder app, Action<BuilderOptions>? action = null)
+        /// <param name="migrate"></param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseSorm(this IApplicationBuilder app, Action<AppBuilderOptions>? action)
         {
-            Options = new BuilderOptions()
-            {
-                EntityClassNameCase = NameCase.Pascal
-            };
+            ServiceContainer.Configure(app);
+            
+            action?.Invoke(BuilderOptions);
 
-            action?.Invoke(Options);
+            if (BuilderOptions.MigrateDb)
+                MigrateDB(app);
 
             return app;
         }
@@ -37,19 +39,25 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="app"></param>
         /// <returns></returns>
-        public static IApplicationBuilder UseMigrateDB(this IApplicationBuilder app)
+        private static void MigrateDB(this IApplicationBuilder app)
         {
-            var logDebug = Options?.LogOptions?.LogDebug;
-            var logError = Options?.LogOptions?.LogError;
+            var interceptor = app.ApplicationServices.GetService<IEntityMigrationInterceptor>();
+            var entityList = app.ApplicationServices.GetServices<IEntity>();
+            var loggerFactory = app.ApplicationServices.GetService<ILoggerFactory>();
+            var logger = loggerFactory?.CreateLogger(typeof(SormAppBuilderExtensions));
+
+            var context = new EntityMigrationInterceptorContext() { EntityList = entityList };
 
             using (var manager = EntityManagerFactory.GetManager())
             {
                 var driver = manager.DbClient.Driver;
-                var entityList = ServiceContainer.ResolveAll<IEntity>();
+                context.Manager = manager;
 
                 manager.ExecuteTransaction(() =>
                 {
-                    ServiceContainer.Resolve<IPreCreateEntities>()?.Execute(manager, entityList);
+                    // 迁移所有实体前
+                    context.Action = EntityMigrationAction.PreUpdateEntities;
+                    interceptor?.Execute(context);
 
                     entityList.Each(item =>
                     {
@@ -59,7 +67,10 @@ namespace Sixpence.ORM
                         // 表未创建则创建，否则自动添加字段
                         if (!tableExsit)
                         {
-                            ServiceContainer.Resolve<IPreCreateEntity>()?.Execute(manager, item); // 创建前
+                            // 创建实体前
+                            context.Action = EntityMigrationAction.PreUpdateEntity;
+                            context.CurrentEntity = item;
+                            interceptor?.Execute(context);
 
                             var attrSql = EntityCommon
                                 .GetColumns(item, driver)
@@ -75,10 +86,11 @@ namespace Sixpence.ORM
                                 .Aggregate((a, b) => a + ",\r\n" + b);
                             manager.Execute($@"CREATE TABLE public.{tableName} ({attrSql})");
 
-                            ServiceContainer.Resolve<IPostCreateEntity>()?.Execute(manager, item); // 创建后
+                            context.Action = EntityMigrationAction.PostUpdateEntity;
+                            interceptor?.Execute(context);
 
-                            if (logDebug != null)
-                                logDebug($"实体 {tableName} 创建成功");
+                            if (BuilderOptions.EnableLogging)
+                                logger?.LogDebug($"实体 {tableName} 创建成功");
                         }
                         else
                         {
@@ -117,10 +129,10 @@ namespace Sixpence.ORM
                         }
                     });
 
-                    ServiceContainer.Resolve<IPostCreateEntities>()?.Execute(manager, entityList);
+                    context.Action = EntityMigrationAction.PostUpdateEntities;
+                    interceptor?.Execute(context);
                 });
             }
-            return app;
         }
     }
 }

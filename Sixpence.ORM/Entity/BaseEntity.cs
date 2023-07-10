@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using Sixpence.Common;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Concurrent;
@@ -159,14 +158,14 @@ namespace Sixpence.ORM.Entity
                 var attr = Attribute.GetCustomAttribute(type, typeof(EntityAttribute)) as EntityAttribute;
                 if (attr == null)
                 {
-                    throw new SpException("获取实体名失败，请检查是否定义实体名");
+                    throw new Exception("获取实体名失败，请检查是否定义实体名");
                 }
 
                 // 若未设置自定义表名，则根据类名去格式化
                 if (string.IsNullOrEmpty(attr.TableName))
                 {
                     var name = this.GetType().Name;
-                    switch (SixpenceORMBuilderExtension.Options.EntityClassNameCase)
+                    switch (SormServiceCollectionExtensions.Options.EntityClassNameCase)
                     {
                         case NameCase.UnderScore:
                             return name.ToLower();

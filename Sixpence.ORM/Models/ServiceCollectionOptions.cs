@@ -1,16 +1,28 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 namespace Sixpence.ORM
 {
     /// <summary>
     /// ORM参数
     /// </summary>
-    public class BuilderOptions
+    public class ServiceCollectionOptions
     {
         /// <summary>
         /// 实体类命名规范，默认帕斯卡命名（表名使用小写+下划线命名）
         /// </summary>
         public NameCase EntityClassNameCase { get; set; }
 
+        /// <summary>
+        /// 数据库配置
+        /// </summary>
+        public DbSetting? DbSetting { get; set; }
+    }
+
+    /// <summary>
+    /// 数据库配置
+    /// </summary>
+    public class DbSetting
+    {
         /// <summary>
         /// 数据库驱动
         /// </summary>
@@ -27,25 +39,9 @@ namespace Sixpence.ORM
         public int? CommandTimeout { get; set; }
 
         /// <summary>
-        /// 日志
+        /// 自动迁移
         /// </summary>
-        public LogOptions LogOptions { get; set; } = new LogOptions();
-    }
-
-    /// <summary>
-    /// 日志
-    /// </summary>
-    public class LogOptions
-    {
-        /// <summary>
-        /// 调试日志
-        /// </summary>
-        public Action<string> LogDebug { get; set; } = text => Console.WriteLine(text);
-        
-        /// <summary>
-        /// 错误日志
-        /// </summary>
-        public Action<string, Exception?>? LogError { get; set; } = (text, exception) => Console.WriteLine(text + exception?.Message + "\r\n" + exception?.StackTrace);
+        public bool Migration { get; set; }
     }
 
     /// <summary>

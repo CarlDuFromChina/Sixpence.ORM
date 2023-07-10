@@ -26,7 +26,7 @@ namespace Sixpence.ORM.Test
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
             CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
-            SixpenceORMBuilderExtension
+            SormAppBuilderExtensions
                 .UseORM(null)
                 .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut);
             testRepository = new Repository<Test>();

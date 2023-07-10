@@ -1,30 +1,34 @@
-﻿using Sixpence.Common;
-using Sixpence.Common.IoC;
-using Sixpence.Common.Utils;
-using Sixpence.ORM.Entity;
+﻿using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
 using System.IO;
-using Sixpence.Common.Logging;
+using Sixpence.ORM.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Sixpence.ORM.EntityManager
 {
     /// <summary>
     /// 实体管理
     /// </summary>
-    internal class EntityManager : IEntityManager, IDisposable
+    public class EntityManager : IEntityManager, IDisposable
     {
-        internal EntityManager(string connectionString, IDbDriver dbDriver, int? commandTimeout)
-        {
-            _dbClient = new DbClient(dbDriver, connectionString, commandTimeout);
-        }
+        private DbClient _dbClient;
+        private readonly IServiceProvider Provider;
+        private readonly ILogger<EntityManager> Logger;
 
         public IDbDriver Driver => _dbClient.Driver;
-        private DbClient _dbClient;
         public DbClient DbClient => _dbClient;
+
+        public EntityManager(string connectionString, IDbDriver dbDriver, int? commandTimeout)
+        {
+            _dbClient = new DbClient(dbDriver, connectionString, commandTimeout);
+            Provider = ServiceContainer.Provider;
+            Logger = Provider.GetService<ILoggerFactory>()?.CreateLogger<EntityManager>();
+        }
 
         #region CRUD
         /// <summary>
@@ -38,11 +42,12 @@ namespace Sixpence.ORM.EntityManager
             {
                 #region 创建前 Plugin
                 var context = new EntityManagerPluginContext() { Entity = entity, EntityManager = this, Action = EntityAction.PreCreate, EntityName = entity.GetEntityName() };
-                ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
+                ServiceContainer.Provider.GetServices<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
                 if (usePlugin)
                 {
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
+                    ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
+                        .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -66,7 +71,8 @@ namespace Sixpence.ORM.EntityManager
                 if (usePlugin)
                 {
                     context.Action = EntityAction.PostCreate;
-                    ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
+                    ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
+                        .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -83,7 +89,7 @@ namespace Sixpence.ORM.EntityManager
         /// <returns></returns>
         public int Delete(string entityName, string id)
         {
-            var entity = ServiceContainer.Resolve<IEntity>(key => EntityCommon.CompareEntityName(key, entityName)) as BaseEntity;
+            var entity = ServiceContainer.Provider.GetServices<IEntity>().FirstOrDefault(item => EntityCommon.CompareEntityName(nameof(item), entityName)) as BaseEntity;
             AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
             var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id", new { id });
 
@@ -91,13 +97,16 @@ namespace Sixpence.ORM.EntityManager
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
-            var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()));
-            plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete });
+
+            var plugins = ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
+                .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()));
+
+            plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete }));
 
             var sql = $"DELETE FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
             int result = this.Execute(sql, new { id });
 
-            plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete });
+            plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete }));
             return result;
         }
 
@@ -110,11 +119,15 @@ namespace Sixpence.ORM.EntityManager
         {
             return this.ExecuteTransaction(() =>
             {
-                var plugin = ServiceContainer.Resolve<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()));
-                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreDelete });
+                var plugins = ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()));
+
+                plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreDelete }));
+                
                 var sql = $"DELETE FROM {entity.GetEntityName()} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
                 int result = this.Execute(sql, new { id = entity.GetPrimaryColumn().Value });
-                plugin?.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PostDelete });
+
+                plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PostDelete }));
                 return result;
             });
         }
@@ -178,10 +191,11 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
             {
                 #region 更新前 Plugin
                 var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreUpdate };
-                ServiceContainer.ResolveAll<IEntityManagerBeforeCreateOrUpdate>()?
+                ServiceContainer.Provider.GetServices<IEntityManagerBeforeCreateOrUpdate>()
                     .Each(item => item.Execute(context));
 
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
+                ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), entity.GetEntityName()))
                     .Each(item => item.Execute(context));
                 #endregion
 
@@ -207,7 +221,8 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
 
                 #region 更新后 Plugin
                 context.Action = EntityAction.PostUpdate;
-                ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, entity.GetEntityName()))
+                ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), entity.GetEntityName()))
                     .Each(item => item.Execute(context));
                 #endregion
                 return result;
@@ -443,7 +458,7 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
             int sqlCount = 0, errorCount = 0;
             if (!File.Exists(sqlFile))
             {
-                DbClient?.LogError($"文件({sqlFile})不存在", null);
+                Logger?.LogError($"文件({sqlFile})不存在");
                 return -1;
             }
             using (StreamReader sr = new StreamReader(sqlFile))
@@ -474,7 +489,7 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
                         catch (Exception ex)
                         {
                             errorCount++;
-                            LogUtil.Error(sql + newLIne + ex.Message, ex);
+                            Logger.LogError(sql + newLIne + ex.Message, ex);
                         }
                         sql = string.Empty;
                     }

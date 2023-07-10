@@ -1,5 +1,4 @@
-﻿using Sixpence.Common;
-using Sixpence.ORM.EntityManager;
+﻿using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
@@ -39,6 +38,13 @@ namespace Sixpence.ORM
             var id = Manager.Create(entity);
             return id;
         }
+
+        /// <summary>
+        /// 创建实体记录
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public virtual string Insert(E entity) => Create(entity);
 
         /// <summary>
         /// 创建或更新历史记录

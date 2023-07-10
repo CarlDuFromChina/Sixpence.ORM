@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Sixpence.ORM.Utils;
+using System;
 using System.Linq;
-using Sixpence.Common.IoC;
-using Sixpence.Common.Utils;
 
 namespace Sixpence.ORM.EntityManager
 {
@@ -13,9 +13,12 @@ namespace Sixpence.ORM.EntityManager
 
         static EntityManagerFactory()
         {
-            Driver = SixpenceORMBuilderExtension.Options?.Driver;
-            ConnectionString = SixpenceORMBuilderExtension.Options?.ConnectionString;
-            CommandTimeout = SixpenceORMBuilderExtension.Options?.CommandTimeout;
+            var dbSetting = SormServiceCollectionExtensions.Options?.DbSetting;
+            AssertUtil.IsNull(dbSetting, "数据库未设置");
+
+            Driver = dbSetting?.Driver;
+            ConnectionString = dbSetting?.ConnectionString;
+            CommandTimeout = dbSetting?.CommandTimeout;
         }
         
         /// <summary>
@@ -41,7 +44,7 @@ namespace Sixpence.ORM.EntityManager
         /// 获取 EntityManager
         /// </summary>
         /// <param name="connectionString">数据库连接字符串</param>
-        /// <param name="driverType">数据库驱动类型</param>
+        /// <param name="driverName">数据库驱动名：PostgresDriver</param>
         /// <returns>EntityManager</returns>
         public static IEntityManager GetManager(string connectionString, string driverName)
         {
@@ -55,7 +58,7 @@ namespace Sixpence.ORM.EntityManager
                 throw new Exception("数据库驱动名不能为空");
             }
 
-            var driver = ServiceContainer.ResolveAll<IDbDriver>().FirstOrDefault(item => item.Name.ToUpper() == driverName);
+            var driver = ServiceContainer.Provider.GetServices<IDbDriver>().FirstOrDefault(item => item.Name.ToUpper() == driverName);
 
             if (driver == null)
             {

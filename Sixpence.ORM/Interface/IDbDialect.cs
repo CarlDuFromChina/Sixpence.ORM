@@ -1,5 +1,4 @@
-﻿using Sixpence.Common.IoC;
-using Sixpence.ORM.Models;
+﻿using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM
 {
-    [ServiceRegister]
     public interface IDbDialect
     {
         /// <summary>

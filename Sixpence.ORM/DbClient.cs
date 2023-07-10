@@ -1,6 +1,6 @@
 ﻿using Dapper;
-using Sixpence.Common.Logging;
-using Sixpence.Common;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -13,19 +13,19 @@ namespace Sixpence.ORM
     /// <summary>
     /// 数据库实例
     /// </summary>
-    public class DbClient
+    public class DbClient : IDisposable
     {
-        public IDbConnection DbConnection { get; private set; }
         private IDbDriver driver;
+        private int? commandTimeout = 20;
+        private readonly ILogger<DbClient> Logger;
+        private readonly bool EnableLogging = SormAppBuilderExtensions.BuilderOptions.EnableLogging;
+
+        public int? CommandTimeout => commandTimeout;
+        public IDbConnection DbConnection { get; private set; }
         public IDbDriver Driver => driver; // 数据库驱动
         public IDbDialect Dialect => driver.Dialect; // 数据库方言
         public IDbBatch Batch => driver.Batch; // 数据库批量操作
-        private int? commandTimeout = 20;
-        public int? CommandTimeout => commandTimeout;
-
-        internal Action<string>? LogDebug;
-        internal Action<string, Exception?>? LogError;
-
+        
         internal DbClient(IDbDriver dbDriver, string connectionString, int? commandTimeout)
         {
             driver = dbDriver;
@@ -34,8 +34,7 @@ namespace Sixpence.ORM
             {
                 this.commandTimeout = commandTimeout;
             }
-            LogDebug = SixpenceORMBuilderExtension.Options?.LogOptions?.LogDebug;
-            LogError = SixpenceORMBuilderExtension.Options?.LogOptions?.LogError;
+            Logger = ServiceContainer.Provider.GetService<ILogger<DbClient>>();
         }
 
         /// <summary>
@@ -142,8 +141,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogDebug != null)
-                LogDebug(sql + paramList.ToLogString());
+            if (EnableLogging)
+                Logger.LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.Execute(sql, param, commandTimeout: CommandTimeout);
         }
@@ -158,8 +157,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogDebug != null)
-                LogDebug(sql + paramList.ToLogString());
+            if (EnableLogging)
+                Logger.LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.ExecuteScalar(sql, param, commandTimeout: CommandTimeout);
         }
@@ -177,8 +176,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogDebug != null)
-                LogDebug(sql + paramList.ToLogString());
+            if (EnableLogging)
+                Logger.LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.Query<T>(sql, param, commandTimeout: CommandTimeout);
         }
@@ -194,8 +193,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogDebug != null)
-                LogDebug(sql + paramList.ToLogString());
+            if (EnableLogging)
+                Logger.LogDebug(sql + paramList.ToLogString());
 
             return DbConnection.QueryFirstOrDefault<T>(sql, param, commandTimeout: CommandTimeout);
         }
@@ -212,8 +211,8 @@ namespace Sixpence.ORM
         {
             var paramList = param?.ToDictionary();
 
-            if (LogDebug != null)
-                LogDebug(sql + paramList.ToLogString());
+            if (EnableLogging)
+                Logger.LogDebug(sql + paramList.ToLogString());
 
             DataTable dt = new DataTable();
             var reader = DbConnection.ExecuteReader(sql, param, commandTimeout: CommandTimeout);
@@ -232,8 +231,8 @@ namespace Sixpence.ORM
             var tempTableName = $"{tableName}_{DateTime.Now.ToString("yyyyMMddHHmmss")}";
             var sql = Driver.Dialect.GetCreateTemporaryTableSql(tableName, tempTableName);
 
-            if (LogDebug != null)
-                LogDebug(sql);
+            if (EnableLogging)
+                Logger.LogDebug(sql);
 
             DbConnection.Execute(sql);
             return tempTableName;
@@ -247,8 +246,8 @@ namespace Sixpence.ORM
         {
             var sql = Dialect.GetDropTableSql(tableName);
 
-            if (LogDebug != null)
-                LogDebug(sql);
+            if (EnableLogging)
+                Logger.LogDebug(sql);
 
             DbConnection.Execute(sql, commandTimeout: CommandTimeout);
         }

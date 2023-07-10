@@ -24,7 +24,7 @@ namespace Sixpence.ORM.Test
             {
                 options.Assembly.Add("Sixpence.ORM.Test");
             });
-            SixpenceORMBuilderExtension
+            SormAppBuilderExtensions
                 .UseORM(null, options =>
                 {
                     options.EntityClassNameCase = NameCase.Pascal;
