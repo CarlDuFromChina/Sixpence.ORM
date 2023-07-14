@@ -1,4 +1,5 @@
-﻿using Sixpence.ORM.Models;
+﻿using Sixpence.ORM.Mappers;
+using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,10 +30,11 @@ namespace Sixpence.ORM.Entity
         {
             this.Name = name;
             this.Type = primaryType;
-            this.Options = new ColumnOptions()
+            this.Options = new DbPropertyMap()
             {
-                IsRequire = true,
+                IsRequired = true,
                 Name = name,
+                PrimaryType = primaryType
             };
         }
     }

@@ -31,9 +31,9 @@ namespace Sixpence.ORM
         /// <returns></returns>
         public virtual string Create(E entity)
         {
-            if (string.IsNullOrEmpty(entity.GetPrimaryColumn().Value))
+            if (string.IsNullOrEmpty(entity.PrimaryColumn.Value?.ToString()))
             {
-                entity.SetAttributeValue(entity.GetPrimaryColumn().Name, entity.NewId());
+                entity.SetAttributeValue(entity.PrimaryColumn.DbPropertyMap.Name, entity.NewId());
             }
             var id = Manager.Create(entity);
             return id;
@@ -54,7 +54,7 @@ namespace Sixpence.ORM
         /// <returns></returns>
         public virtual string Save(E entity)
         {
-            var id = entity.GetPrimaryColumn().Value ?? entity.NewId();
+            var id = entity.PrimaryColumn.Value ?? entity.NewId();
             var isExist = FindOne(id) != null;
             if (isExist)
             {
@@ -64,7 +64,7 @@ namespace Sixpence.ORM
             {
                 id = Create(entity);
             }
-            return id;
+            return id.ToString();
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace Sixpence.ORM
         /// <param name="id"></param>
         public virtual void Delete(string id)
         {
-            Manager.Delete(new E().GetEntityName(), id);
+            Manager.Delete(new E().EntityMap.Table, id);
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace Sixpence.ORM
         /// <returns></returns>
         public virtual IEnumerable<E> Find(object conditions = null)
         {
-            var sql = $"SELECT * FROM {new E().GetEntityName()}";
+            var sql = $"SELECT * FROM {new E().EntityMap.Table}";
 
             if (conditions == null)
                 return Manager.Query<E>(sql);
@@ -109,7 +109,7 @@ namespace Sixpence.ORM
         /// <returns></returns>
         public virtual IEnumerable<E> FindAll()
         {
-            var sql = $"SELECT * FROM {new E().GetEntityName()}";
+            var sql = $"SELECT * FROM {new E().EntityMap.Table}";
             return Manager.Query<E>(sql);
         }
 
@@ -121,8 +121,8 @@ namespace Sixpence.ORM
         public virtual IEnumerable<E> FindByIds(string ids)
         {
             var paramList = new Dictionary<string, object>();
-            var tableName = new E().GetEntityName();
-            var primaryKey = new E().GetPrimaryColumn().Name;
+            var tableName = new E().EntityMap.Table;
+            var primaryKey = new E().PrimaryColumn.Name;
             var inClause = string.Join(",", ids.Select((id, index) => $"{Manager.Driver.Dialect.ParameterPrefix}id" + index));
             var sql = $"SELECT * FROM {tableName} WHERE {primaryKey} IN ({inClause})";
             var count = 0;
@@ -152,9 +152,9 @@ namespace Sixpence.ORM
         /// <param name="entity"></param>
         public virtual void Update(E entity)
         {
-            if (string.IsNullOrEmpty(entity?.GetPrimaryColumn().Value))
+            if (string.IsNullOrEmpty(entity?.PrimaryColumn.Value.ToString()))
             {
-                return;
+                throw new Exception("实体未定义主键");
             }
 
             Manager.Update(entity);
@@ -178,7 +178,7 @@ namespace Sixpence.ORM
         public E FindOne(object conditions = null)
         {
             var result = ParseConditions(conditions?.ToDictionary());
-            var sql = $"SELECT * FROM {new E().GetEntityName()} WHERE 1 = 1 {result.WhereSQL}";
+            var sql = $"SELECT * FROM {new E().EntityMap.Table} WHERE 1 = 1 {result.WhereSQL}";
             return Manager.QueryFirst<E>(sql, result.ParamList);
         }
 
@@ -208,7 +208,7 @@ namespace Sixpence.ORM
         /// </summary>
         public void Clear()
         {
-            Manager.Execute($"TRUNCATE TABLE {new E().GetEntityName()}");
+            Manager.Execute($"TRUNCATE TABLE {new E().EntityMap.Table}");
         }
     }
 }

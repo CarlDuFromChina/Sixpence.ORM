@@ -1,4 +1,5 @@
 ﻿using Sixpence.ORM.Entity;
+using Sixpence.ORM.Interface;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
@@ -9,23 +10,9 @@ namespace Sixpence.ORM
 {
     public interface IEntity
     {
-        /// <summary>
-        /// 获取实体名（表名）
-        /// </summary>
-        /// <returns></returns>
-        string GetEntityName();
-
-        /// <summary>
-        /// 获取逻辑名
-        /// </summary>
-        /// <returns></returns>
-        string GetRemark();
-
-        /// <summary>
-        /// 获取主键列
-        /// </summary>
-        /// <returns></returns>
-        (string Name, string Value, PrimaryType Type) GetPrimaryColumn();
+        IDbEntityMap? EntityMap { get; }
+        ISormPrimaryColumn PrimaryColumn { get; }
+        IList<ISormColumn> Columns { get; }
 
         /// <summary>
         /// 获取属性值
@@ -48,19 +35,27 @@ namespace Sixpence.ORM
         IDictionary<string, object> GetAttributes();
 
         /// <summary>
-        /// 获取所有值
+        /// 获取字段值
         /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
         /// <returns></returns>
-        IEnumerable<object> GetValues();
+        T GetAttributeValue<T>(string name) where T : class;
 
         /// <summary>
-        /// 获取所有键
+        /// 生成新 ID
+        /// </summary>
+        /// <returns></returns>
+        string NewId();
+
+        /// <summary>
+        /// 获取所有字段名
         /// </summary>
         /// <returns></returns>
         IEnumerable<string> GetKeys();
 
         /// <summary>
-        /// 是否存在该键
+        /// 是否存在字段
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>

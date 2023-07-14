@@ -54,8 +54,8 @@ namespace Sixpence.ORM.EntityManager
                {
                    if (item.AttributeList == null || item.AttributeList.Count == 0) return;
 
-                   var paramList = new Dictionary<string, object>() { { $"{parameterPrefix}id", entity.GetPrimaryColumn().Value } };
-                   var sqlParam = new List<string>() { $" AND {entity.GetPrimaryColumn().Name} <> {parameterPrefix}id" }; // 排除自身
+                   var paramList = new Dictionary<string, object>() { { $"{parameterPrefix}id", entity.PrimaryColumn.Value } };
+                   var sqlParam = new List<string>() { $" AND {entity.PrimaryColumn.DbPropertyMap.Name} <> {parameterPrefix}id" }; // 排除自身
                    item.AttributeList.Distinct().Each(attr =>
                    {
                        var keyValue = dialect.HandleParameter($"{parameterPrefix}{attr}", entity[attr]);
@@ -63,7 +63,7 @@ namespace Sixpence.ORM.EntityManager
                        paramList.Add(keyValue.name, keyValue.value);
                    });
 
-                   var sql = string.Format(@"SELECT {0} FROM {1} WHERE 1 = 1 ",  entity.GetPrimaryColumn().Name, entity.GetEntityName()) + string.Join("", sqlParam);
+                   var sql = string.Format(@"SELECT {0} FROM {1} WHERE 1 = 1 ",  entity.PrimaryColumn.DbPropertyMap.Name, entity.EntityMap.Table) + string.Join("", sqlParam);
                    AssertUtil.IsTrue(manager.Query<string>(sql, paramList)?.Count() > 0, item.RepeatMessage);
                });
         }

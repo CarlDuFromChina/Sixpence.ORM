@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Sixpence.ORM.Utils;
 using Microsoft.Extensions.Options;
+using Sixpence.ORM.Mappers;
 
 namespace Sixpence.ORM
 {
@@ -17,7 +18,7 @@ namespace Sixpence.ORM
         internal static AppBuilderOptions BuilderOptions = new AppBuilderOptions();
 
         /// <summary>
-        /// 自动迁移实体类
+        /// 添加 Sorm 中间件，并进行配置
         /// </summary>
         /// <param name="app"></param>
         /// <param name="migrate"></param>
@@ -61,8 +62,11 @@ namespace Sixpence.ORM
 
                     entityList.Each(item =>
                     {
-                        var tableName = item.GetEntityName();
-                        var tableExsit = ConvertUtil.ConToBoolean(manager.ExecuteScalar(driver.Dialect.GetTableExsitSql(item.GetEntityName())));
+                        var entityMap = item.EntityMap;
+                        var tableName = entityMap.Table;
+                        var propertyMapList = entityMap.Properties.ToList();
+
+                        var tableExsit = ConvertUtil.ConToBoolean(manager.ExecuteScalar(driver.Dialect.GetTableExsitSql(tableName)));
 
                         // 表未创建则创建，否则自动添加字段
                         if (!tableExsit)
@@ -72,14 +76,13 @@ namespace Sixpence.ORM
                             context.CurrentEntity = item;
                             interceptor?.Execute(context);
 
-                            var attrSql = EntityCommon
-                                .GetColumns(item, driver)
+                            var attrSql = propertyMapList
                                 .Select(e =>
                                 {
                                     var lengthSQL = e.Length != null ? $"({e.Length})" : "";
-                                    var requireSQL = e.IsRequire == true ? " NOT NULL" : "";
+                                    var requireSQL = e.IsRequired == true ? " NOT NULL" : "";
                                     var defaultValueSQL = e.DefaultValue == null ? "" : e.DefaultValue is string ? $"DEFAULT '{e.DefaultValue}'" : $"DEFAULT {e.DefaultValue}";
-                                    var primaryKeySQL = e.Name == item.GetPrimaryColumn().Name ? "PRIMARY KEY" : "";
+                                    var primaryKeySQL = e.Name == item.PrimaryColumn.DbPropertyMap.Name ? "PRIMARY KEY" : "";
 
                                     return $"{e.Name} {e.Type}{lengthSQL} {requireSQL} {primaryKeySQL} {defaultValueSQL}";
                                 })
@@ -94,15 +97,14 @@ namespace Sixpence.ORM
                         }
                         else
                         {
-                            var tableAttrs = driver.Dialect.GetTableColumns(manager.DbClient.DbConnection, tableName); // 查询表现有字段
-                            var entityAttrs = EntityCommon.GetColumns(item, driver); // 查询实体现有字段
-                            var addColumns = new List<ColumnOptions>(); // 表需要添加的字段
-                            var removeColumns = new List<ColumnOptions>(); // 表需要删除的字段
+                            var columns = driver.Dialect.GetTableColumns(manager.DbClient.DbConnection, tableName).ToList(); // 查询表现有字段
+                            var addColumns = new List<IDbPropertyMap>(); // 表需要添加的字段
+                            var removeColumns = new List<IDbPropertyMap>(); // 表需要删除的字段
 
                             // 循环实体字段
-                            entityAttrs.Each(attr =>
+                            propertyMapList.Each(attr =>
                             {
-                                var _attr = tableAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
+                                var _attr = columns.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
                                 if (_attr == null)
                                 {
                                     addColumns.Add(attr);
@@ -110,12 +112,12 @@ namespace Sixpence.ORM
                             });
 
                             // 循环表字段
-                            tableAttrs.Each(attr =>
+                            columns.Each(attr =>
                             {
-                                var _attr = entityAttrs.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
+                                var _attr = propertyMapList.Find(e => e.Name.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase));
                                 if (_attr == null)
                                 {
-                                    removeColumns.Add(new ColumnOptions() { Name = attr.Name });
+                                    removeColumns.Add(new DbPropertyMap() { Name = attr.Name });
                                 }
                             });
 

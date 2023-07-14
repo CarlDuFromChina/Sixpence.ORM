@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Postgres.Entity;
 using Sixpence.ORM;
 using Sixpence.ORM.Postgres;
 
@@ -8,9 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+builder.Services.AddTransient<IEntity, UserInfo>();
 builder.Services.AddSorm(options =>
 {
-    options.EntityClassNameCase = NameCase.Pascal;
+    options.NameCase = NameCase.Pascal;
     options.UsePostgres("Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;", 20);
 });
 

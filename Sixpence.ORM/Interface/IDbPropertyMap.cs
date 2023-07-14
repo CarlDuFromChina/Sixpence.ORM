@@ -1,45 +1,52 @@
 ﻿using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Sixpence.ORM
 {
-    /// <summary>
-    /// 字段
-    /// </summary>
-    public class ColumnOptions
+    public interface IDbPropertyMap
     {
         /// <summary>
         /// 字段名
         /// </summary>
-        public string Name { get; set; }
+        string Name { get; set; }
 
         /// <summary>
         /// 字段类型（数据库字段类型）
         /// </summary>
-        public string Type { get; set; }
+        string Type { get; set; }
 
         /// <summary>
         /// 备注信息
         /// </summary>
-        public string Remark { get; set; }
+        string Remark { get; set; }
 
         /// <summary>
         /// 字段长度
         /// </summary>
-        public int? Length { get; set; }
+        int? Length { get; set; }
 
         /// <summary>
         /// 是否必填
         /// </summary>
-        public bool? IsRequire { get; set; }
+        bool? IsRequired { get; set; }
 
         /// <summary>
         /// 默认值
         /// </summary>
-        public object DefaultValue { get; set; }
+        object DefaultValue { get; set; }
+
+        /// <summary>
+        /// 是否是主键
+        /// </summary>
+        bool IsKey { get; set; }
+
+        /// <summary>
+        /// 主键类型
+        /// </summary>
+        PrimaryType? PrimaryType { get; set; }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using Sixpence.ORM.Interface;
+using Sixpence.ORM.Mappers;
 
 namespace Sixpence.ORM.Entity
 {
@@ -10,7 +12,7 @@ namespace Sixpence.ORM.Entity
     {
         public ColumnAttribute()
         {
-            Options = new ColumnOptions();
+            Options = new DbPropertyMap();
         }
 
         /// <summary>
@@ -22,11 +24,11 @@ namespace Sixpence.ORM.Entity
         /// <param name="isRequire">是否必填</param>
         public ColumnAttribute(string name = "", string type = "", int length = 0, bool isRequire = false, object? defaultValue = null)
         {
-            Options = new ColumnOptions()
+            Options = new DbPropertyMap()
             {
                 Name = name,
                 Type = type,
-                IsRequire = isRequire,
+                IsRequired = isRequire,
                 DefaultValue = defaultValue
             };
             if (length == 0)
@@ -39,6 +41,6 @@ namespace Sixpence.ORM.Entity
             }
         }
 
-        public ColumnOptions Options { get; set; }
+        public IDbPropertyMap Options { get; set; }
     }
 }

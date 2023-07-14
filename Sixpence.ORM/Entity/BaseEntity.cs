@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Sixpence.ORM.Interface;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Concurrent;
@@ -10,86 +10,60 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM.Entity
 {
+    /// <summary>
+    /// 实体类基类，实体类可以继承此类
+    /// </summary>
     [DataContract]
     [Serializable]
     public abstract class BaseEntity : IEntity
     {
-        private static readonly ConcurrentDictionary<string, string> _entityNameCache = new ConcurrentDictionary<string, string>();
+        public IDbEntityMap EntityMap => SormServiceCollectionExtensions.Options.EntityMaps[this];
+        public ISormPrimaryColumn PrimaryColumn
+        {
+            get
+            {
+                var propertyMap = EntityMap.Properties.FirstOrDefault(item => item.IsKey);
+                var property = EntityCommon.GetPrimaryPropertyInfo(GetType());
 
-        #region 实体基础字段
-        /// <summary>
-        /// 创建人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("创建人id")]
-        public string created_by { get; set; }
+                if (propertyMap == null)
+                    throw new Exception("实体未定义主键");
 
-        /// <summary>
-        /// 创建人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("创建人名称")]
-        public string created_by_name { get; set; }
+                return new SormPrimaryColumn()
+                {
+                    Name = propertyMap.Name,
+                    Value = property.GetValue(this) ?? "",
+                    DbPropertyMap = propertyMap,
+                };
+            }
+        }
 
-        /// <summary>
-        /// 创建日期
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("创建时间")]
-        public DateTime? created_at { get; set; }
+        public IList<ISormColumn> Columns
+        {
+            get
+            {
+                var columns = new List<ISormColumn>() { PrimaryColumn };
+                GetAttributes().Each(item =>
+                {
+                    if (item.Key != PrimaryColumn.Name)
+                    {
+                        var column = new SormColumn()
+                        {
+                            Name = item.Key,
+                            Value = item.Value,
+                            DbPropertyMap = EntityMap.Properties.FirstOrDefault(p => p.Name == EntityCommon.ConvertToDbName(item.Key)),
+                        };
+                        columns.Add(column);
+                    }
+                });
+                return columns;
+            }
+        }
 
-        /// <summary>
-        /// 修改人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("修改人")]
-        public string updated_by { get; set; }
-
-        /// <summary>
-        /// 修改人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("修改人姓名")]
-        public string updated_by_name { get; set; }
-
-
-        /// <summary>
-        /// 修改日期
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("修改时间")]
-        public DateTime? updated_at { get; set; }
-
-        #endregion
-
-        /// <summary>
-        /// 索引器
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        #region 索引器
         public object this[string key]
         {
             get => GetAttributeValue(key);
             set => SetAttributeValue(key, value);
-        }
-
-        #region Methods
-        public PrimaryColumnAttribute GetPrimaryColumnAttribute()
-        {
-            return this.GetType()
-                    .GetProperties()
-                    .FirstOrDefault(item => item.IsDefined(typeof(PrimaryColumnAttribute), false))
-                    .GetCustomAttributes(typeof(PrimaryColumnAttribute), false)
-                    .FirstOrDefault() as PrimaryColumnAttribute;
-        }
-
-        public virtual IEnumerable<string> GetKeys()
-        {
-            return this.GetType().GetProperties().Select(item => item.Name);
-        }
-
-        public virtual bool ContainKey(string name)
-        {
-            return GetKeys().Contains(name);
-        }
-
-        public virtual IEnumerable<object> GetValues()
-        {
-            return this.GetType().GetProperties().Select(item => item.GetValue(this));
         }
 
         public virtual IDictionary<string, object> GetAttributes()
@@ -97,11 +71,11 @@ namespace Sixpence.ORM.Entity
             var attributes = new Dictionary<string, object>();
             this.GetType()
                 .GetProperties()
-                .Where(item => item.IsDefined(typeof(ColumnAttribute), true))
+                .Where(item => Attribute.IsDefined(item, typeof(ColumnAttribute)))
                 .ToList().ForEach(item =>
-            {
-                attributes.Add(item.Name, item.GetValue(this));
-            });
+                {
+                    attributes.Add(item.Name, item.GetValue(this));
+                });
             return attributes;
         }
 
@@ -134,85 +108,16 @@ namespace Sixpence.ORM.Entity
                 var property = this.GetType().GetProperty(name);
                 if (property?.GetSetMethod() != null)
                 {
-                    if (property.PropertyType == typeof(JToken) && !string.IsNullOrEmpty(value?.ToString()))
-                    {
-                        property.SetValue(this, JToken.Parse(value?.ToString()));
-                    }
-                    else
-                    {
-                        property.SetValue(this, value);
-                    }
+                    property.SetValue(this, value);
                 }
             }
         }
+        #endregion
 
-        /// <summary>
-        /// 获取实体名
-        /// </summary>
-        /// <returns></returns>
-        public string GetEntityName()
-        {
-            var type = GetType();
-            return _entityNameCache.GetOrAdd(type.FullName, (key) =>
-            {
-                var attr = Attribute.GetCustomAttribute(type, typeof(EntityAttribute)) as EntityAttribute;
-                if (attr == null)
-                {
-                    throw new Exception("获取实体名失败，请检查是否定义实体名");
-                }
-
-                // 若未设置自定义表名，则根据类名去格式化
-                if (string.IsNullOrEmpty(attr.TableName))
-                {
-                    var name = this.GetType().Name;
-                    switch (SormServiceCollectionExtensions.Options.EntityClassNameCase)
-                    {
-                        case NameCase.UnderScore:
-                            return name.ToLower();
-                        case NameCase.Pascal:
-                        default:
-                            return EntityCommon.UpperChartToLowerUnderLine(name);
-                    }
-                }
-                return attr.TableName;
-            });
-        }
-
-        /// <summary>
-        /// 获取逻辑名
-        /// </summary>
-        /// <returns></returns>
-        public string GetRemark()
-        {
-            var attr = Attribute.GetCustomAttribute(GetType(), typeof(EntityAttribute)) as EntityAttribute;
-            if (attr == null)
-            {
-                return string.Empty;
-            }
-            return attr.Remark;
-        }
-
-        /// <summary>
-        /// 生成一个新 ID
-        /// </summary>
-        /// <returns></returns>
-        public string NewId()
-        {
-            return EntityCommon.GenerateID(GetPrimaryColumn().Type).ToString();
-        }
-
-        /// <summary>
-        /// 获取主键
-        /// </summary>
-        /// <returns></returns>
-        public (string Name, string Value, PrimaryType Type) GetPrimaryColumn()
-        {
-            var primaryColumn = GetPrimaryColumnAttribute();
-            var keyName = primaryColumn.Name;
-            var type = primaryColumn.Type;
-            var value = GetAttributeValue<string>(keyName);
-            return (Name: keyName, Value: value, Type: type);
-        }
+        #region Methods
+        public string NewId() => EntityCommon.GenerateID(this.PrimaryColumn.PrimaryType)?.ToString();
+        public virtual IEnumerable<string> GetKeys() => EntityMap.Properties.Select(item => item.Name);
+        public virtual bool ContainKey(string name) => GetKeys().Contains(name);
         #endregion
     }
 }

@@ -1,4 +1,5 @@
-﻿using Sixpence.ORM.Models;
+﻿using Sixpence.ORM.Mappers;
+using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -21,7 +22,7 @@ namespace Sixpence.ORM
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        string GetAddColumnSql(string tableName, List<ColumnOptions> columns);
+        string GetAddColumnSql(string tableName, IList<IDbPropertyMap> columns);
 
         /// <summary>
         /// 获取列删除语句
@@ -29,7 +30,7 @@ namespace Sixpence.ORM
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        string GetDropColumnSql(string tableName, List<ColumnOptions> columns);
+        string GetDropColumnSql(string tableName, IList<IDbPropertyMap> columns);
 
         /// <summary>
         /// 获取临时表创建语句
@@ -66,7 +67,7 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="tableName"></param>
         /// <returns></returns>
-        List<EntityAttr> GetTableColumns(IDbConnection conn, string tableName);
+        IList<IDbPropertyMap> GetTableColumns(IDbConnection conn, string tableName);
 
         /// <summary>
         /// 创建或更新SQL

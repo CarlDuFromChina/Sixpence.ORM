@@ -6,20 +6,14 @@
 
 `Sixpence.ORM`是一个基于`Dapper`的`ORM`框架，在`Dapper`的基础上，提供实体自动生成和`CRUD`封装，支持批量操作。我相信，本项目可以帮助你大大提升你的开发效率。
 
-### 基础
+## 框架特点
 
-核心类：
-
-+ **BaseEntity**：实体基类，所有实体都应继承于该基类
-+ **EntityManager**：通过此类，可以管理（CRUD）任何实体， `EntityManager` 就像放一个实体存储库的集合的地方
-+ **Repository**：`Repository` 就像 `EntityManager` 一样，但其操作仅限于具体实体
-
-实体特性：
-
-+ **ColumnAttribute**：标注属性对应数据库中的列，必须指定列名、类型等
-+ **EntityAttribute**：标注类是一个实体类，可以指定表名，逻辑名
-+ **KeyAttributesAttribute**：标注实体类唯一键，可以是组合主键。插入或更新时会检查重复项
-+ **PrimaryColumnAttribute**：标注属性是主键，可以指定列名、类型
++ **支持 .Net 6**
++ **配置简单，易上手**
++ **轻松定义通用实体类**
++ **支持批量创建、更新**
++ **灵活扩展**
++ **根据实体类自动迁移数据库**
 
 ### 链接
 
@@ -35,108 +29,151 @@ Sixpence.ORM 是一个[NuGet library](https://www.nuget.org/packages/Dapper)，�
 Install-Package Sixpence.ORM -Version 3.3.0
 ```
 
-## 特性
-
-+ **支持 DotNet Core 3.1 +**
-+ **支持注入依赖系统**
-+ **表自动生成**
-+ **支持批量创建、更新**
-+ **灵活扩展**
-+ **使用简单直观**
-
 ## 使用教程
 
 `Sixpence.ORM`配置和使用都非常简单，你仅需要几分钟时间即可掌握该框架
 
-### 配置
+### 入门
+
+#### 1、安装
 
 在启动类`startup.cs`里注册服务
 
 ```csharp
-public class Startup
-{
-    public virtual void ConfigureServices(IServiceCollection services)
-    {
-        services.AddServiceContainer(options =>
-        {
-            options.Assembly.Add("Blog.dll"); // 添加你的项目
-        });
-    }
+using Microsoft.AspNetCore.Builder;
+using Sixpence.ORM;
+using Sixpence.ORM.Postgres;
 
-    public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHttpContextAccessor accessor)
-    {
-        app.UseORM()
-           .UsePostgres()
-           .UseMigrateDB();
-    }
-}
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+// 1、注册服务，配置数据库和实体
+builder.Services.AddSorm(options =>
+{
+    options.EntityClassNameCase = NameCase.Pascal;
+    options.UsePostgres("Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;", 20);
+});
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() {  Title = "Postgres Demo 接口", Version = "v1"});
+});
+
+var app = builder.Build();
+
+// 2、添加中间件，开启日志、自动合并实体类字段改动
+app.UseSorm(options =>
+{
+    options.EnableLogging = true;
+    options.MigrateDb = true;
+});
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.MapSwagger();
+
+app.UseSwagger();
+
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("v1/swagger.json", "My API V1");
+});
+
+app.Run();
 ```
 
-### 实体类定义（Entity）
+#### 2、实体类定义（Entity）
 
 实体类**必须**要继承`BaseEntity`基类，此外还要注意特性声明
 
-+ EntityAttribute：定义实体表名和逻辑名
-+ KeyAttributes：定义唯一键
-+ PrimaryColumn：定义主键
-+ Column：定义列
++ **EntityAttribute**：定义实体表名和逻辑名
++ **KeyAttributes**：定义唯一键
++ **PrimaryColumn**：定义主键
++ **Column**：定义列
+
+以下是一个用户信息的实体类示例：
 
 ```csharp
-namespace Blog
+using System;
+using Sixpence.ORM;
+using Sixpence.ORM.Entity;
+
+namespace Postgres.Entity
 {
     [Entity]
-    [KeyAttributes("code不能重复", "code")]
-    public class test : BaseEntity
+    public class UserInfo : BaseEntity
     {
         [PrimaryColumn]
         public string id { get; set; }
 
         [Column]
         public string code { get; set; }
-      
-      	[Column]
-      	public DateTime? birthday { get; set; }
+
+        [Column]
+        public bool is_admin { get; set; }
     }
 }
 ```
 
-### 仓储模型（Repository）
+#### 3、仓储模型（Repository）
 
 我们定义好实体后，可以利用仓储模型（Repository）直接进行增删改查。示例代码如下：
 
 ```csharp
-public class TestService
+using System;
+using Sixpence.ORM;
+using Sixpence.ORM.Entity;
+
+namespace Postgres.Entity
 {
-    private Repository<Test> testRepository = new Repository<Test>(); // 实例化
+    [Entity]
+    public class UserInfo : BaseEntity
+    {
+        [PrimaryColumn]
+        public string id { get; set; }
 
-    public void CreateData(Test test)
-    {
-        testRepository.Create(test); // 创建
-    }
+        [Column]
+        public string code { get; set; }
 
-    public void UpdateData(Test test)
-    {
-        testRepository.Update(test); // 更新
-    }
+        [Column]
+        public bool is_admin { get; set; }
 
-    public Test QueryById(string id)
-    {
-        return testRepository.FindOne(id); // 查询单个记录
-    }
-    
-    public IList<Test> Query(string ids)
-    {
-        return testRepository.FindByIds(ids); // 根据多个id查询
-    }
-    
-    public Test QueryByName(string name)
-    {
-        return testRepository.FindOne(new Dictionary<string, Object>() { { "name", name } }); // 条件查询
+        #region DAL
+        public static List<UserInfo> FindAll()
+        {
+            return new Repository<UserInfo>().FindAll().ToList();
+        }
+
+        public static UserInfo FindById(string id)
+        {
+            return new Repository<UserInfo>().FindOne();
+        }
+
+        public static void InsertUserInfo(UserInfo userInfo)
+        {
+            new Repository<UserInfo>().Insert(userInfo);
+        }
+
+        public static void UpdateUserInfo(UserInfo userInfo)
+        {
+            new Repository<UserInfo>().Update(userInfo);
+        }
+
+        public static void DeleteUserInfo(string id)
+        {
+            new Repository<UserInfo>().Delete(id);
+        }
+        #endregion
     }
 }
 ```
 
-### 实体管理器（EntityManager）
+### 高级
+
+#### 1、实体管理器（EntityManager）
 
 有时候`Repository`无法满足我们复杂的使用场景，这个时候我们就需要`EntityManager`
 
@@ -151,15 +188,15 @@ var manager = EntityManagerFactory.GetManager();
 单条查询：
 
 ```csharp
-var data = manager.QueryFirst<Test>("123"); // 根据 id 查询数据
-var data = manager.QueryFirst<Test>("select * from test where id = @id", new { id = "123" }); // 原生 SQL 查询
+var data = manager.QueryFirst<UserInfo>("123"); // 根据 id 查询数据
+var data = manager.QueryFirst<UserInfo>("select * from test where id = @id", new { id = "123" }); // 原生 SQL 查询
 ```
 
 多条查询：
 
 ```csharp
-var dataList = manager.Query<Test>(); // 查询 test 实体所有数据
-var dataList = manager.Query<Test>("select * from test where begin_time > @begin_time", new { begin_time = DateTime.Now }); // 原生 SQL 查询
+var dataList = manager.Query<UserInfo>(); // 查询 test 实体所有数据
+var dataList = manager.Query<UserInfo>("select * from test where begin_time > @begin_time", new { begin_time = DateTime.Now });  // 原生 SQL 查询
 ```
 
 **(3) 删除数据**
@@ -167,19 +204,19 @@ var dataList = manager.Query<Test>("select * from test where begin_time > @begin
 单条删除：
 
 ```csharp
-var test = new Test() { id = "123" };
-manager.Delete(test);
-manager.Delete("test", "123");
+var data = new UserInfo() { id = "123" };
+manager.Delete(data);
+manager.Delete("user_info", "123");
 ```
 
 批量删除：
 
 ```csharp
-var dataList = new List<Test>()
+var dataList = new List<UserInfo>()
 {
-    new Test() { id = "B001"},
-    new Test() { id = "B002"},
-    new Test() { id = "B003"},
+    new UserInfo() { id = "B001"},
+    new UserInfo() { id = "B002"},
+    new UserInfo() { id = "B003"},
     // ...
 };
 manager.BulkDelete(dataList);
@@ -190,7 +227,7 @@ manager.BulkDelete(dataList);
 单条更新：
 
 ```csharp
-var test = new Test() { id = "123", name = "王二" };
+var data = new UserInfo() { id = "123", name = "王二" };
 manager.Update(data);
 ```
 
@@ -209,29 +246,29 @@ manager.BulkUpdate(dataList);
 单条创建：
 
 ```csharp
-var entity = new Test() { code = "A001", name = "Test", id = "123" };
+var entity = new UserInfo() { code = "A001", name = "Test", id = "123" };
 var result = manager.Create(entity);
 ```
 
 批量创建：
 
 ```csharp
-var dataList = new List<Test>()
+var dataList = new List<UserInfo>()
 {
-    new Test() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-    new Test() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-    new Test() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+    new UserInfo() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+    new UserInfo() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+    new UserInfo() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
 };
 var manager = EntityManagerFactory.GetManager();
 manager.ExecuteTransaction(() => manager.BulkCreate(dataList));
 ```
 
-### 事务（Transcation）
+#### 2、事务（Transcation）
 
 `EntityManager`中使用事务：
 
 ```csharp
-public void Transcation(Test data)
+public void Transcation(UserInfo data)
 {
     var manager = EntityManagerFactory.GetManager();
     manager.ExecuteTransaction(() => {
@@ -245,11 +282,11 @@ public void Transcation(Test data)
 `Repository`中使用事务：
 
 ```csharp
-public void Transcation(Test test, User user)
+public void Transcation(Test test, UserInfo user)
 {
     var manager = EntityManagerFactory.GetManager();
     var testRepository = new Repository<Test>(manager);
-    var userRepository = new Repository<User>(manager);
+    var userRepository = new Repository<UserInfo>(manager);
     manager.ExecuteTransaction(() => {
         testRepository.Create(test);
         userRepository.Create(user);

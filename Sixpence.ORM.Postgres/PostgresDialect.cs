@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using Newtonsoft.Json.Linq;
+using Sixpence.ORM.Mappers;
 using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
@@ -34,13 +34,13 @@ WHERE 1!=1;";
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        public string GetAddColumnSql(string tableName, List<ColumnOptions> columns)
+        public string GetAddColumnSql(string tableName, IList<IDbPropertyMap> columns)
         {
             var sql = new StringBuilder();
             var tempSql = $@"ALTER TABLE {tableName}";
             foreach (var item in columns)
             {
-                var require = item.IsRequire == true ? " NOT NULL" : "";
+                var require = item.IsRequired == true ? " NOT NULL" : "";
                 var length = item.Length != null ? $"({item.Length})" : "";
                 var defaultValue = item.DefaultValue == null ? "" : item.DefaultValue is string ? $"DEFAULT '{item.DefaultValue}'" : $"DEFAULT {item.DefaultValue}";
                 sql.Append($"{tempSql} ADD COLUMN IF NOT EXISTS {item.Name} {item.Type}{length} {require} {defaultValue};\r\n");
@@ -54,7 +54,7 @@ WHERE 1!=1;";
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        public string GetDropColumnSql(string tableName, List<ColumnOptions> columns)
+        public string GetDropColumnSql(string tableName, IList<IDbPropertyMap> columns)
         {
             var sql = $@"
 ALTER TABLE {tableName}
@@ -104,13 +104,13 @@ WHERE schemaname = 'public' AND tablename = '{tableName}'";
         /// <param name="conn"></param>
         /// <param name="tableName"></param>
         /// <returns></returns>
-        public List<EntityAttr> GetTableColumns(IDbConnection conn, string tableName)
+        public IList<IDbPropertyMap> GetTableColumns(IDbConnection conn, string tableName)
         {
             var sql = @"
 SELECT 
-	A.attname AS NAME,
-	A.attnotnull AS IsNotNull,
-	format_type ( A.atttypid, A.atttypmod ) AS TYPE
+	A.attname AS Name,
+	A.attnotnull AS IsRequired,
+	format_type ( A.atttypid, A.atttypmod ) AS Type
 FROM
 	pg_class AS C,
 	pg_attribute AS A 
@@ -119,7 +119,7 @@ WHERE
 	AND A.attrelid = C.oid 
 	AND A.attnum > 0
 	AND A.atttypid <> 0";
-            return conn.Query<EntityAttr>(sql).ToList();
+            return conn.Query<IDbPropertyMap>(sql).ToList();
         }
 
         /// <summary>
@@ -156,15 +156,6 @@ ON CONFLICT ({primaryKeys}) DO UPDATE SET {updatedValues};";
         /// <returns></returns>
         public (string name, object value) HandleParameter(string name, object value)
         {
-            if (value is JToken)
-            {
-                var _value = value as JToken;
-                if (_value?.Type == JTokenType.Null)
-                {
-                    return (name + "::jsonb", null);
-                }
-                return (name + "::jsonb", Regex.Replace(_value.ToString(), @"\s", "")); // 替换JArray的换行和空格
-            }
             return (name, value);
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Sixpence.ORM.EntityManager;
+using Sixpence.ORM.Mappers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace Sixpence.ORM
     {
         public static ServiceCollectionOptions Options = new ServiceCollectionOptions()
         {
-            EntityClassNameCase = NameCase.Pascal
+            NameCase = NameCase.Pascal
         };
 
         public static IServiceCollection AddSorm(this IServiceCollection services, Action<ServiceCollectionOptions> action)
@@ -26,6 +27,8 @@ namespace Sixpence.ORM
             {
                 throw new ArgumentNullException("数据库设置不能为空");
             }
+
+            services.AddMapper(Options);
 
             return services;
         }

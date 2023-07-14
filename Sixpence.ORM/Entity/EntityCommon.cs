@@ -1,8 +1,12 @@
-﻿using Sixpence.ORM.Models;
+﻿using Sixpence.ORM.Interface;
+using Sixpence.ORM.Mappers;
+using Sixpence.ORM.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -13,12 +17,14 @@ namespace Sixpence.ORM.Entity
     /// </summary>
     public static class EntityCommon
     {
+        private static readonly ConcurrentDictionary<string, string> _entityNameCache = new ConcurrentDictionary<string, string>();
+
         /// <summary>
-        /// 生成唯一 ID
+        /// 生成实体随机 ID
         /// </summary>
         /// <param name="primaryType"></param>
         /// <returns></returns>
-        public static object GenerateID(PrimaryType primaryType = PrimaryType.GUID)
+        public static object GenerateID(PrimaryType? primaryType = PrimaryType.GUID)
         {
             switch (primaryType)
             {
@@ -28,6 +34,17 @@ namespace Sixpence.ORM.Entity
                 default:
                     return GenerateGuid();
             }
+        }
+
+        /// <summary>
+        /// 生成实体随机 ID
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <returns></returns>
+        public static object GenerateID<TEntity>() where TEntity : IEntity, new()
+        {
+            var entity = new TEntity();
+            return GenerateID(entity.PrimaryColumn.PrimaryType);
         }
 
         public static string GenerateGuid()
@@ -49,7 +66,7 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public static bool CompareEntityName(string className, string tableName)
         {
-            switch (SormServiceCollectionExtensions.Options.EntityClassNameCase)
+            switch (SormServiceCollectionExtensions.Options.NameCase)
             {
                 case NameCase.Pascal:
                     return tableName.Replace("_", "").Equals(className, StringComparison.OrdinalIgnoreCase);
@@ -93,41 +110,80 @@ namespace Sixpence.ORM.Entity
             return formatName.ToString();
         }
 
-        /// <summary>
-        /// 获取实体所有字段设置
-        /// </summary>
-        /// <returns></returns>
-        public static List<ColumnOptions> GetColumns(IEntity entity, IDbDriver driver)
+        public static string GetEntityTableName(IEntity entity)
         {
-            return entity
-                .GetType()
-                .GetProperties()
-                .Where(item => item.IsDefined(typeof(ColumnAttribute), false))
-                .Select(item =>
+            return GetEntityTableName(entity.GetType());
+        }
+
+        public static string GetEntityTableName(Type entity)
+        {
+            return _entityNameCache.GetOrAdd(entity.FullName, (key) =>
+            {
+                var attr = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
+                if (attr == null)
                 {
-                    var column = (item.GetCustomAttributes(typeof(ColumnAttribute), true).FirstOrDefault() as ColumnAttribute).Options;
-                    if (string.IsNullOrEmpty(column.Name))
+                    throw new Exception("获取实体名失败，请检查是否定义实体名");
+                }
+
+                // 若未设置自定义表名，则根据类名去格式化
+                if (string.IsNullOrEmpty(attr.TableName))
+                {
+                    var name = entity.Name;
+                    switch (SormServiceCollectionExtensions.Options.NameCase)
                     {
-                        column.Name = item.Name;
+                        case NameCase.UnderScore:
+                            return name.ToLower();
+                        case NameCase.Pascal:
+                        default:
+                            return UpperChartToLowerUnderLine(name);
                     }
-                    if (string.IsNullOrEmpty(column.Type))
-                    {
-                        if (driver.FieldMapping.GetFieldMappings().TryGetValue(item.PropertyType, out var type))
-                        {
-                            column.Type = type;
-                        }
-                        else
-                        {
-                            throw new Exception($"未找到类型 {item.PropertyType} 的映射");
-                        }
-                    }
-                    if (item.IsDefined(typeof(DescriptionAttribute), false))
-                    {
-                        column.Remark = (item.GetCustomAttributes(typeof(DescriptionAttribute), true).FirstOrDefault() as DescriptionAttribute)?.Description;
-                    }
-                    return column;
-                })
-                .ToList();
+                }
+                return attr.TableName;
+            });
+        }
+
+        /// <summary>
+        /// 根据设置命名规则转换成数据库名称，数据库字段和表名都需要转换
+        /// 例如下划线命名 UserName，返回值 user_name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static string ConvertToDbName(string name)
+        {
+            switch (SormServiceCollectionExtensions.Options.NameCase)
+            {
+                case NameCase.UnderScore:
+                    return name.ToLower();
+                case NameCase.Pascal:
+                default:
+                    return UpperChartToLowerUnderLine(name);
+            }
+        }
+
+        public static string GetEntitySchema(IEntity entity) => GetEntitySchema(entity.GetType());
+
+        public static string GetEntitySchema(Type entity)
+        {
+            var attr = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
+            if (attr == null)
+            {
+                throw new Exception("获取实体名失败，请检查是否定义实体名");
+            }
+            return attr.Schema;
+        }
+
+        public static PropertyInfo GetPrimaryPropertyInfo(Type type)
+        {
+            var properties = type.GetProperties().Where(item => Attribute.IsDefined(item, typeof(PrimaryColumnAttribute)));
+            if (properties == null)
+            {
+                throw new Exception("实体未定义主键");
+            }
+            if (properties.Count() > 1)
+            {
+                throw new Exception("实体只能有一个主键");
+            }
+            return properties.FirstOrDefault();
         }
     }
 }

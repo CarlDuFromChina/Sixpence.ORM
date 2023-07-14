@@ -12,7 +12,6 @@ namespace Sixpence.ORM.Postgres
         {
             return new Dictionary<Type, string>()
             {
-                { typeof(string), "varchar" },
                 { typeof(short), "int2vector" },
                 { typeof(short?), "int2vector" },
                 { typeof(int), "int4" },

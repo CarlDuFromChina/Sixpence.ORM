@@ -1,5 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Sixpence.ORM.Interface;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+
 namespace Sixpence.ORM
 {
     /// <summary>
@@ -8,14 +12,20 @@ namespace Sixpence.ORM
     public class ServiceCollectionOptions
     {
         /// <summary>
-        /// 实体类命名规范，默认帕斯卡命名（表名使用小写+下划线命名）
+        /// 实体类和字段命名规范，默认帕斯卡命名
+        /// 帕斯卡命名：public class UserInfo { public string UserName { get; set; } }
+        /// 下划线命名：public class user_info { public string user_name { get; set; } }
         /// </summary>
-        public NameCase EntityClassNameCase { get; set; }
+        public NameCase NameCase { get; set; }
 
         /// <summary>
         /// 数据库配置
         /// </summary>
         public DbSetting? DbSetting { get; set; }
+
+        internal IDictionary<IEntity, IDbEntityMap> EntityMaps { get; set; } = new Dictionary<IEntity, IDbEntityMap>();
+
+        public string Schema { get; set; }
     }
 
     /// <summary>

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using Npgsql;
+﻿using Npgsql;
 using Sixpence.ORM.Utils;
 using System;
 using System.Collections.Generic;
@@ -47,8 +46,6 @@ namespace Sixpence.ORM.Postgres
                                 writer.Write(ConvertUtil.ConToDecimal(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Numeric);
                             else if (dataType == typeof(DateTime) || dataType == typeof(DateTime?))
                                 writer.Write(ConvertUtil.ConToDateTime(dr[columnName]), NpgsqlTypes.NpgsqlDbType.Timestamp);
-                            else if (dataType == typeof(JToken))
-                                writer.Write(dr[columnName].ToString(), NpgsqlTypes.NpgsqlDbType.Jsonb);
                             else if (dataType == typeof(string))
                                 writer.Write(dr[columnName].ToString());
                             else

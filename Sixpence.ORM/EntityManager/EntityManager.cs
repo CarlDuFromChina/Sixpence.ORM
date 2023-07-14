@@ -41,13 +41,13 @@ namespace Sixpence.ORM.EntityManager
             return this.ExecuteTransaction(() =>
             {
                 #region 创建前 Plugin
-                var context = new EntityManagerPluginContext() { Entity = entity, EntityManager = this, Action = EntityAction.PreCreate, EntityName = entity.GetEntityName() };
+                var context = new EntityManagerPluginContext() { Entity = entity, EntityManager = this, Action = EntityAction.PreCreate, EntityName = entity.EntityMap.Table };
                 ServiceContainer.Provider.GetServices<IEntityManagerBeforeCreateOrUpdate>()?
                     .Each(item => item.Execute(context));
                 if (usePlugin)
                 {
                     ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                        .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()))
+                        .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.EntityMap.Table))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
@@ -64,7 +64,7 @@ namespace Sixpence.ORM.EntityManager
                     values.Add(keyValue.name);
                     paramList.Add(attrName, keyValue.value);
                 }
-                sql = string.Format(sql, entity.GetEntityName(), string.Join(",", attrs), string.Join(",", values));
+                sql = string.Format(sql, entity.EntityMap.Table, string.Join(",", attrs), string.Join(",", values));
                 this.Execute(sql, paramList);
 
                 #region 创建后 Plugin
@@ -72,12 +72,12 @@ namespace Sixpence.ORM.EntityManager
                 {
                     context.Action = EntityAction.PostCreate;
                     ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                        .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()))
+                        .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.EntityMap.Table))
                         .Each(item => item.Execute(context));
                 }
                 #endregion
 
-                return entity.GetPrimaryColumn().Value;
+                return entity.PrimaryColumn.Value.ToString() ?? "";
             });
         }
 
@@ -91,7 +91,7 @@ namespace Sixpence.ORM.EntityManager
         {
             var entity = ServiceContainer.Provider.GetServices<IEntity>().FirstOrDefault(item => EntityCommon.CompareEntityName(nameof(item), entityName)) as BaseEntity;
             AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
-            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id", new { id });
+            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id", new { id });
 
             if (dataList.Rows.Count == 0) return 0;
 
@@ -99,11 +99,11 @@ namespace Sixpence.ORM.EntityManager
             attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
 
             var plugins = ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()));
+                .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.EntityMap.Table));
 
             plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete }));
 
-            var sql = $"DELETE FROM {entityName} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
+            var sql = $"DELETE FROM {entityName} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id";
             int result = this.Execute(sql, new { id });
 
             plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete }));
@@ -120,14 +120,14 @@ namespace Sixpence.ORM.EntityManager
             return this.ExecuteTransaction(() =>
             {
                 var plugins = ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                    .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.GetEntityName()));
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.EntityMap.Table));
 
-                plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreDelete }));
+                plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityMap.Table, Action = EntityAction.PreDelete }));
                 
-                var sql = $"DELETE FROM {entity.GetEntityName()} WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
-                int result = this.Execute(sql, new { id = entity.GetPrimaryColumn().Value });
+                var sql = $"DELETE FROM {entity.EntityMap.Table} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id";
+                int result = this.Execute(sql, new { id = entity.PrimaryColumn?.Value });
 
-                plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PostDelete }));
+                plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.EntityMap.Table, Action = EntityAction.PostDelete }));
                 return result;
             });
         }
@@ -167,17 +167,17 @@ namespace Sixpence.ORM.EntityManager
         public string Save(BaseEntity entity)
         {
             var sql = $@"
-SELECT * FROM {entity.GetEntityName()}
-WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
+SELECT * FROM {entity.EntityMap.Table}
+WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id;
 ";
-            var dataList = this.Query(sql, new { id = entity.GetPrimaryColumn().Value });
+            var dataList = this.Query(sql, new { id = entity.PrimaryColumn?.Value });
 
             if (dataList != null && dataList.Rows.Count > 0)
                 Update(entity);
             else
                 Create(entity);
 
-            return entity.GetPrimaryColumn().Value;
+            return entity.PrimaryColumn?.Value?.ToString() ?? "";
         }
 
         /// <summary>
@@ -189,40 +189,57 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
         {
             return this.ExecuteTransaction(() =>
             {
+                var tableName = entity.EntityMap.Table;
+                var primaryKeyName = entity.PrimaryColumn.DbPropertyMap.Name;
+                var prefix = Driver.Dialect.ParameterPrefix;
+
                 #region 更新前 Plugin
-                var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entity.GetEntityName(), Action = EntityAction.PreUpdate };
+                var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = tableName, Action = EntityAction.PreUpdate };
                 ServiceContainer.Provider.GetServices<IEntityManagerBeforeCreateOrUpdate>()
                     .Each(item => item.Execute(context));
 
                 ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), entity.GetEntityName()))
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), tableName))
                     .Each(item => item.Execute(context));
                 #endregion
 
-                var sql = @"UPDATE {0} SET {1} WHERE {2} = {3}id;";
-                var paramList = new Dictionary<string, object>() { { $"{Driver.Dialect.ParameterPrefix}id", entity.GetPrimaryColumn().Value } };
+                var paramList = new Dictionary<string, object>();
+                var setValueSql = "";
+                var whereSql = "";
 
-                #region 处理属性
+                #region 处理字段SQL
                 var attributes = new List<string>();
-                int count = 0;
-                foreach (var item in entity.GetAttributes())
+                foreach (var item in entity.Columns)
                 {
-                    if (item.Key != "id" && item.Key != entity.GetPrimaryColumn().Name)
+                    var parameterName = $"{prefix}{item.DbPropertyMap.Name}"; // 定义参数化 @user_name
+
+                    // 处理特殊类型
+                    var parameter = Driver.Dialect.HandleParameter(parameterName, item.Value);
+                    if (string.IsNullOrEmpty(parameter.name))
+                        parameter.name = parameterName;
+                    if (parameter.value == null)
+                        parameter.value = item.Value;
+
+                    paramList.Add(parameter.name, parameter.value); // :user_name, 'admin'
+                    if (item.Name != entity.PrimaryColumn.Name)
                     {
-                        var keyValue = Driver.Dialect.HandleParameter($"{Driver.Dialect.ParameterPrefix}param{count}", item.Value);
-                        paramList.Add($"{Driver.Dialect.ParameterPrefix}param{count}", keyValue.value);
-                        attributes.Add($"{ item.Key} = {keyValue.name}");
-                        count++;
+                        attributes.Add($"{item.DbPropertyMap.Name} = {parameter.name}"); // user_name = :user_name
+                    }
+                    else
+                    {
+                        whereSql = $@"{primaryKeyName} = {parameter.name}";
                     }
                 }
+                setValueSql = string.Join(',', attributes);
                 #endregion
-                sql = string.Format(sql, entity.GetEntityName(), string.Join(",", attributes), entity.GetPrimaryColumn().Name, Driver.Dialect.ParameterPrefix);
+
+                var sql = $@"UPDATE {tableName} SET {setValueSql} WHERE {primaryKeyName} = {prefix}{primaryKeyName};";
                 var result = this.Execute(sql, paramList);
 
                 #region 更新后 Plugin
                 context.Action = EntityAction.PostUpdate;
                 ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), entity.GetEntityName()))
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), tableName))
                     .Each(item => item.Execute(context));
                 #endregion
                 return result;
@@ -309,7 +326,10 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
         /// <returns></returns>
         public T QueryFirst<T>(string id) where T : BaseEntity, new()
         {
-            var sql = $"SELECT * FROM {new T().GetEntityName()} WHERE {new T().GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id";
+            var t = new T();
+            var tableName = t.EntityMap.Table;
+            var primaryKeyName = t.PrimaryColumn.DbPropertyMap.Name;
+            var sql = $"SELECT * FROM {tableName} WHERE {primaryKeyName} = {Driver.Dialect.ParameterPrefix}id";
             return QueryFirst<T>(sql, new { id });
         }
 
@@ -412,8 +432,8 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
         public IEnumerable<T> Query<T>(IList<string> ids) where T : BaseEntity, new()
         {
             var paramList = new Dictionary<string, object>();
-            var tableName = new T().GetEntityName();
-            var primaryKey = new T().GetPrimaryColumn().Name;
+            var tableName = new T().EntityMap.Table;
+            var primaryKey = new T().PrimaryColumn?.DbPropertyMap.Name;
             var inClause = string.Join(",", ids.Select((id, index) => $"{Driver.Dialect.ParameterPrefix}id" + index));
             var sql = $"SELECT * FROM {tableName} WHERE {primaryKey} IN ({inClause})";
             var count = 0;
@@ -523,8 +543,8 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
             if (dataList.IsEmpty()) return;
 
             var t = new TEntity();
-            var tableName = t.GetEntityName();
-            var primaryKey = t.GetPrimaryColumn().Name;
+            var tableName = t.EntityMap.Table;
+            var primaryKey = t.PrimaryColumn?.DbPropertyMap.Name;
             var dt = Query($"select * from {tableName} WHERE 1 <> 1");
 
             BulkCreate(tableName, primaryKey, dataList.ToDataTable(dt.Columns));
@@ -569,8 +589,8 @@ WHERE {entity.GetPrimaryColumn().Name} = {Driver.Dialect.ParameterPrefix}id;
             if (dataList.IsEmpty()) return;
 
             var t = new TEntity();
-            var mainKeyName = t.GetPrimaryColumn().Name; // 主键
-            var tableName = t.GetEntityName(); // 表名
+            var mainKeyName = t.PrimaryColumn?.DbPropertyMap.Name; // 主键
+            var tableName = t.EntityMap.Table; // 表名
             var dt = DbClient.Query($"SELECT * FROM {tableName} WHERE 1 <> 1");
 
             BulkUpdate(tableName, mainKeyName, dataList.ToDataTable(dt.Columns));
@@ -634,8 +654,8 @@ AND {tempTableName}.{primaryKeyName} IS NOT NULL
         {
             if (dataList.IsEmpty()) return;
 
-            var primaryKeyName = new TEntity().GetPrimaryColumn().Name; // 主键
-            var tableName = new TEntity().GetEntityName(); // 表名
+            var primaryKeyName = new TEntity().PrimaryColumn?.DbPropertyMap.Name; // 主键
+            var tableName = new TEntity().EntityMap.Table; // 表名
             var dt = DbClient.Query($"SELECT * FROM {tableName} WHERE 1 <> 1");
 
             BulkCreateOrUpdate(tableName, primaryKeyName, dataList.ToDataTable(dt.Columns), updateFieldList);
@@ -707,9 +727,9 @@ AND {tempTableName}.{primaryKeyName} IS NOT NULL
             }
 
             var t = new TEntity();
-            var tableName = t.GetEntityName();
-            var primaryKeyName = t.GetPrimaryColumn().Name;
-            var ids = string.Join(",", dataList.Select(item => "'" + item.GetPrimaryColumn().Value + "'"));
+            var tableName = t.EntityMap.Table;
+            var primaryKeyName = t.PrimaryColumn?.DbPropertyMap.Name;
+            var ids = string.Join(",", dataList.Select(item => "'" + item.PrimaryColumn?.Value + "'"));
 
             ExecuteTransaction(() =>
             {

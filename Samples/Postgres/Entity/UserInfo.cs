@@ -5,16 +5,16 @@ using Sixpence.ORM.Entity;
 namespace Postgres.Entity
 {
     [Entity]
-    public class UserInfo : BaseEntity
+    public class UserInfo : SormEntity
     {
         [PrimaryColumn]
-        public string id { get; set; }
+        public string Id { get; set; }
 
         [Column]
-        public string code { get; set; }
+        public string Code { get; set; }
 
         [Column]
-        public bool is_admin { get; set; }
+        public bool IsAdmin { get; set; }
 
         #region DAL
         public static List<UserInfo> FindAll()
