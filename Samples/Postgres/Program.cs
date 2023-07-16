@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Postgres.Entity;
-using Sixpence.ORM;
+﻿using Sixpence.ORM;
 using Sixpence.ORM.Postgres;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.AddTransient<IEntity, UserInfo>();
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+    loggingBuilder.AddDebug();
+});
+
 builder.Services.AddSorm(options =>
 {
     options.NameCase = NameCase.Pascal;

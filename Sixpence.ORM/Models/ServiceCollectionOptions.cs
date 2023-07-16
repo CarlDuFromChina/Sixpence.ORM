@@ -23,9 +23,10 @@ namespace Sixpence.ORM
         /// </summary>
         public DbSetting? DbSetting { get; set; }
 
-        internal IDictionary<IEntity, IDbEntityMap> EntityMaps { get; set; } = new Dictionary<IEntity, IDbEntityMap>();
-
-        public string Schema { get; set; }
+        /// <summary>
+        /// 实体映射
+        /// </summary>
+        internal IDictionary<string, IDbEntityMap> EntityMaps { get; set; } = new Dictionary<string, IDbEntityMap>();
     }
 
     /// <summary>
@@ -47,11 +48,6 @@ namespace Sixpence.ORM
         /// 超时时间
         /// </summary>
         public int? CommandTimeout { get; set; }
-
-        /// <summary>
-        /// 自动迁移
-        /// </summary>
-        public bool Migration { get; set; }
     }
 
     /// <summary>

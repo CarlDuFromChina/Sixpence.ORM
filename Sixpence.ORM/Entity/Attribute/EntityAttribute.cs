@@ -16,7 +16,7 @@ namespace Sixpence.ORM.Entity
 
             if (string.IsNullOrEmpty(schema))
             {
-                Schema = SormServiceCollectionExtensions.Options.Schema;
+                Schema = SormServiceCollectionExtensions.Options.DbSetting.Driver.Dialect.Schema;
             }
         }
 

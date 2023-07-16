@@ -15,6 +15,8 @@ namespace Sixpence.ORM.Postgres
     {
         public char ParameterPrefix => '@';
 
+        public string Schema => "public";
+
         /// <summary>
         /// 获取临时表创建语句
         /// </summary>
@@ -104,7 +106,7 @@ WHERE schemaname = 'public' AND tablename = '{tableName}'";
         /// <param name="conn"></param>
         /// <param name="tableName"></param>
         /// <returns></returns>
-        public IList<IDbPropertyMap> GetTableColumns(IDbConnection conn, string tableName)
+        public string GetTableColumnsSql(string tableName)
         {
             var sql = @"
 SELECT 
@@ -119,7 +121,7 @@ WHERE
 	AND A.attrelid = C.oid 
 	AND A.attnum > 0
 	AND A.atttypid <> 0";
-            return conn.Query<IDbPropertyMap>(sql).ToList();
+            return sql;
         }
 
         /// <summary>

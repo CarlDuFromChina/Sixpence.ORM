@@ -17,6 +17,11 @@ namespace Sixpence.ORM
         char ParameterPrefix { get; }
 
         /// <summary>
+        /// 命名空间
+        /// </summary>
+        string Schema { get; }
+
+        /// <summary>
         /// 获取列新增获取语句
         /// </summary>
         /// <param name="tableName"></param>
@@ -67,7 +72,7 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="tableName"></param>
         /// <returns></returns>
-        IList<IDbPropertyMap> GetTableColumns(IDbConnection conn, string tableName);
+        string GetTableColumnsSql(string tableName);
 
         /// <summary>
         /// 创建或更新SQL

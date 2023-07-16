@@ -17,7 +17,7 @@ namespace Sixpence.ORM.Entity
     [Serializable]
     public abstract class BaseEntity : IEntity
     {
-        public IDbEntityMap EntityMap => SormServiceCollectionExtensions.Options.EntityMaps[this];
+        public IDbEntityMap EntityMap => SormServiceCollectionExtensions.Options.EntityMaps[this.GetType().FullName];
         public ISormPrimaryColumn PrimaryColumn
         {
             get
@@ -42,7 +42,8 @@ namespace Sixpence.ORM.Entity
             get
             {
                 var columns = new List<ISormColumn>() { PrimaryColumn };
-                GetAttributes().Each(item =>
+                var attributes = GetAttributes();
+                foreach(var item in attributes)
                 {
                     if (item.Key != PrimaryColumn.Name)
                     {
@@ -54,7 +55,7 @@ namespace Sixpence.ORM.Entity
                         };
                         columns.Add(column);
                     }
-                });
+                }
                 return columns;
             }
         }

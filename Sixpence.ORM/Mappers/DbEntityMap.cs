@@ -33,13 +33,13 @@ namespace Sixpence.ORM.Mappers
                 if (column != null)
                 {
                     // 以特性定义字段名优先级最高
-                    if (string.IsNullOrEmpty(column.Name))
+                    if (!string.IsNullOrEmpty(column.Name))
                     {
-                        column.Name = item.Name;
+                        column.Name = column.Name;
                     }
                     else
                     {
-                        column.Name = EntityCommon.ConvertToDbName(column.Name); // 转数据库字段名（下划线命名转换）
+                        column.Name = EntityCommon.ConvertToDbName(item.Name); // 转数据库字段名（下划线命名转换）
                     }
 
                     if (string.IsNullOrEmpty(column.Type))

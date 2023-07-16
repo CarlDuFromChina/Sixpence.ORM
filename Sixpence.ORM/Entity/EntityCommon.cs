@@ -164,12 +164,18 @@ namespace Sixpence.ORM.Entity
 
         public static string GetEntitySchema(Type entity)
         {
-            var attr = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
-            if (attr == null)
+            var attribute = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
+            if (attribute == null)
             {
                 throw new Exception("获取实体名失败，请检查是否定义实体名");
             }
-            return attr.Schema;
+
+            if (!string.IsNullOrEmpty(attribute.Schema))
+            {
+                return attribute.Schema;
+            }
+
+            return SormServiceCollectionExtensions.Options?.DbSetting?.Driver?.Dialect?.Schema;
         }
 
         public static PropertyInfo GetPrimaryPropertyInfo(Type type)

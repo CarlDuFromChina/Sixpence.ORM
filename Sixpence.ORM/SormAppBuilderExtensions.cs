@@ -64,6 +64,7 @@ namespace Sixpence.ORM
                     {
                         var entityMap = item.EntityMap;
                         var tableName = entityMap.Table;
+                        var schema = entityMap.Schema;
                         var propertyMapList = entityMap.Properties.ToList();
 
                         var tableExsit = ConvertUtil.ConToBoolean(manager.ExecuteScalar(driver.Dialect.GetTableExsitSql(tableName)));
@@ -87,7 +88,7 @@ namespace Sixpence.ORM
                                     return $"{e.Name} {e.Type}{lengthSQL} {requireSQL} {primaryKeySQL} {defaultValueSQL}";
                                 })
                                 .Aggregate((a, b) => a + ",\r\n" + b);
-                            manager.Execute($@"CREATE TABLE public.{tableName} ({attrSql})");
+                            manager.Execute($@"CREATE TABLE {schema}.{tableName} ({attrSql})");
 
                             context.Action = EntityMigrationAction.PostUpdateEntity;
                             interceptor?.Execute(context);
@@ -97,7 +98,8 @@ namespace Sixpence.ORM
                         }
                         else
                         {
-                            var columns = driver.Dialect.GetTableColumns(manager.DbClient.DbConnection, tableName).ToList(); // 查询表现有字段
+                            var getTableColumnsSql = driver.Dialect.GetTableColumnsSql(tableName);
+                            var columns = manager.Query<DbPropertyMap>(getTableColumnsSql).ToList();
                             var addColumns = new List<IDbPropertyMap>(); // 表需要添加的字段
                             var removeColumns = new List<IDbPropertyMap>(); // 表需要删除的字段
 
