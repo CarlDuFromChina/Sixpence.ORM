@@ -51,7 +51,7 @@ builder.Services.AddControllers();
 // 1、注册服务，配置数据库和实体
 builder.Services.AddSorm(options =>
 {
-    options.EntityClassNameCase = NameCase.Pascal;
+    options.EntityClassNameCase = NameCase.Pascal; // 实体大写, UserInfo
     options.UsePostgres("Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;", 20);
 });
 
@@ -65,8 +65,8 @@ var app = builder.Build();
 // 2、添加中间件，开启日志、自动合并实体类字段改动
 app.UseSorm(options =>
 {
-    options.EnableLogging = true;
-    options.MigrateDb = true;
+    options.EnableLogging = true; // 启用日志记录 SQL
+    options.MigrateDb = true; // 自动合并实体改动到数据库
 });
 
 app.UseAuthorization();
@@ -107,14 +107,24 @@ namespace Postgres.Entity
     public class UserInfo : BaseEntity
     {
         [PrimaryColumn]
-        public string id { get; set; }
+        public string Id { get; set; }
 
         [Column]
-        public string code { get; set; }
+        public string Code { get; set; }
 
         [Column]
-        public bool is_admin { get; set; }
+        public bool IsAdmin { get; set; }
     }
+}
+```
+
+对应生成的`pg sql`
+
+```sql
+create table user_info {
+	id text primary key,
+	code text,
+	is_admin bool
 }
 ```
 

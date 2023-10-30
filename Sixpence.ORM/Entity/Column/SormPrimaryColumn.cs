@@ -6,13 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Models
+namespace Sixpence.ORM.Entity
 {
     internal class SormPrimaryColumn : ISormPrimaryColumn
     {
         public string Name { get; set; }
         public object Value { get; set; }
         public PrimaryType PrimaryType { get; set; }
-        public IDbPropertyMap DbPropertyMap { get;set; }
+        public IDbPropertyMap DbPropertyMap { get; set; }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Sixpence.ORM.Interface;
 using Sixpence.ORM.Mappers;
-using Sixpence.ORM.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

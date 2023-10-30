@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.Models
+namespace Sixpence.ORM.Entity
 {
     internal class SormColumn : ISormColumn
     {

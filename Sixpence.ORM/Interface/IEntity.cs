@@ -1,6 +1,5 @@
 ﻿using Sixpence.ORM.Entity;
 using Sixpence.ORM.Interface;
-using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

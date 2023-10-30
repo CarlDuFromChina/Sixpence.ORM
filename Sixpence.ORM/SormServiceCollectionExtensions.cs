@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Mappers;
+using Sixpence.ORM.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

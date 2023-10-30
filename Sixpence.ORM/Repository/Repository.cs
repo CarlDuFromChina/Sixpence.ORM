@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM
+namespace Sixpence.ORM.Repository
 {
     public class Repository<E> : IRepository<E>
         where E : BaseEntity, new()

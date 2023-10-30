@@ -1,6 +1,7 @@
 ﻿using System;
 using Sixpence.ORM;
 using Sixpence.ORM.Entity;
+using Sixpence.ORM.Repository;
 
 namespace Postgres.Entity
 {

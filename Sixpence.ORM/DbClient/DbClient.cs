@@ -25,7 +25,7 @@ namespace Sixpence.ORM
         public IDbDriver Driver => driver; // 数据库驱动
         public IDbDialect Dialect => driver.Dialect; // 数据库方言
         public IDbBatch Batch => driver.Batch; // 数据库批量操作
-        
+
         internal DbClient(IDbDriver dbDriver, string connectionString, int? commandTimeout)
         {
             driver = dbDriver;

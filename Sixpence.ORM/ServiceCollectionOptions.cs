@@ -13,8 +13,16 @@ namespace Sixpence.ORM
     {
         /// <summary>
         /// 实体类和字段命名规范，默认帕斯卡命名
-        /// 帕斯卡命名：public class UserInfo { public string UserName { get; set; } }
-        /// 下划线命名：public class user_info { public string user_name { get; set; } }
+        /// 帕斯卡命名：
+        /// public class UserInfo
+        /// {
+        ///     public string UserName { get; set; }
+        /// }
+        /// 下划线命名：
+        /// public class user_info
+        /// {
+        ///     public string user_name { get; set; }
+        /// }
         /// </summary>
         public NameCase NameCase { get; set; }
 
