@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>3.5.0</version>
+    <version>3.4.0-preview1</version>
 	<title>Sixpence.ORM</title>
     <authors>Karl Du</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
