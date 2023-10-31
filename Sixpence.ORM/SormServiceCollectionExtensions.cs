@@ -12,10 +12,7 @@ namespace Sixpence.ORM
 {
     public static class SormServiceCollectionExtensions
     {
-        public static ServiceCollectionOptions Options = new ServiceCollectionOptions()
-        {
-            NameCase = NameCase.Pascal
-        };
+        public static ServiceCollectionOptions Options = new ServiceCollectionOptions();
 
         public static IServiceCollection AddSorm(this IServiceCollection services, Action<ServiceCollectionOptions> action)
         {

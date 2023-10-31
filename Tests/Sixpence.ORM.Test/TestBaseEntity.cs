@@ -1,11 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using Sixpence.Common;
-using Sixpence.Common.IoC;
 using Sixpence.ORM.Entity;
 using Sixpence.ORM.EntityManager;
+using Sixpence.ORM.Postgres;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Sixpence.ORM.Test
@@ -13,24 +14,24 @@ namespace Sixpence.ORM.Test
     [TestFixture]
     internal class TestBaseEntity
     {
-        private Test test;
+        private Test test = new Test() { Code = "A001", Name = "Test", Id = Guid.NewGuid().ToString(), IsSuper = true };
+        private IServiceProvider provider;
 
         [SetUp]
         public void SetUp()
         {
-            test = new Test() { code = "A001", name = "Test", id = Guid.NewGuid().ToString(), is_super = true };
             IServiceCollection services = new ServiceCollection();
-            services.AddServiceContainer(options =>
+            services.AddSorm(options =>
             {
-                options.Assembly.Add("Sixpence.ORM.Test");
+                options.UsePostgres(DBSourceConfig.ConnectionString, DBSourceConfig.CommandTimeOut);
             });
-            SormAppBuilderExtensions
-                .UseORM(null, options =>
-                {
-                    options.EntityClassNameCase = NameCase.Pascal;
-                })
-                .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut)
-                .UseMigrateDB();
+            provider = services.BuildServiceProvider();
+            var app = new ApplicationBuilder(provider);
+            SormAppBuilderExtensions.UseSorm(app, options =>
+            {
+                options.EnableLogging = true;
+                options.MigrateDb = true;
+            });
         }
 
         [Test]
@@ -42,14 +43,16 @@ namespace Sixpence.ORM.Test
         [Test]
         public void Check_Resolve_Entity()
         {
-            var entity = ServiceContainer.Resolve<IEntity>(className => EntityCommon.CompareEntityName(className, "user_info"));
+            var entity = provider.GetServices<IEntity>()
+                .FirstOrDefault(item => EntityCommon.CompareEntityName(nameof(item), "user_info"));
             Assert.IsNotNull(entity);
         }
 
         [Test]
         public void Check_Resolve_EntityManagerPlugin()
         {
-            var plugin = ServiceContainer.ResolveAll<IEntityManagerPlugin>(item => EntityCommon.MatchEntityManagerPlugin(item, "user_info"));
+            var plugin = provider.GetServices<IEntityManagerPlugin>()
+                .FirstOrDefault(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), "user_info"));
             Assert.IsNotNull(plugin);
         }
     }

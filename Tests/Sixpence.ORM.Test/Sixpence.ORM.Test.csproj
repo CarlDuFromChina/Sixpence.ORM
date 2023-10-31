@@ -8,14 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="appsettings.json" />
     <None Remove="log4net.config" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="log4net.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -34,8 +30,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Sixpence.ORM\Sixpence.ORM.csproj" />
-    <ProjectReference Include="..\Sixpence.ORM.Postgres\Sixpence.ORM.Postgres.csproj" />
+    <ProjectReference Include="..\..\Sixpence.ORM.Postgres\Sixpence.ORM.Postgres.csproj" />
+    <ProjectReference Include="..\..\Sixpence.ORM\Sixpence.ORM.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Sixpence.ORM;
+using Sixpence.ORM.Postgres;
 using NUnit.Framework;
-using Sixpence.Common;
-using Sixpence.Common.Utils;
-using Sixpence.ORM.EntityManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Sixpence.Common.Current;
-using Sixpence.ORM.Postgres;
+using Sixpence.ORM.EntityManager;
+using Sixpence.ORM.Utils;
+using Microsoft.AspNetCore.Builder;
 
 namespace Sixpence.ORM.Test
 {
@@ -19,21 +19,23 @@ namespace Sixpence.ORM.Test
         public void SetUp()
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddServiceContainer(options =>
+            services.AddSorm(options =>
             {
-                options.Assembly.Add("Sixpence.ORM.Test");
+                options.UsePostgres(DBSourceConfig.ConnectionString, DBSourceConfig.CommandTimeOut);
             });
-            CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
-            SormAppBuilderExtensions
-                .UseORM(null)
-                .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut);
+            var provider = services.BuildServiceProvider();
+            var app = new ApplicationBuilder(provider);
+            SormAppBuilderExtensions.UseSorm(app, options =>
+            {
+                options.EnableLogging = true;
+                options.MigrateDb = true;
+            });
         }
 
         [Test]
         [Order(1)]
         public void Check_Entity_AutoGenerate()
         {
-            SormAppBuilderExtensions.UseMigrateDB(null);
             using(IEntityManager manager = EntityManagerFactory.GetManager())
             {
                 var result = manager.ExecuteScalar(manager.DbClient.Driver.Dialect.GetTableExsitSql("test"));
@@ -47,7 +49,7 @@ namespace Sixpence.ORM.Test
         {
             using(var manager = EntityManagerFactory.GetManager())
             {
-                var entity = new Test() { code = "A001", name = "Test", id = "123", is_super = true };
+                var entity = new Test() { Code = "A001", Name = "Test", Id = "123", IsSuper = true };
                 var result = manager.Create(entity);
                 Assert.IsNotEmpty(result);
             }
@@ -73,10 +75,10 @@ namespace Sixpence.ORM.Test
             using(var manager = EntityManagerFactory.GetManager())
             {
                 var data = manager.QueryFirst<Test>("123");
-                data.name = "test";
+                data.Name = "test";
                 manager.Update(data);
                 data = manager.QueryFirst<Test>("123");
-                Assert.IsTrue(data.name.Equals("test"));
+                Assert.IsTrue(data.Name.Equals("test"));
             }
         }
 
@@ -90,7 +92,7 @@ namespace Sixpence.ORM.Test
                 var data = manager.QueryFirst<Test>("123");
                 Assert.IsNull(data);
 
-                var entity = new Test() { code = "A001", name = "Test", id = "123" };
+                var entity = new Test() { Code = "A001", Name = "Test", Id = "123" };
                 manager.Create(entity);
 
                 data = manager.QueryFirst<Test>("123");
@@ -99,7 +101,7 @@ namespace Sixpence.ORM.Test
                 Assert.IsNull(data);
 
                 manager.Create(entity);
-                manager.Delete("test", entity.id);
+                manager.Delete("test", entity.Id);
                 data = manager.QueryFirst<Test>("123");
                 Assert.IsNull(data);
 
@@ -117,9 +119,9 @@ namespace Sixpence.ORM.Test
         {
             var dataList = new List<Test>()
             {
-                new Test() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user", is_super = true },
-                new Test() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user", is_super = false },
-                new Test() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user", is_super = false },
+                new Test() { Id= Guid.NewGuid().ToString(), Code = "B001", Name = "测试1", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user", IsSuper = true },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B002", Name = "测试2" , CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user", IsSuper = false },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B003", Name = "测试3", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user", IsSuper = false },
             };
             using(var manager = EntityManagerFactory.GetManager())
             {
@@ -136,14 +138,14 @@ namespace Sixpence.ORM.Test
             using(var manager = EntityManagerFactory.GetManager())
             {
                 var dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
-                dataList[0].name = "test1";
-                dataList[1].name = "test2";
-                dataList[2].name = "test3";
+                dataList[0].Name = "test1";
+                dataList[1].Name = "test2";
+                dataList[2].Name = "test3";
                 manager.BulkUpdate(dataList);
                 dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
-                Assert.AreEqual(dataList[0].name, "test1");
-                Assert.AreEqual(dataList[1].name, "test2");
-                Assert.AreEqual(dataList[2].name, "test3");
+                Assert.AreEqual(dataList[0].Name, "test1");
+                Assert.AreEqual(dataList[1].Name, "test2");
+                Assert.AreEqual(dataList[2].Name, "test3");
                 manager.Execute("TRUNCATE test");
             }
         }
@@ -154,9 +156,9 @@ namespace Sixpence.ORM.Test
         {
             var dataList = new List<Test>()
             {
-                new Test() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-                new Test() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-                new Test() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B001", Name = "测试1", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B002", Name = "测试2" , CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B003", Name = "测试3", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
             };
             using(var manager = EntityManagerFactory.GetManager())
             {

@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Sixpence.ORM.Mappers;
-using Sixpence.ORM.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;

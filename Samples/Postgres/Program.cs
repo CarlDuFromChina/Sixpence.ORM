@@ -15,7 +15,6 @@ builder.Services.AddLogging(loggingBuilder =>
 
 builder.Services.AddSorm(options =>
 {
-    options.NameCase = NameCase.Pascal;
     options.UsePostgres("Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;", 20);
 });
 

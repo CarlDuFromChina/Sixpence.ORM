@@ -9,26 +9,21 @@ namespace Sixpence.ORM.Test
 {
     [Entity]
     [KeyAttributes("code不能重复", "code")]
-    public partial class Test : BaseEntity
+    public partial class Test : SormEntity
     {
         [PrimaryColumn]
-        public string id { get; set; }
+        public string Id { get; set; }
 
         [Column]
-        public string name { get; set; }
+        public string Name { get; set; }
 
         [Column]
-        public string code { get; set; }
+        public string Code { get; set; }
 
         [Column]
-        public bool? is_super { get; set; }
+        public bool? IsSuper { get; set; }
 
         [Column]
-        public JToken tags { get; set; }
-    }
-
-    public partial class Test
-    {
-        public string is_super_name { get; }
+        public JToken Tags { get; set; }
     }
 }

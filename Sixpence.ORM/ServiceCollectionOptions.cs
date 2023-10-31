@@ -12,21 +12,6 @@ namespace Sixpence.ORM
     public class ServiceCollectionOptions
     {
         /// <summary>
-        /// 实体类和字段命名规范，默认帕斯卡命名
-        /// 帕斯卡命名：
-        /// public class UserInfo
-        /// {
-        ///     public string UserName { get; set; }
-        /// }
-        /// 下划线命名：
-        /// public class user_info
-        /// {
-        ///     public string user_name { get; set; }
-        /// }
-        /// </summary>
-        public NameCase NameCase { get; set; }
-
-        /// <summary>
         /// 数据库配置
         /// </summary>
         public DbSetting? DbSetting { get; set; }

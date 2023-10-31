@@ -1,13 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using Sixpence.Common;
-using Sixpence.Common.Current;
 using Sixpence.ORM.Postgres;
-using System;
-using System.Collections.Generic;
+using Sixpence.ORM.Repository;
 using System.Linq;
-using System.Text;
 
 namespace Sixpence.ORM.Test
 {
@@ -21,14 +18,17 @@ namespace Sixpence.ORM.Test
         public void SetUp()
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddServiceContainer(options =>
+            services.AddSorm(options =>
             {
-                options.Assembly.Add("Sixpence.ORM.Test");
+                options.UsePostgres(DBSourceConfig.ConnectionString, DBSourceConfig.CommandTimeOut);
             });
-            CallContext<CurrentUserModel>.SetData(CallContextType.User, new CurrentUserModel() { Id = "1", Code = "1", Name = "test" });
-            SormAppBuilderExtensions
-                .UseORM(null)
-                .UsePostgres(DBSourceConfig.Config.ConnectionString, DBSourceConfig.Config.CommandTimeOut);
+            var provider = services.BuildServiceProvider();
+            var app = new ApplicationBuilder(provider);
+            SormAppBuilderExtensions.UseSorm(app, options =>
+            {
+                options.EnableLogging = true;
+                options.MigrateDb = true;
+            });
             testRepository = new Repository<Test>();
             testGuidNumerRepository = new Repository<TestGuidNumber>();
         }
@@ -37,7 +37,7 @@ namespace Sixpence.ORM.Test
         [Order(1)]
         public void Check_Repository_Insert()
         {
-            testRepository.Create(new Test() { code = "A001", name = "Test", id = "124", is_super = true });
+            testRepository.Create(new Test() { Code = "A001", Name = "Test", Id = "124", IsSuper = true });
             var data = testRepository.FindOne("124");
             Assert.IsNotNull(data);
         }
@@ -61,11 +61,11 @@ namespace Sixpence.ORM.Test
         public void Check_Repository_Update()
         {
             var data = testRepository.FindOne("124");
-            data.name = "test";
-            data.tags = new JArray() { "t1", "t2" };
+            data.Name = "test";
+            data.Tags = new JArray() { "t1", "t2" };
             testRepository.Update(data);
             data = testRepository.FindOne("124");
-            Assert.IsTrue(data.name.Equals("test"));
+            Assert.IsTrue(data.Name.Equals("test"));
         }
 
         [Test]
@@ -76,7 +76,7 @@ namespace Sixpence.ORM.Test
             var data = testRepository.FindOne("124");
             Assert.IsNull(data);
 
-           var id = testRepository.Save(new Test() { code = "A001", name = "Test" });
+           var id = testRepository.Save(new Test() { Code = "A001", Name = "Test" });
             Assert.IsNotEmpty(id);
             data = testRepository.FindOne(id);
             Assert.IsNotNull(data);

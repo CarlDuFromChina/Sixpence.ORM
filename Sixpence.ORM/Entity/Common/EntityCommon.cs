@@ -65,14 +65,7 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public static bool CompareEntityName(string className, string tableName)
         {
-            switch (SormServiceCollectionExtensions.Options.NameCase)
-            {
-                case NameCase.Pascal:
-                    return tableName.Replace("_", "").Equals(className, StringComparison.OrdinalIgnoreCase);
-                case NameCase.UnderScore:
-                default:
-                    return tableName.Equals(className, StringComparison.OrdinalIgnoreCase);
-            }
+            return tableName.Replace("_", "").Equals(className, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -128,14 +121,7 @@ namespace Sixpence.ORM.Entity
                 if (string.IsNullOrEmpty(attr.TableName))
                 {
                     var name = entity.Name;
-                    switch (SormServiceCollectionExtensions.Options.NameCase)
-                    {
-                        case NameCase.UnderScore:
-                            return name.ToLower();
-                        case NameCase.Pascal:
-                        default:
-                            return UpperChartToLowerUnderLine(name);
-                    }
+                    return UpperChartToLowerUnderLine(name);
                 }
                 return attr.TableName;
             });
@@ -149,14 +135,7 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public static string ConvertToDbName(string name)
         {
-            switch (SormServiceCollectionExtensions.Options.NameCase)
-            {
-                case NameCase.UnderScore:
-                    return name.ToLower();
-                case NameCase.Pascal:
-                default:
-                    return UpperChartToLowerUnderLine(name);
-            }
+            return UpperChartToLowerUnderLine(name);
         }
 
         public static string GetEntitySchema(IEntity entity) => GetEntitySchema(entity.GetType());
