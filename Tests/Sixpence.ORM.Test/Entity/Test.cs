@@ -8,7 +8,6 @@ using System.Text;
 namespace Sixpence.ORM.Test
 {
     [Entity]
-    [KeyAttributes("code不能重复", "code")]
     public partial class Test : SormEntity
     {
         [PrimaryColumn]
@@ -24,6 +23,6 @@ namespace Sixpence.ORM.Test
         public bool? IsSuper { get; set; }
 
         [Column]
-        public JToken Tags { get; set; }
+        public string Tags { get; set; }
     }
 }

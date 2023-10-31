@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Sixpence.ORM.Postgres
@@ -25,8 +26,7 @@ namespace Sixpence.ORM.Postgres
                 { typeof(DateTime?), "timestamp" },
                 { typeof(bool), "bool" },
                 { typeof(bool?), "bool" },
-                { typeof(object), "jsonb" },
-                { typeof(string), "text" }
+                { typeof(string), "text" },
             };
         }
     }

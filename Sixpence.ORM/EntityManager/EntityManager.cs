@@ -8,6 +8,7 @@ using System.IO;
 using Sixpence.ORM.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using static Dapper.SqlMapper;
 
 namespace Sixpence.ORM.EntityManager
 {
@@ -19,6 +20,7 @@ namespace Sixpence.ORM.EntityManager
         private DbClient _dbClient;
         private readonly IServiceProvider Provider;
         private readonly ILogger<EntityManager> Logger;
+        private readonly bool EnableLogging = SormAppBuilderExtensions.BuilderOptions.EnableLogging;
 
         public IDbDriver Driver => _dbClient.Driver;
         public DbClient DbClient => _dbClient;
@@ -56,13 +58,13 @@ namespace Sixpence.ORM.EntityManager
                 var attrs = new List<string>();
                 var values = new List<object>();
                 var paramList = new Dictionary<string, object>();
-                foreach (var attr in entity.GetAttributes())
+                foreach (var attr in EntityCommon.GetDbColumns(entity))
                 {
                     var attrName = attr.Key; // 列名
                     var keyValue = Driver.Dialect.HandleParameter($"{Driver.Dialect.ParameterPrefix}{attrName}", attr.Value); // 值
                     attrs.Add(attrName);
                     values.Add(keyValue.name);
-                    paramList.Add(attrName, keyValue.value);
+                    paramList.Add(keyValue.name, keyValue.value);
                 }
                 sql = string.Format(sql, entity.EntityMap.Table, string.Join(",", attrs), string.Join(",", values));
                 this.Execute(sql, paramList);
@@ -89,14 +91,14 @@ namespace Sixpence.ORM.EntityManager
         /// <returns></returns>
         public int Delete(string entityName, string id)
         {
-            var entity = ServiceContainer.Provider.GetServices<IEntity>().FirstOrDefault(item => EntityCommon.CompareEntityName(nameof(item), entityName)) as BaseEntity;
+            var entity = ServiceContainer.Provider.GetServices<IEntity>().FirstOrDefault(item => item.EntityMap.Table == entityName) as BaseEntity;
             AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
             var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id", new { id });
 
             if (dataList.Rows.Count == 0) return 0;
 
             var attributes = dataList.Rows[0].ToDictionary(dataList.Columns);
-            attributes.Each(item => entity.SetAttributeValue(item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
+            attributes.Each(item => EntityCommon.SetDbColumnValue(entity, item.Key, item.Value.Equals(DBNull.Value) ? null : item.Value));
 
             var plugins = ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
                 .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.EntityMap.Table));
@@ -199,7 +201,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
                     .Each(item => item.Execute(context));
 
                 ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), tableName))
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, tableName))
                     .Each(item => item.Execute(context));
                 #endregion
 
@@ -239,7 +241,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
                 #region 更新后 Plugin
                 context.Action = EntityAction.PostUpdate;
                 ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
-                    .Where(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), tableName))
+                    .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, tableName))
                     .Each(item => item.Execute(context));
                 #endregion
                 return result;
@@ -509,7 +511,8 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
                         catch (Exception ex)
                         {
                             errorCount++;
-                            Logger.LogError(sql + newLIne + ex.Message, ex);
+                            if (EnableLogging)
+                                Logger?.LogError(sql + newLIne + ex.Message, ex);
                         }
                         sql = string.Empty;
                     }
@@ -546,8 +549,14 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
             var tableName = t.EntityMap.Table;
             var primaryKey = t.PrimaryColumn?.DbPropertyMap.Name;
             var dt = Query($"select * from {tableName} WHERE 1 <> 1");
-
-            BulkCreate(tableName, primaryKey, dataList.ToDataTable(dt.Columns));
+            dataList.ForEach(entity =>
+            {
+                var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = tableName, Action = EntityAction.PreCreate };
+                ServiceContainer.Provider.GetServices<IEntityManagerBeforeCreateOrUpdate>()
+                    .Each(item => item.Execute(context));
+            });
+            var data = EntityCommon.ParseToDataTable(dataList, dt.Columns);
+            BulkCreate(tableName, primaryKey, data);
         }
 
         /// <summary>
@@ -592,8 +601,13 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
             var mainKeyName = t.PrimaryColumn?.DbPropertyMap.Name; // 主键
             var tableName = t.EntityMap.Table; // 表名
             var dt = DbClient.Query($"SELECT * FROM {tableName} WHERE 1 <> 1");
-
-            BulkUpdate(tableName, mainKeyName, dataList.ToDataTable(dt.Columns));
+            dataList.ForEach(entity =>
+            {
+                var context = new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = tableName, Action = EntityAction.PreUpdate };
+                ServiceContainer.Provider.GetServices<IEntityManagerBeforeCreateOrUpdate>()
+                    .Each(item => item.Execute(context));
+            });
+            BulkUpdate(tableName, mainKeyName, EntityCommon.ParseToDataTable(dataList, dt.Columns));
         }
 
         /// <summary>
@@ -658,7 +672,7 @@ AND {tempTableName}.{primaryKeyName} IS NOT NULL
             var tableName = new TEntity().EntityMap.Table; // 表名
             var dt = DbClient.Query($"SELECT * FROM {tableName} WHERE 1 <> 1");
 
-            BulkCreateOrUpdate(tableName, primaryKeyName, dataList.ToDataTable(dt.Columns), updateFieldList);
+            BulkCreateOrUpdate(tableName, primaryKeyName, EntityCommon.ParseToDataTable(dataList, dt.Columns), updateFieldList);
         }
 
         /// <summary>

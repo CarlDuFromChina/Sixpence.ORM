@@ -1,9 +1,11 @@
 ﻿using Sixpence.ORM.Interface;
 using Sixpence.ORM.Mappers;
+using Sixpence.ORM.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -46,26 +48,23 @@ namespace Sixpence.ORM.Entity
             return GenerateID(entity.PrimaryColumn.PrimaryType);
         }
 
+        /// <summary>
+        /// 生成实体随机 ID
+        /// </summary>
+        /// <returns></returns>
         public static string GenerateGuid()
         {
             return Guid.NewGuid().ToString();
         }
 
+        /// <summary>
+        /// 生成实体随机 ID（数字版）
+        /// </summary>
+        /// <returns></returns>
         public static long GenerateGuidNumber()
         {
             byte[] buffer = Guid.NewGuid().ToByteArray();
             return BitConverter.ToInt64(buffer, 0);
-        }
-
-        /// <summary>
-        /// 比较类名和实体名
-        /// </summary>
-        /// <param name="className"></param>
-        /// <param name="tableName"></param>
-        /// <returns></returns>
-        public static bool CompareEntityName(string className, string tableName)
-        {
-            return tableName.Replace("_", "").Equals(className, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -80,11 +79,11 @@ namespace Sixpence.ORM.Entity
         }
 
         /// <summary>
-        /// 大写字符转小写下划线
+        /// 帕斯卡命名转下划线命名
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static string UpperChartToLowerUnderLine(string name)
+        public static string PascalToUnderline(string name)
         {
             var formatName = new StringBuilder();
             for (int i = 0; i < name.Length; i++)
@@ -102,14 +101,41 @@ namespace Sixpence.ORM.Entity
             return formatName.ToString();
         }
 
+        /// <summary>
+        /// 下划线命名转帕斯卡命名
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static string UnderlineToPascal(string name)
+        {
+            var formatName = new StringBuilder();
+            var nameArray = name.Split('_');
+            foreach (var item in nameArray)
+            {
+                formatName.Append(item.Substring(0, 1).ToUpper() + item.Substring(1));
+            }
+            return formatName.ToString();
+        }
+
+        /// <summary>
+        /// 获取实体表名
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public static string GetEntityTableName(IEntity entity)
         {
             return GetEntityTableName(entity.GetType());
         }
 
+        /// <summary>
+        /// 获取实体表名
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static string GetEntityTableName(Type entity)
         {
-            return _entityNameCache.GetOrAdd(entity.FullName, (key) =>
+            return _entityNameCache.GetOrAdd(entity.FullName, (Func<string, string>)((key) =>
             {
                 var attr = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
                 if (attr == null)
@@ -121,10 +147,10 @@ namespace Sixpence.ORM.Entity
                 if (string.IsNullOrEmpty(attr.TableName))
                 {
                     var name = entity.Name;
-                    return UpperChartToLowerUnderLine(name);
+                    return PascalToUnderline(name);
                 }
                 return attr.TableName;
-            });
+            }));
         }
 
         /// <summary>
@@ -135,11 +161,22 @@ namespace Sixpence.ORM.Entity
         /// <returns></returns>
         public static string ConvertToDbName(string name)
         {
-            return UpperChartToLowerUnderLine(name);
+            return PascalToUnderline(name);
         }
 
+        /// <summary>
+        /// 获取实体模式
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public static string GetEntitySchema(IEntity entity) => GetEntitySchema(entity.GetType());
 
+        /// <summary>
+        /// 获取实体模式
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static string GetEntitySchema(Type entity)
         {
             var attribute = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
@@ -156,6 +193,12 @@ namespace Sixpence.ORM.Entity
             return SormServiceCollectionExtensions.Options?.DbSetting?.Driver?.Dialect?.Schema;
         }
 
+        /// <summary>
+        /// 获取主键名
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static PropertyInfo GetPrimaryPropertyInfo(Type type)
         {
             var properties = type.GetProperties().Where(item => Attribute.IsDefined(item, typeof(PrimaryColumnAttribute)));
@@ -169,5 +212,162 @@ namespace Sixpence.ORM.Entity
             }
             return properties.FirstOrDefault();
         }
+
+        #region 类属性读写
+        /// <summary>
+        /// 获取实体所有的字段名和值
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public static Dictionary<string, object?> GetProperties(object entity)
+        {
+            var entityType = entity.GetType();
+            var attributes = new Dictionary<string, object?>();
+            entityType
+                .GetProperties()
+                .Where(item => Attribute.IsDefined(item, typeof(ColumnAttribute)))
+                .ToList().ForEach(item =>
+                {
+                    var keyName = item.Name;
+                    var keyValue = item.GetValue(entity);
+                    attributes.Add(keyName, keyValue);
+                });
+            return attributes;
+        }
+
+        /// <summary>
+        /// 设置实体属性值
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        public static void SetAttributeValue(object entity, string name, object value)
+        {
+            var entityType = entity.GetType();
+            var property = entityType.GetProperty(name);
+            if (property?.GetSetMethod() != null)
+            {
+                property.SetValue(entity, value);
+            }
+        }
+
+        /// <summary>
+        /// 获取属性值
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static object? GetAttributeValue(object entity, string name)
+        {
+            var entityType = entity.GetType();
+            return entityType.GetProperty(name)?.GetValue(entity);
+        }
+        #endregion
+
+        #region 类属性读写（数据库字段名）
+        /// <summary>
+        /// 获取实体所有的数据库字段名和值
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public static Dictionary<string, object?> GetDbColumns(object entity)
+        {
+            var attributes = new Dictionary<string, object?>();
+            var entityType = entity.GetType();
+
+            entityType
+                .GetProperties()
+                .Where(item => Attribute.IsDefined(item, typeof(ColumnAttribute)))
+                .ToList().ForEach(item =>
+                {
+                    if (item.CanRead)
+                    {
+                        var attribute = AttributeUtil.GetAttribute<ColumnAttribute>(item);
+                        var keyName = !string.IsNullOrEmpty(attribute?.Options?.Name) ? attribute.Options.Name : PascalToUnderline(item.Name);
+                        var keyValue = item.GetValue(entity);
+                        attributes.Add(keyName, keyValue);
+                    }
+                });
+
+            return attributes;
+        }
+
+        /// <summary>
+        /// 根据数据库字段名设置实体属性值
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        public static void SetDbColumnValue(object entity, string name, object? value)
+        {
+            var entityType = entity.GetType();
+            var property = entityType.GetProperty(UnderlineToPascal(name));
+            if (property?.GetSetMethod() != null)
+            {
+                property.SetValue(entity, value);
+            }
+        }
+
+        /// <summary>
+        /// 根据数据库字段名获取属性值
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static object? GetDbColumnValue(object entity, string name)
+        {
+            var entityType = entity.GetType();
+            return entityType.GetProperty(UnderlineToPascal(name))?.GetValue(entity);
+        }
+        #endregion
+
+        #region 转 DataTable
+        public static DataTable ParseToDataTable<T>(IList<T> data)
+        {
+            PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(T));
+            DataTable table = new DataTable();
+
+            foreach (PropertyDescriptor prop in properties)
+                table.Columns.Add(PascalToUnderline(prop.Name), Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+
+            foreach (T item in data)
+            {
+                DataRow row = table.NewRow();
+                foreach (PropertyDescriptor prop in properties)
+                    row[PascalToUnderline(prop.Name)] = prop.GetValue(item) ?? DBNull.Value;
+                table.Rows.Add(row);
+            }
+            return table;
+        }
+
+        public static DataTable ParseToDataTable<T>(IList<T> data, DataColumnCollection columns)
+        {
+            PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(T));
+            DataTable table = new DataTable();
+            foreach (DataColumn item in columns)
+            {
+                var prop = properties.Find(item.ColumnName, true);
+                table.Columns.Add(new DataColumn(PascalToUnderline(item.ColumnName), item.DataType));
+            }
+
+            foreach (T item in data)
+            {
+                DataRow row = table.NewRow();
+                foreach (DataColumn c in columns)
+                {
+                    row[c.ColumnName] = DBNull.Value;
+
+                    var prop = properties.Find(UnderlineToPascal(c.ColumnName), true);
+                    var propValue = prop?.GetValue(item);
+                    if (propValue != null)
+                    {
+                        row[c.ColumnName] = Convert.ChangeType(propValue, c.DataType);
+                    }
+                }
+                table.Rows.Add(row);
+            }
+            return table;
+        }
+        #endregion
     }
 }

@@ -51,7 +51,6 @@ builder.Services.AddControllers();
 // 1、注册服务，配置数据库和实体
 builder.Services.AddSorm(options =>
 {
-    options.EntityClassNameCase = NameCase.Pascal; // 实体大写, UserInfo
     options.UsePostgres("Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123123;", 20);
 });
 
@@ -143,13 +142,13 @@ namespace Postgres.Entity
     public class UserInfo : BaseEntity
     {
         [PrimaryColumn]
-        public string id { get; set; }
+        public string Id { get; set; }
 
         [Column]
-        public string code { get; set; }
+        public string Code { get; set; }
 
         [Column]
-        public bool is_admin { get; set; }
+        public bool IsAdmin { get; set; }
 
         #region DAL
         public static List<UserInfo> FindAll()
@@ -214,7 +213,7 @@ var dataList = manager.Query<UserInfo>("select * from test where begin_time > @b
 单条删除：
 
 ```csharp
-var data = new UserInfo() { id = "123" };
+var data = new UserInfo() { Id = "123" };
 manager.Delete(data);
 manager.Delete("user_info", "123");
 ```
@@ -224,9 +223,9 @@ manager.Delete("user_info", "123");
 ```csharp
 var dataList = new List<UserInfo>()
 {
-    new UserInfo() { id = "B001"},
-    new UserInfo() { id = "B002"},
-    new UserInfo() { id = "B003"},
+    new UserInfo() { Id = "B001"},
+    new UserInfo() { Id = "B002"},
+    new UserInfo() { Id = "B003"},
     // ...
 };
 manager.BulkDelete(dataList);
@@ -237,7 +236,7 @@ manager.BulkDelete(dataList);
 单条更新：
 
 ```csharp
-var data = new UserInfo() { id = "123", name = "王二" };
+var data = new UserInfo() { Id = "123", Name = "王二" };
 manager.Update(data);
 ```
 
@@ -245,9 +244,9 @@ manager.Update(data);
 
 ```csharp
 var dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
-dataList[0].name = "test1";
-dataList[1].name = "test2";
-dataList[2].name = "test3";
+dataList[0].Name = "test1";
+dataList[1].Name = "test2";
+dataList[2].Name = "test3";
 manager.BulkUpdate(dataList);
 ```
 
@@ -256,7 +255,7 @@ manager.BulkUpdate(dataList);
 单条创建：
 
 ```csharp
-var entity = new UserInfo() { code = "A001", name = "Test", id = "123" };
+var entity = new UserInfo() { Code = "A001", Name = "Test", Id = "123" };
 var result = manager.Create(entity);
 ```
 
@@ -265,9 +264,9 @@ var result = manager.Create(entity);
 ```csharp
 var dataList = new List<UserInfo>()
 {
-    new UserInfo() { id = Guid.NewGuid().ToString(), code = "B001", name = "测试1", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-    new UserInfo() { id = Guid.NewGuid().ToString(), code = "B002", name = "测试2" , created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
-    new UserInfo() { id = Guid.NewGuid().ToString(), code = "B003", name = "测试3", created_at = DateTime.Now, created_by = "user", created_by_name = "user", updated_at = DateTime.Now, updated_by = "user", updated_by_name = "user" },
+    new UserInfo() { Id = Guid.NewGuid().ToString(), Code = "B001", Name = "测试1", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
+    new UserInfo() { Id = Guid.NewGuid().ToString(), Code = "B002", Name = "测试2" , CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
+    new UserInfo() { Id = Guid.NewGuid().ToString(), Code = "B003", Name = "测试3", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
 };
 var manager = EntityManagerFactory.GetManager();
 manager.ExecuteTransaction(() => manager.BulkCreate(dataList));
@@ -283,7 +282,7 @@ public void Transcation(UserInfo data)
     var manager = EntityManagerFactory.GetManager();
     manager.ExecuteTransaction(() => {
         manager.Create(data);
-        data.name = "123";
+        data.Name = "123";
         manager.Update(data);
     });
 }

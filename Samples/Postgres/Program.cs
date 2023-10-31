@@ -1,4 +1,5 @@
-﻿using Sixpence.ORM;
+﻿using Postgres.Entity;
+using Sixpence.ORM;
 using Sixpence.ORM.Postgres;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddConsole();
     loggingBuilder.AddDebug();
 });
+
+builder.Services.AddTransient<IEntity, UserInfo>();
 
 builder.Services.AddSorm(options =>
 {

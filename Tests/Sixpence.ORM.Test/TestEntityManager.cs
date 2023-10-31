@@ -19,15 +19,21 @@ namespace Sixpence.ORM.Test
         public void SetUp()
         {
             IServiceCollection services = new ServiceCollection();
+            // Plugin
+            services.AddTransient<IEntityManagerPlugin, UserInfoPlugin>();
+
+            // Entity
+            services.AddTransient<IEntity, Test>();
+
             services.AddSorm(options =>
             {
                 options.UsePostgres(DBSourceConfig.ConnectionString, DBSourceConfig.CommandTimeOut);
             });
             var provider = services.BuildServiceProvider();
             var app = new ApplicationBuilder(provider);
-            SormAppBuilderExtensions.UseSorm(app, options =>
+            app.UseSorm(options =>
             {
-                options.EnableLogging = true;
+                options.EnableLogging = false;
                 options.MigrateDb = true;
             });
         }
@@ -119,9 +125,9 @@ namespace Sixpence.ORM.Test
         {
             var dataList = new List<Test>()
             {
-                new Test() { Id= Guid.NewGuid().ToString(), Code = "B001", Name = "测试1", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user", IsSuper = true },
-                new Test() { Id = Guid.NewGuid().ToString(), Code = "B002", Name = "测试2" , CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user", IsSuper = false },
-                new Test() { Id = Guid.NewGuid().ToString(), Code = "B003", Name = "测试3", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user", IsSuper = false },
+                new Test() { Id= Guid.NewGuid().ToString(), Code = "B001", Name = "测试1", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now, IsSuper = true },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B002", Name = "测试2" , CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now, IsSuper = false },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B003", Name = "测试3", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now, IsSuper = false },
             };
             using(var manager = EntityManagerFactory.GetManager())
             {
@@ -156,9 +162,9 @@ namespace Sixpence.ORM.Test
         {
             var dataList = new List<Test>()
             {
-                new Test() { Id = Guid.NewGuid().ToString(), Code = "B001", Name = "测试1", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
-                new Test() { Id = Guid.NewGuid().ToString(), Code = "B002", Name = "测试2" , CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
-                new Test() { Id = Guid.NewGuid().ToString(), Code = "B003", Name = "测试3", CreatedAt = DateTime.Now, CreatedBy = "user", CreatedByName = "user", UpdatedAt = DateTime.Now, UpdatedBy = "user", UpdatedByName = "user" },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B001", Name = "测试1", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B002", Name = "测试2" , CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
+                new Test() { Id = Guid.NewGuid().ToString(), Code = "B003", Name = "测试3", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
             };
             using(var manager = EntityManagerFactory.GetManager())
             {

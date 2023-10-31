@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Sixpence.ORM.Utils;
 
 namespace Sixpence.ORM.Repository
 {
@@ -31,10 +32,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual string Create(E entity)
         {
-            if (string.IsNullOrEmpty(entity.PrimaryColumn.Value?.ToString()))
-            {
-                entity.SetAttributeValue(entity.PrimaryColumn.DbPropertyMap.Name, entity.NewId());
-            }
+            AssertUtil.IsNullOrEmpty(entity?.PrimaryColumn?.Value?.ToString(), "实体主键不能为空");
             var id = Manager.Create(entity);
             return id;
         }
@@ -54,7 +52,7 @@ namespace Sixpence.ORM.Repository
         /// <returns></returns>
         public virtual string Save(E entity)
         {
-            var id = entity.PrimaryColumn.Value ?? entity.NewId();
+            var id = string.IsNullOrEmpty(entity.PrimaryColumn.Value?.ToString()) ? entity.NewId() : entity.PrimaryColumn.Value?.ToString();
             var isExist = FindOne(id) != null;
             if (isExist)
             {
@@ -123,7 +121,7 @@ namespace Sixpence.ORM.Repository
             var paramList = new Dictionary<string, object>();
             var tableName = new E().EntityMap.Table;
             var primaryKey = new E().PrimaryColumn.Name;
-            var inClause = string.Join(",", ids.Select((id, index) => $"{Manager.Driver.Dialect.ParameterPrefix}id" + index));
+            var inClause = string.Join(",", ids.Split(',').Select((id, index) => $"{Manager.Driver.Dialect.ParameterPrefix}id" + index));
             var sql = $"SELECT * FROM {tableName} WHERE {primaryKey} IN ({inClause})";
             var count = 0;
             ids.Split(',')

@@ -107,7 +107,7 @@ WHERE schemaname = 'public' AND tablename = '{tableName}'";
         /// <returns></returns>
         public string GetTableColumnsSql(string tableName)
         {
-            var sql = @"
+            var sql = $@"
 SELECT 
 	A.attname AS Name,
 	A.attnotnull AS IsRequired,
@@ -116,7 +116,7 @@ FROM
 	pg_class AS C,
 	pg_attribute AS A 
 WHERE
-	C.relname = 'test' 
+	C.relname = '{tableName}' 
 	AND A.attrelid = C.oid 
 	AND A.attnum > 0
 	AND A.atttypid <> 0";

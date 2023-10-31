@@ -14,35 +14,10 @@ namespace Sixpence.ORM.Entity
     public class SormEntity : BaseEntity
     {
         /// <summary>
-        /// 创建人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("创建人id")]
-        public string CreatedBy { get; set; }
-
-        /// <summary>
-        /// 创建人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("创建人名称")]
-        public string CreatedByName { get; set; }
-
-        /// <summary>
         /// 创建日期
         /// </summary>
         [DataMember, Column(isRequire: true), Description("创建时间")]
         public DateTime? CreatedAt { get; set; }
-
-        /// <summary>
-        /// 修改人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("修改人")]
-        public string UpdatedBy { get; set; }
-
-        /// <summary>
-        /// 修改人
-        /// </summary>
-        [DataMember, Column(isRequire: true), Description("修改人姓名")]
-        public string UpdatedByName { get; set; }
-
 
         /// <summary>
         /// 修改日期

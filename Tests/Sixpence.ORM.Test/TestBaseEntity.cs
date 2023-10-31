@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Sixpence.ORM.Entity;
 using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Postgres;
+using Sixpence.ORM.Test.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,30 +22,30 @@ namespace Sixpence.ORM.Test
         public void SetUp()
         {
             IServiceCollection services = new ServiceCollection();
+            
+            services.AddTransient<IEntityManagerPlugin, UserInfoPlugin>();
+            services.AddTransient<IEntity, UserInfo>();
+            services.AddTransient<IEntity, Test>();
+
             services.AddSorm(options =>
             {
                 options.UsePostgres(DBSourceConfig.ConnectionString, DBSourceConfig.CommandTimeOut);
             });
+
             provider = services.BuildServiceProvider();
             var app = new ApplicationBuilder(provider);
-            SormAppBuilderExtensions.UseSorm(app, options =>
+            app.UseSorm(options =>
             {
-                options.EnableLogging = true;
+                options.EnableLogging = false;
                 options.MigrateDb = true;
             });
-        }
-
-        [Test]
-        public void ContainsKey()
-        {
-            Assert.IsTrue(test.ContainKey("code"));
         }
 
         [Test]
         public void Check_Resolve_Entity()
         {
             var entity = provider.GetServices<IEntity>()
-                .FirstOrDefault(item => EntityCommon.CompareEntityName(nameof(item), "user_info"));
+                .FirstOrDefault(item => item.EntityMap.Table == "user_info");
             Assert.IsNotNull(entity);
         }
 
@@ -52,8 +53,15 @@ namespace Sixpence.ORM.Test
         public void Check_Resolve_EntityManagerPlugin()
         {
             var plugin = provider.GetServices<IEntityManagerPlugin>()
-                .FirstOrDefault(item => EntityCommon.MatchEntityManagerPlugin(nameof(item), "user_info"));
+                .FirstOrDefault(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, "user_info"));
             Assert.IsNotNull(plugin);
+        }
+
+        [Test]
+        public void CheckPascalToUnderline()
+        {
+            var name = "UserInfo";
+            Assert.IsTrue(EntityCommon.PascalToUnderline(name) == "user_info");
         }
     }
 

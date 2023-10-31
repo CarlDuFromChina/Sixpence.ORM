@@ -14,12 +14,6 @@ namespace Sixpence.ORM
     {
         public static IServiceCollection AddMapper(this IServiceCollection services, ServiceCollectionOptions options)
         {
-            // 注册所有的实体
-            GetEntityTypes().Each(item =>
-            {
-                services.AddTransient(typeof(IEntity), item);
-            });
-
             var provider = services.BuildServiceProvider();
             var entityList = provider.GetServices<IEntity>();
 
@@ -40,30 +34,6 @@ namespace Sixpence.ORM
             });
 
             return services;
-        }
-
-        private static List<Assembly> GetAssemblies()
-        {
-            var assemblies = new List<Assembly>();
-            var assembly = Assembly.GetEntryAssembly();
-            if (assembly != null)
-            {
-                assemblies.Add(assembly);
-            }
-            assemblies.AddRange(Assembly.GetExecutingAssembly().GetReferencedAssemblies().Select(Assembly.Load));
-            return assemblies;
-        }
-
-        private static List<Type> GetEntityTypes()
-        {
-            var assemblies = GetAssemblies();
-            var entityTypes = new List<Type>();
-            assemblies.Each(assembly =>
-            {
-                var types = assembly.GetTypes().Where(type => type.GetInterfaces().Contains(typeof(IEntity)));
-                entityTypes.AddRange(types);
-            });
-            return entityTypes;
         }
     }
 }

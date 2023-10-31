@@ -12,13 +12,14 @@ namespace Sixpence.ORM
 {
     public static class SormServiceCollectionExtensions
     {
-        public static ServiceCollectionOptions Options = new ServiceCollectionOptions();
+        public static ServiceCollectionOptions Options;
 
         public static IServiceCollection AddSorm(this IServiceCollection services, Action<ServiceCollectionOptions> action)
         {
-            services.AddTransient<IEntityManagerBeforeCreateOrUpdate, EntityManagerBeforeCreateOrUpdate>();
             services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
+            services.AddTransient<IEntityManagerBeforeCreateOrUpdate, EntityManagerBeforeCreateOrUpdate>();
 
+            Options = new ServiceCollectionOptions();
             action?.Invoke(Options);
 
             if (Options.DbSetting == null)
