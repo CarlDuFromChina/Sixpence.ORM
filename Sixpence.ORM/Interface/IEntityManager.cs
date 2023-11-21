@@ -90,6 +90,14 @@ namespace Sixpence.ORM
         T QueryFirst<T>(string sql, object param = null) where T : BaseEntity, new();
 
         /// <summary>
+        /// 根据查询条件查询实体对象
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        T QueryFirst<T>(object param) where T : BaseEntity, new();
+
+        /// <summary>
         /// 执行SQL查询
         /// </summary>
         /// <param name="sql"></param>
@@ -113,6 +121,15 @@ namespace Sixpence.ORM
         /// <param name="paramList"></param>
         /// <returns></returns>
         IEnumerable<T> Query<T>(string sql, object param = null);
+
+        /// <summary>
+        /// 根据SQL查询
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="sql"></param>
+        /// <param name="paramList"></param>
+        /// <returns></returns>
+        IEnumerable<T> Query<T>(object param) where T : BaseEntity, new();
 
         /// <summary>
         /// 根据查询条件查询实体的对象列表 (分页查询）

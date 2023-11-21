@@ -41,10 +41,11 @@ WHERE 1!=1;";
             var tempSql = $@"ALTER TABLE {tableName}";
             foreach (var item in columns)
             {
-                var require = item.IsRequired == true ? " NOT NULL" : "";
+                var require = item.CanBeNull != true ? " NOT NULL" : "";
                 var length = item.Length != null ? $"({item.Length})" : "";
+                var unique = item.IsUnique == true ? " UNIQUE" : "";
                 var defaultValue = item.DefaultValue == null ? "" : item.DefaultValue is string ? $"DEFAULT '{item.DefaultValue}'" : $"DEFAULT {item.DefaultValue}";
-                sql.Append($"{tempSql} ADD COLUMN IF NOT EXISTS {item.Name} {item.Type}{length} {require} {defaultValue};\r\n");
+                sql.Append($"{tempSql} ADD COLUMN IF NOT EXISTS {item.Name} {item.DbType}{length} {require} {unique} {defaultValue};\r\n");
             }
             return sql.ToString();
         }

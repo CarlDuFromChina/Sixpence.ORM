@@ -31,7 +31,7 @@ namespace Sixpence.ORM.Entity
             this.Type = primaryType;
             this.Options = new DbPropertyMap()
             {
-                IsRequired = true,
+                CanBeNull = true,
                 Name = name,
                 PrimaryType = primaryType
             };

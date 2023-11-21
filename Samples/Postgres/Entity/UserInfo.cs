@@ -5,7 +5,7 @@ using Sixpence.ORM.Repository;
 
 namespace Postgres.Entity
 {
-    [Entity]
+    [Table]
     public class UserInfo : SormEntity
     {
         [PrimaryColumn]

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Sixpence.ORM.Test
 {
-    [Entity]
+    [Table]
     public class TestGuidNumber : BaseEntity
     {
         [PrimaryColumn(primaryType: PrimaryType.GUIDNumber)]

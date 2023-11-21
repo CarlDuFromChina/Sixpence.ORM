@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Sixpence.ORM.Test
 {
-    [Entity]
+    [Table]
     public partial class Test : SormEntity
     {
         [PrimaryColumn]

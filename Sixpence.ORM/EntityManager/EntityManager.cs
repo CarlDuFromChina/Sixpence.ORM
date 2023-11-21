@@ -9,6 +9,7 @@ using Sixpence.ORM.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static Dapper.SqlMapper;
+using System.Text;
 
 namespace Sixpence.ORM.EntityManager
 {
@@ -348,6 +349,23 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         }
 
         /// <summary>
+        /// 根据筛选条件查询返回记录
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public T QueryFirst<T>(object param = null) where T : BaseEntity, new()
+        {
+            var entityMap = new T().EntityMap;
+            var sql = new StringBuilder($"select * from {entityMap.Schema}.{entityMap.Table} where 1 = 1");
+            param
+                .ToDictionary()
+                .Each(item => sql.Append($" and {item.Key} = {Driver.Dialect.ParameterPrefix}{item.Key}"));
+
+            return DbClient.QueryFirst<T>(sql.ToString(), param);
+        }
+
+        /// <summary>
         /// 查询
         /// </summary>
         /// <param name="sql"></param>
@@ -380,6 +398,23 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         public IEnumerable<T> Query<T>(string sql, object param = null)
         {
             return DbClient.Query<T>(sql, param);
+        }
+
+        /// <summary>
+        /// 查询
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public IEnumerable<T> Query<T>(object param = null) where T : BaseEntity, new()
+        {
+            var entityMap = new T().EntityMap;
+            var sql = new StringBuilder($"select * from {entityMap.Schema}.{entityMap.Table} where 1 = 1");
+            param
+                .ToDictionary()
+                .Each(item => sql.Append($" and {item.Key} = {Driver.Dialect.ParameterPrefix}{item.Key}"));
+
+            return DbClient.Query<T>(sql.ToString(), param);
         }
 
         /// <summary>

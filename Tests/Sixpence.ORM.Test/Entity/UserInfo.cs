@@ -2,7 +2,7 @@
 
 namespace Sixpence.ORM.Test.Entity
 {
-    [Entity]
+    [Table]
     public class UserInfo : BaseEntity
     {
         [PrimaryColumn]

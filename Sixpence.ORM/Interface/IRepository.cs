@@ -50,6 +50,12 @@ namespace Sixpence.ORM
         IEnumerable<E> FindByIds(string ids);
 
         /// <summary>
+        /// 查询所有记录
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<E> FindAll();
+
+        /// <summary>
         /// 根据实体ID查询实体
         /// </summary>
         /// <param name="id"></param>

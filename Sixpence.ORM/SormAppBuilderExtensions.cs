@@ -81,11 +81,12 @@ namespace Sixpence.ORM
                                 .Select(e =>
                                 {
                                     var lengthSQL = e.Length != null ? $"({e.Length})" : "";
-                                    var requireSQL = e.IsRequired == true ? " NOT NULL" : "";
+                                    var requireSQL = e.CanBeNull != true ? " NOT NULL" : "";
+                                    var uniqueSQL = e.IsUnique == true ? " UNIQUE" : "";
                                     var defaultValueSQL = e.DefaultValue == null ? "" : e.DefaultValue is string ? $"DEFAULT '{e.DefaultValue}'" : $"DEFAULT {e.DefaultValue}";
                                     var primaryKeySQL = e.Name == item.PrimaryColumn.DbPropertyMap.Name ? "PRIMARY KEY" : "";
 
-                                    return $"{e.Name} {e.Type}{lengthSQL} {requireSQL} {primaryKeySQL} {defaultValueSQL}";
+                                    return $"{e.Name} {e.DbType}{lengthSQL} {requireSQL} {uniqueSQL} {primaryKeySQL} {defaultValueSQL}";
                                 })
                                 .Aggregate((a, b) => a + ",\r\n" + b);
                             manager.Execute($@"CREATE TABLE {schema}.{tableName} ({attrSql})");

@@ -17,7 +17,7 @@ namespace Sixpence.ORM
         /// <summary>
         /// 字段类型（数据库字段类型）
         /// </summary>
-        string Type { get; set; }
+        string DbType { get; set; }
 
         /// <summary>
         /// 备注信息
@@ -32,7 +32,12 @@ namespace Sixpence.ORM
         /// <summary>
         /// 是否必填
         /// </summary>
-        bool? IsRequired { get; set; }
+        bool? CanBeNull { get; set; }
+
+        /// <summary>
+        /// 是否唯一
+        /// </summary>
+        bool IsUnique { get; set; }
 
         /// <summary>
         /// 默认值

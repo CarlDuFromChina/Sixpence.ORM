@@ -42,11 +42,11 @@ namespace Sixpence.ORM.Mappers
                         column.Name = EntityCommon.ConvertToDbName(item.Name); // 转数据库字段名（下划线命名转换）
                     }
 
-                    if (string.IsNullOrEmpty(column.Type))
+                    if (string.IsNullOrEmpty(column.DbType))
                     {
                         if (driver.FieldMapping.GetFieldMappings().TryGetValue(item.PropertyType, out var type))
                         {
-                            column.Type = type;
+                            column.DbType = type;
                         }
                         else
                         {

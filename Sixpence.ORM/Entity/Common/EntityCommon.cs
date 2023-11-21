@@ -137,7 +137,7 @@ namespace Sixpence.ORM.Entity
         {
             return _entityNameCache.GetOrAdd(entity.FullName, (Func<string, string>)((key) =>
             {
-                var attr = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
+                var attr = Attribute.GetCustomAttribute(entity, typeof(TableAttribute)) as TableAttribute;
                 if (attr == null)
                 {
                     throw new Exception("获取实体名失败，请检查是否定义实体名");
@@ -179,7 +179,7 @@ namespace Sixpence.ORM.Entity
         /// <exception cref="Exception"></exception>
         public static string GetEntitySchema(Type entity)
         {
-            var attribute = Attribute.GetCustomAttribute(entity, typeof(EntityAttribute)) as EntityAttribute;
+            var attribute = Attribute.GetCustomAttribute(entity, typeof(TableAttribute)) as TableAttribute;
             if (attribute == null)
             {
                 throw new Exception("获取实体名失败，请检查是否定义实体名");
