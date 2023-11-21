@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Sixpence.ORM.Entity
@@ -12,12 +13,12 @@ namespace Sixpence.ORM.Entity
     /// <summary>
     /// 实体类基类，实体类可以继承此类
     /// </summary>
-    [DataContract]
-    [Serializable]
     public abstract class BaseEntity : IEntity
     {
+        [JsonIgnore]
         public IDbEntityMap EntityMap => SormServiceCollectionExtensions.Options.EntityMaps[this.GetType().FullName];
 
+        [JsonIgnore]
         public ISormPrimaryColumn PrimaryColumn
         {
             get
@@ -37,6 +38,7 @@ namespace Sixpence.ORM.Entity
             }
         }
 
+        [JsonIgnore]
         public IList<ISormColumn> Columns
         {
             get

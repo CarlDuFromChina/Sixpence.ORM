@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sixpence.ORM.EntityManager
+namespace Sixpence.ORM
 {
     public class EntityManagerBeforeCreateOrUpdate : IEntityManagerBeforeCreateOrUpdate
     {

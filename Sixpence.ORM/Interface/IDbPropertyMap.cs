@@ -22,7 +22,7 @@ namespace Sixpence.ORM
         /// <summary>
         /// 备注信息
         /// </summary>
-        string Remark { get; set; }
+        string? Remark { get; set; }
 
         /// <summary>
         /// 字段长度
@@ -42,7 +42,7 @@ namespace Sixpence.ORM
         /// <summary>
         /// 默认值
         /// </summary>
-        object DefaultValue { get; set; }
+        object? DefaultValue { get; set; }
 
         /// <summary>
         /// 是否是主键

@@ -14,8 +14,8 @@ namespace Sixpence.ORM.Test
     [TestFixture]
     public class TestRepository
     {
-        private Repository<Test> testRepository;
-        private Repository<TestGuidNumber> testGuidNumerRepository;
+        private IRepository<Test> testRepository;
+        private IRepository<TestGuidNumber> testGuidNumerRepository;
 
         [SetUp]
         public void SetUp()
@@ -27,7 +27,10 @@ namespace Sixpence.ORM.Test
             // Entity
             services.AddTransient<IEntity, Test>();
             services.AddTransient<IEntity, TestGuidNumber>();
-
+            // Repository
+            services.AddTransient<IRepository<Test>, Repository<Test>>();
+            services.AddTransient<IRepository<TestGuidNumber>, Repository<TestGuidNumber>>();
+            
             services.AddSorm(options =>
             {
                 options.UsePostgres(DBSourceConfig.ConnectionString, DBSourceConfig.CommandTimeOut);
@@ -39,8 +42,8 @@ namespace Sixpence.ORM.Test
                 options.EnableLogging = false;
                 options.MigrateDb = true;
             });
-            testRepository = new Repository<Test>();
-            testGuidNumerRepository = new Repository<TestGuidNumber>();
+            testRepository = provider.GetRequiredService<IRepository<Test>>();
+            testGuidNumerRepository = provider.GetRequiredService<IRepository<TestGuidNumber>>();
         }
 
         [Test]

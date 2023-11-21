@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Mappers;
 using Sixpence.ORM.Repository;
 using System;
@@ -16,7 +15,7 @@ namespace Sixpence.ORM
 
         public static IServiceCollection AddSorm(this IServiceCollection services, Action<ServiceCollectionOptions> action)
         {
-            services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
+            services.AddSingleton<IEntityManager, EntityManager>();
             services.AddTransient<IEntityManagerBeforeCreateOrUpdate, EntityManagerBeforeCreateOrUpdate>();
 
             Options = new ServiceCollectionOptions();

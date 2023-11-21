@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using static Dapper.SqlMapper;
 using System.Text;
 
-namespace Sixpence.ORM.EntityManager
+namespace Sixpence.ORM
 {
     /// <summary>
     /// 实体管理
@@ -20,11 +20,19 @@ namespace Sixpence.ORM.EntityManager
     {
         private DbClient _dbClient;
         private readonly IServiceProvider Provider;
-        private readonly ILogger<EntityManager> Logger;
+        private readonly ILogger<EntityManager>? Logger;
         private readonly bool EnableLogging = SormAppBuilderExtensions.BuilderOptions.EnableLogging;
 
         public IDbDriver Driver => _dbClient.Driver;
         public DbClient DbClient => _dbClient;
+
+        public EntityManager()
+        {
+            var dbSetting = SormServiceCollectionExtensions.Options?.DbSetting;
+            _dbClient = new DbClient(dbSetting.Driver, dbSetting.ConnectionString, dbSetting.CommandTimeout);
+            Provider = ServiceContainer.Provider;
+            Logger = Provider.GetService<ILoggerFactory>()?.CreateLogger<EntityManager>();
+        }
 
         public EntityManager(string connectionString, IDbDriver dbDriver, int? commandTimeout)
         {

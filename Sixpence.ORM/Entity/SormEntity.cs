@@ -16,13 +16,13 @@ namespace Sixpence.ORM.Entity
         /// <summary>
         /// 创建日期
         /// </summary>
-        [DataMember, Column(CanBeNull: true), Description("创建时间")]
+        [Column(CanBeNull: true), Description("创建时间")]
         public DateTime? CreatedAt { get; set; }
 
         /// <summary>
         /// 修改日期
         /// </summary>
-        [DataMember, Column(CanBeNull: true), Description("修改时间")]
+        [Column(CanBeNull: true), Description("修改时间")]
         public DateTime? UpdatedAt { get; set; }
     }
 }

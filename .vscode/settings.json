@@ -1,0 +1,38 @@
+{
+    // C# 和 .NET Core 相关设置
+    "[csharp]": {
+        // 启用OmniSharp（C#扩展）的格式化功能
+        "editor.defaultFormatter": "ms-dotnettools.csharp",
+
+        // 设置缩进大小为4个空格
+        "editor.tabSize": 4,
+
+        // 使用空格作为缩进
+        "editor.insertSpaces": true,
+
+        // 在保存文件时自动格式化
+        "editor.formatOnSave": true,
+
+        // 设置代码风格，例如：使用花括号的新行格式
+        "csharp.format.blockOpenBraceOnNewLine": true,
+        "csharp.format.blockCloseBraceOnNewLine": true,
+
+        // 在括号内部和外部添加空格
+        "csharp.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": true,
+        "csharp.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": true,
+
+        // 设置是否在控制流语句（if, else, while, for等）后自动添加空格
+        "csharp.format.insertSpaceAfterKeywordsInControlFlowStatements": true,
+
+        // 设置是否在分号后自动添加空格
+        "csharp.format.insertSpaceAfterSemicolonInForStatement": true,
+
+        // 设置是否在逗号后自动添加空格
+        "csharp.format.insertSpaceAfterCommaDelimiter": true
+    },
+
+    // 其他通用编辑设置
+    "files.autoSave": "onFocusChange",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true
+}

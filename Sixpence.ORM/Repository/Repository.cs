@@ -1,10 +1,10 @@
-﻿using Sixpence.ORM.EntityManager;
-using Sixpence.ORM.Entity;
+﻿using Sixpence.ORM.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Sixpence.ORM.Utils;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Sixpence.ORM.Repository
 {
@@ -12,15 +12,15 @@ namespace Sixpence.ORM.Repository
         where E : BaseEntity, new()
     {
         #region 构造函数
-        public Repository()
+        public Repository(IServiceProvider provider)
         {
-            Manager = EntityManagerFactory.GetManager();
+            Manager = provider.GetRequiredService<IEntityManager>();
         }
 
-        public Repository(IEntityManager manager)
-        {
-            Manager = manager;
-        }
+        //public Repository(IEntityManager manager)
+        //{
+        //    Manager = manager;
+        //}
         #endregion
 
         public IEntityManager Manager { get; set; }
@@ -36,13 +36,6 @@ namespace Sixpence.ORM.Repository
             var id = Manager.Create(entity);
             return id;
         }
-
-        /// <summary>
-        /// 创建实体记录
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public virtual string Insert(E entity) => Create(entity);
 
         /// <summary>
         /// 创建或更新历史记录

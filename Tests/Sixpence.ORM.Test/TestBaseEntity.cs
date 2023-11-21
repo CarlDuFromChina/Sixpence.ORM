@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Sixpence.ORM.Entity;
-using Sixpence.ORM.EntityManager;
 using Sixpence.ORM.Postgres;
 using Sixpence.ORM.Test.Entity;
 using System;

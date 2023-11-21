@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Postgres.Entity;
+using Postgres.Service;
 
 namespace UserInfoController;
 
@@ -8,9 +9,12 @@ namespace UserInfoController;
 public class UserInfoController : ControllerBase
 {
     private readonly ILogger<UserInfoController> _logger;
+    private readonly UserInfoService service;
 
-    public UserInfoController(ILogger<UserInfoController> logger)
+    public UserInfoController(ILogger<UserInfoController> logger,
+        UserInfoService service)
     {
+        this.service = service;
         _logger = logger;
     }
 
@@ -19,26 +23,26 @@ public class UserInfoController : ControllerBase
     {
         if (!string.IsNullOrEmpty(id))
         {
-            return new List<UserInfo>() { UserInfo.FindById(id) };
+            return new List<UserInfo>() { service.FindById(id) };
         }   
-        return UserInfo.FindAll();
+        return service.FindAll();
     }
 
     [HttpPost]
     public void Post(UserInfo userInfo)
     {
-        UserInfo.InsertUserInfo(userInfo);
+        service.InsertUserInfo(userInfo);
     }
 
     [HttpPut]
     public void Put(UserInfo userInfo)
     {
-        UserInfo.UpdateUserInfo(userInfo);
+        service.UpdateUserInfo(userInfo);
     }
 
     [HttpDelete]
     public void Delete(string id)
     {
-        UserInfo.DeleteUserInfo(id);
+        service.DeleteUserInfo(id);
     }
 }
