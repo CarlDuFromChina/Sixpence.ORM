@@ -46,7 +46,7 @@ namespace Sixpence.ORM.Test
         public void Check_Entity_AutoGenerate()
         {
             var result = manager.ExecuteScalar(manager.DbClient.Driver.Dialect.GetTableExsitSql("test"));
-            Assert.IsTrue(ConvertUtil.ConToBoolean(result));
+            Assert.IsTrue((bool)result);
         }
 
         [Test]
@@ -152,8 +152,8 @@ namespace Sixpence.ORM.Test
             {
                 manager.BulkCreate(dataList);
                 manager.BulkDelete(dataList);
-                dataList = manager.Query<Test>("select * from test where code in ('B001', 'B002', 'B003')").ToList();
-                Assert.IsTrue(dataList.IsEmpty());
+                dataList = manager.Query<Test>("select * from test where code = ANY(@ids)", new { ids = new string[] { "B001", "B002", "B003" } }).ToList();
+                Assert.IsTrue(dataList == null || dataList.Count == 0);
             });
         }
     }

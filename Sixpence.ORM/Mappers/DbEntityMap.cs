@@ -15,11 +15,13 @@ namespace Sixpence.ORM.Mappers
         {
             this.Table = EntityCommon.GetEntityTableName(entity);
             this.Schema = EntityCommon.GetEntitySchema(entity);
+            this.Description = EntityCommon.GetEntityTableDescription(entity);
             this.Properties = GetMaps(entity, driver);
         }
 
         public string Table { get; set; }
         public string Schema { get; set; }
+        public string Description { get; set; }
         public IList<IDbPropertyMap> Properties { get; set; }
 
         private List<IDbPropertyMap> GetMaps(IEntity entity, IDbDriver driver)

@@ -9,19 +9,19 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM
 {
-    public static class IEnumerableExtensions
+    internal static class IEnumerableExtensions
     {
-        public static bool IsEmpty<T>(this IEnumerable<T> ts)
+        internal static bool IsEmpty<T>(this IEnumerable<T> ts)
         {
             return ts == null || ts.Count() == 0;
         }
 
-        public static bool IsNotEmpty<T>(this IEnumerable<T> ts)
+        internal static bool IsNotEmpty<T>(this IEnumerable<T> ts)
         {
             return !IsEmpty(ts);
         }
 
-        public static DataTable ToDataTable<T>(this IList<T> data)
+        internal static DataTable ToDataTable<T>(this IList<T> data)
         {
             PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(T));
             DataTable table = new DataTable();
@@ -39,7 +39,7 @@ namespace Sixpence.ORM
             return table;
         }
 
-        public static DataTable ToDataTable<T>(this IList<T> data, DataColumnCollection columns)
+        internal static DataTable ToDataTable<T>(this IList<T> data, DataColumnCollection columns)
         {
             PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(T));
             DataTable table = new DataTable();
@@ -67,13 +67,14 @@ namespace Sixpence.ORM
             }
             return table;
         }
+
         /// <summary>
         /// 针对IEnumerable的各项进行处理
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="src"></param>
         /// <param name="callback"></param>
-        public static void Each<T>(this IEnumerable<T> src, Action<T> callback)
+        internal static void Each<T>(this IEnumerable<T> src, Action<T> callback)
         {
             if (src == null) return;
             foreach (var item in src)
@@ -88,7 +89,7 @@ namespace Sixpence.ORM
         /// <typeparam name="T"></typeparam>
         /// <param name="array"></param>
         /// <returns></returns>
-        public static List<T> ToList<T>(this T[] array)
+        internal static List<T> ToList<T>(this T[] array)
         {
             var list = new List<T>();
             if (array == null || array.Length == 0)
@@ -101,18 +102,6 @@ namespace Sixpence.ORM
                 list.Add(item);
             });
             return list;
-        }
-
-        /// <summary>
-        /// 获取Type
-        /// </summary>
-        /// <param name="assemblies"></param>
-        /// <returns></returns>
-        public static List<Type> GetTypes(this List<Assembly> assemblies)
-        {
-            var types = new List<Type>();
-            assemblies.ForEach(item => types.AddRange(item.GetTypes()));
-            return types;
         }
     }
 }

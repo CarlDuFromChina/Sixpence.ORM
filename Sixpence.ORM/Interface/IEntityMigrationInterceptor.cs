@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -26,5 +27,6 @@ namespace Sixpence.ORM
         public IEntityManager Manager { get; set; }
         public IEnumerable<IEntity> EntityList { get; set; }
         public IEntity CurrentEntity { get; set; }
+        public ILogger Logger { get; set; }
     }
 }

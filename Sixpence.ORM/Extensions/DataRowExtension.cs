@@ -6,9 +6,9 @@ using System.Text;
 
 namespace Sixpence.ORM
 {
-    public static class DataRowExtension
+    internal static class DataRowExtension
     {
-        public static Dictionary<string, object> ToDictionary(this DataRow row)
+        internal static Dictionary<string, object> ToDictionary(this DataRow row)
         {
             var dict = row.Table.Columns
               .Cast<DataColumn>()
@@ -16,7 +16,7 @@ namespace Sixpence.ORM
             return dict;
         }
 
-        public static Dictionary<string, object> ToDictionary(this DataRow dataRow, DataColumnCollection columnCollection)
+        internal static Dictionary<string, object> ToDictionary(this DataRow dataRow, DataColumnCollection columnCollection)
         {
             var columns = new List<string>();
             foreach (DataColumn column in columnCollection)

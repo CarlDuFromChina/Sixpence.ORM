@@ -137,9 +137,9 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public int Execute(string sql, object param = null)
+        public int Execute(string sql, object? param = null)
         {
-            var paramList = param?.ToDictionary();
+            var paramList = param.ToDictionary();
 
             if (EnableLogging)
                 Logger.LogDebug(sql + paramList.ToLogString());
@@ -153,9 +153,9 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string sql, object param = null)
+        public object ExecuteScalar(string sql, object? param = null)
         {
-            var paramList = param?.ToDictionary();
+            var paramList = param.ToDictionary();
 
             if (EnableLogging)
                 Logger.LogDebug(sql + paramList.ToLogString());
@@ -172,9 +172,9 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="param"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, object param = null)
+        public IEnumerable<T> Query<T>(string sql, object? param = null)
         {
-            var paramList = param?.ToDictionary();
+            var paramList = param.ToDictionary();
 
             if (EnableLogging)
                 Logger.LogDebug(sql + paramList.ToLogString());
@@ -189,9 +189,9 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public T QueryFirst<T>(string sql, object param = null)
+        public T QueryFirst<T>(string sql, object? param = null)
         {
-            var paramList = param?.ToDictionary();
+            var paramList = param.ToDictionary();
 
             if (EnableLogging)
                 Logger.LogDebug(sql + paramList.ToLogString());
@@ -207,9 +207,9 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public DataTable Query(string sql, object param = null)
+        public DataTable Query(string sql, object? param = null)
         {
-            var paramList = param?.ToDictionary();
+            var paramList = param.ToDictionary();
 
             if (EnableLogging)
                 Logger.LogDebug(sql + paramList.ToLogString());

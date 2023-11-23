@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sixpence.ORM.Utils
+namespace Sixpence.ORM.Postgres.Utils
 {
     internal class ConvertUtil
     {

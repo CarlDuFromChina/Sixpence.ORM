@@ -40,7 +40,7 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="conditions"></param>
         /// <returns></returns>
-        IEnumerable<E> Find(object conditions = null);
+        IEnumerable<E> Find(object? conditions = null);
 
         /// <summary>
         /// 根据实体ID批量查询实体
@@ -67,7 +67,7 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="conditions"></param>
         /// <returns></returns>
-        E FindOne(object conditions = null);
+        E FindOne(object conditions);
 
         /// <summary>
         /// 原生SQL查询
@@ -75,7 +75,7 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="param"></param>
         /// <returns></returns>
-        IEnumerable<E> Query(string sql, object param = null);
+        IEnumerable<E> NativeQuery(string sql, object? param = null);
 
         /// <summary>
         /// 更新实体

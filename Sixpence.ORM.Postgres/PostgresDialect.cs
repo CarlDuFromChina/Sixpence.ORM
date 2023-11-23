@@ -20,7 +20,8 @@ namespace Sixpence.ORM.Postgres
         /// 获取临时表创建语句
         /// </summary>
         /// <param name="conn"></param>
-        /// <param name="tableName"></param>
+        /// <param name="tableName">目标表</param>
+        /// <param name="tempTableName">临时表表名</param>
         /// <returns></returns>
         public string GetCreateTemporaryTableSql(string tableName, string tempTableName)
         {
@@ -79,7 +80,7 @@ ALTER TABLE {tableName}
         {
             return $@"
 SELECT COUNT(1) > 0 FROM pg_tables
-WHERE schemaname = 'public' AND tablename = '{tableName}'";
+WHERE schemaname = {Schema}' AND tablename = '{tableName}'";
         }
 
         /// <summary>
@@ -159,6 +160,16 @@ ON CONFLICT ({primaryKeys}) DO UPDATE SET {updatedValues};";
         public (string name, object value) HandleParameter(string name, object value)
         {
             return (name, value);
+        }
+
+        /// <summary>
+        /// 获取 IN 句
+        /// </summary>
+        /// <param name="parameter"></param>
+        /// <returns></returns>
+        public string GetInClauseSql(string parameter)
+        {
+            return $"= ANY({parameter})";
         }
     }
 }

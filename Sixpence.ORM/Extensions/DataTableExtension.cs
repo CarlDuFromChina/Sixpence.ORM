@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM
 {
-    public static class DataTableExtension
+    internal static class DataTableExtension
     {
         /// <summary>
         /// 是否是个空表
         /// </summary>
         /// <param name="dt"></param>
         /// <returns></returns>
-        public static bool IsEmpty(this DataTable dt)
+        internal static bool IsEmpty(this DataTable dt)
         {
             return dt == null || dt.Rows.Count == 0;
         }

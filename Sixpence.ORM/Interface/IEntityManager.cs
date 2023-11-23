@@ -87,7 +87,7 @@ namespace Sixpence.ORM
         /// <summary>
         /// 根据查询条件查询实体对象
         /// </summary>
-        T QueryFirst<T>(string sql, object param = null) where T : BaseEntity, new();
+        T QueryFirst<T>(string sql, object? param = null) where T : BaseEntity, new();
 
         /// <summary>
         /// 根据查询条件查询实体对象
@@ -103,7 +103,7 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        DataTable Query(string sql, object param = null);
+        DataTable Query(string sql, object? param = null);
 
         /// <summary>
         /// 查询数量
@@ -111,7 +111,7 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        int QueryCount(string sql, object param = null);
+        int QueryCount(string sql, object? param = null);
 
         /// <summary>
         /// 根据SQL查询
@@ -120,7 +120,7 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        IEnumerable<T> Query<T>(string sql, object param = null);
+        IEnumerable<T> Query<T>(string sql, object? param = null);
 
         /// <summary>
         /// 根据SQL查询
@@ -129,7 +129,7 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        IEnumerable<T> Query<T>(object param) where T : BaseEntity, new();
+        IEnumerable<T> Query<T>(object? param = null) where T : BaseEntity, new();
 
         /// <summary>
         /// 根据查询条件查询实体的对象列表 (分页查询）
@@ -157,7 +157,7 @@ namespace Sixpence.ORM
         /// <param name="manager"></param>
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
-        int Execute(string sql, object param = null);
+        int Execute(string sql, object? param = null);
 
         /// <summary>
         /// 执行Sql返回第一行第一列记录
@@ -166,7 +166,7 @@ namespace Sixpence.ORM
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        object ExecuteScalar(string sql, object param = null);
+        object ExecuteScalar(string sql, object? param = null);
 
         /// <summary>
         /// 执行SQL文件

@@ -49,6 +49,17 @@ namespace Sixpence.ORM.Entity
             }));
         }
 
+        public static string GetEntityTableDescription(IEntity entity)
+        {
+            return GetEntityTableDescription(entity.GetType());
+        }
+
+        public static string GetEntityTableDescription(Type entity)
+        {
+            var attr = Attribute.GetCustomAttribute(entity, typeof(TableAttribute)) as TableAttribute;
+            return attr?.Description ?? string.Empty;
+        }
+
         /// <summary>
         /// 根据设置命名规则转换成数据库名称，数据库字段和表名都需要转换
         /// 例如下划线命名 UserName，返回值 user_name

@@ -7,15 +7,15 @@ using System.Text;
 
 namespace Sixpence.ORM
 {
-    public static class ObjectExtension
+    internal static class ObjectExtension
     {
-        public static Dictionary<string, object> ToDictionary(this object param)
+        internal static Dictionary<string, object> ToDictionary(this object? param)
         {
             if (param == null)
-                return null;
+                return new Dictionary<string, object>();
 
             if (param is Dictionary<string, object>)
-                return param as Dictionary<string, object>;
+                return param as Dictionary<string, object> ?? new Dictionary<string, object>();
 
             if (param is NameValueCollection)
             {

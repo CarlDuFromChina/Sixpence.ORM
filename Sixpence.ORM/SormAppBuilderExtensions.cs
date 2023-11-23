@@ -48,10 +48,14 @@ namespace Sixpence.ORM
             var manager = app.ApplicationServices.GetRequiredService<IEntityManager>();
             var logger = loggerFactory?.CreateLogger(typeof(SormAppBuilderExtensions));
 
-            var context = new EntityMigrationInterceptorContext() { EntityList = entityList };
+            var context = new EntityMigrationInterceptorContext()
+            {
+                EntityList = entityList,
+                Manager = manager,
+                Logger = logger
+            };
 
             var driver = manager.DbClient.Driver;
-            context.Manager = manager;
 
             manager.ExecuteTransaction(() =>
             {

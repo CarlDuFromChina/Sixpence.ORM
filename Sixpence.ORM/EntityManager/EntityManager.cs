@@ -351,7 +351,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public T QueryFirst<T>(string sql, object param = null) where T : BaseEntity, new()
+        public T QueryFirst<T>(string sql, object? param = null) where T : BaseEntity, new()
         {
             return DbClient.QueryFirst<T>(sql, param);
         }
@@ -362,13 +362,13 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         /// <typeparam name="T"></typeparam>
         /// <param name="param"></param>
         /// <returns></returns>
-        public T QueryFirst<T>(object param = null) where T : BaseEntity, new()
+        public T QueryFirst<T>(object? param = null) where T : BaseEntity, new()
         {
             var entityMap = new T().EntityMap;
-            var sql = new StringBuilder($"select * from {entityMap.Schema}.{entityMap.Table} where 1 = 1");
+            var sql = new StringBuilder($"SELECT * FROM {entityMap.Schema}.{entityMap.Table} WHERE 1 = 1");
             param
                 .ToDictionary()
-                .Each(item => sql.Append($" and {item.Key} = {Driver.Dialect.ParameterPrefix}{item.Key}"));
+                .Each(item => sql.Append($" AND {item.Key} = {Driver.Dialect.ParameterPrefix}{item.Key}"));
 
             return DbClient.QueryFirst<T>(sql.ToString(), param);
         }
@@ -379,7 +379,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public DataTable Query(string sql, object param = null)
+        public DataTable Query(string sql, object? param = null)
         {
             return DbClient.Query(sql, param);
         }
@@ -391,7 +391,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public int QueryCount(string sql, object param = null)
+        public int QueryCount(string sql, object? param = null)
         {
             return ConvertUtil.ConToInt(this.ExecuteScalar(sql, param));
         }
@@ -403,7 +403,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(string sql, object param = null)
+        public IEnumerable<T> Query<T>(string sql, object? param = null)
         {
             return DbClient.Query<T>(sql, param);
         }
@@ -414,7 +414,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         /// <typeparam name="T"></typeparam>
         /// <param name="param"></param>
         /// <returns></returns>
-        public IEnumerable<T> Query<T>(object param = null) where T : BaseEntity, new()
+        public IEnumerable<T> Query<T>(object? param = null) where T : BaseEntity, new()
         {
             var entityMap = new T().EntityMap;
             var sql = new StringBuilder($"select * from {entityMap.Schema}.{entityMap.Table} where 1 = 1");
@@ -506,7 +506,7 @@ WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefi
         /// <param name="sql"></param>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public object ExecuteScalar(string sql, object param = null)
+        public object ExecuteScalar(string sql, object? param = null)
         {
             return DbClient.ExecuteScalar(sql, param);
         }
@@ -784,14 +784,13 @@ AND {tempTableName}.{primaryKeyName} IS NOT NULL
             }
 
             var t = new TEntity();
+            var dialect = Driver.Dialect;
             var tableName = t.EntityMap.Table;
-            var primaryKeyName = t.PrimaryColumn?.DbPropertyMap.Name;
-            var ids = string.Join(",", dataList.Select(item => "'" + item.PrimaryColumn?.Value + "'"));
+            var primaryKeyName = t.PrimaryColumn.DbPropertyMap.Name;
+            var idList = dataList.Select(item => item.PrimaryColumn.Value.ToString()).ToArray();
 
-            ExecuteTransaction(() =>
-            {
-                DbClient.Execute($"DELETE FROM {tableName} WHERE {primaryKeyName} IN ({ids})");
-            });
+            var sql = $"DELETE FROM {tableName} WHERE {primaryKeyName} {dialect.GetInClauseSql(dialect.ParameterPrefix + "ids")}";
+            DbClient.Execute(sql, new { ids = idList });
         }
         #endregion
     }

@@ -10,7 +10,7 @@ namespace Sixpence.ORM
     /// <summary>
     /// 字符串扩展类
     /// </summary>
-    public static class StringExtensions
+    internal static class StringExtensions
     {
         /// <summary>
         /// 判断字符串是否存在于一个字符串中
@@ -19,7 +19,7 @@ namespace Sixpence.ORM
         /// <param name="toCheck"></param>
         /// <param name="comp"></param>
         /// <returns></returns>
-        public static bool Contains(this string source, string toCheck, StringComparison comp)
+        internal static bool Contains(this string source, string toCheck, StringComparison comp)
         {
             return source.IndexOf(toCheck, comp) >= 0;
         }
@@ -29,7 +29,7 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="paramList"></param>
         /// <returns></returns>
-        public static string ToLogString(this Dictionary<string, object> paramList)
+        internal static string ToLogString(this Dictionary<string, object> paramList)
         {
             if (paramList == null || paramList.Count == 0)
             {
@@ -51,7 +51,7 @@ namespace Sixpence.ORM
         /// <param name="value"></param>
         /// <param name="str">需要查找的字符串</param>
         /// <returns></returns>
-        public static string GetSubString(this string value, string str)
+        internal static string GetSubString(this string value, string str)
         {
             if (string.IsNullOrEmpty(value))
             {
@@ -74,7 +74,7 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static string GetFileType(this string value)
+        internal static string GetFileType(this string value)
         {
             if (!string.IsNullOrEmpty(value))
             {
@@ -91,7 +91,7 @@ namespace Sixpence.ORM
         /// <param name="value"></param>
         /// <param name="keyValuePairs"></param>
         /// <returns></returns>
-        public static string Replace(this string value, Dictionary<string, string> keyValuePairs)
+        internal static string Replace(this string value, Dictionary<string, string> keyValuePairs)
         {
             if (string.IsNullOrEmpty(value) || keyValuePairs.IsEmpty())
             {
@@ -108,7 +108,7 @@ namespace Sixpence.ORM
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static Stream ToStream(this string value)
+        internal static Stream ToStream(this string value)
             => new MemoryStream(Encoding.UTF8.GetBytes(value ?? ""));
     }
 }

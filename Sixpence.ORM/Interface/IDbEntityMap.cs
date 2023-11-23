@@ -11,6 +11,7 @@ namespace Sixpence.ORM.Interface
     {
         public string Table { get; set; }
         public string Schema { get; set; }
+        public string Description { get; set; }
         public IList<IDbPropertyMap> Properties { get; set; }
     }
 }

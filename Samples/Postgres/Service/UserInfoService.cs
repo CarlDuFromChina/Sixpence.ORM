@@ -19,7 +19,7 @@ namespace Postgres.Service
 
         public UserInfo FindById(string id)
         {
-            return repository.FindOne();
+            return repository.FindOne(id);
         }
 
         public void InsertUserInfo(UserInfo userInfo)

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Sixpence.ORM.Utils
 {
-    public class AttributeUtil
+    internal class AttributeUtil
     {
-        public static T GetAttribute<T>(Type type) where T : Attribute
+        internal static T GetAttribute<T>(Type type) where T : Attribute
         {
             // 使用反射获取类型上的所有自定义属性
             object[] attributes = type.GetCustomAttributes(typeof(T), false);
@@ -26,7 +26,7 @@ namespace Sixpence.ORM.Utils
             }
         }
 
-        public static T GetAttribute<T>(PropertyInfo property) where T: Attribute
+        internal static T GetAttribute<T>(PropertyInfo property) where T: Attribute
         {
             // 使用反射获取类型上的所有自定义属性
             object[] attributes = property.GetCustomAttributes(typeof(T), false);

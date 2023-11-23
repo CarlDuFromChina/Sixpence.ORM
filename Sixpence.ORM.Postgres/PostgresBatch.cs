@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using Sixpence.ORM.Postgres.Utils;
 using Sixpence.ORM.Utils;
 using System;
 using System.Collections.Generic;
