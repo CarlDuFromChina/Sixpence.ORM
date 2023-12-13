@@ -11,7 +11,7 @@ namespace Sixpence.ORM.Mappers
     /// <summary>
     /// 字段
     /// </summary>
-    internal class DbPropertyMap : IDbPropertyMap
+    public class DbPropertyMap : IDbPropertyMap
     {
         public string Name { get; set; }
         public string DbType { get; set; }

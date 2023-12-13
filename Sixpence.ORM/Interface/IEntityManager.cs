@@ -38,10 +38,10 @@ namespace Sixpence.ORM
         /// <summary>
         /// 删除数据的实体记录
         /// </summary>
-        /// <param name="typeName">表的名字</param>
+        /// <param name="tableName">表的名字</param>
         /// <param name="id">记录的主键Id</param>
         /// <returns>影响的数据库行数</returns>
-        int Delete(string typeName, string id);
+        int Delete(string tableName, string id);
 
         /// <summary>
         /// 删除数据库的实体记录

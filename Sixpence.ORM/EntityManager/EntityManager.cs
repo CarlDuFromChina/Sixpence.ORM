@@ -98,11 +98,12 @@ namespace Sixpence.ORM
         /// <param name="entityName"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public int Delete(string entityName, string id)
+        public int Delete(string tableName, string id)
         {
-            var entity = ServiceContainer.Provider.GetServices<IEntity>().FirstOrDefault(item => item.EntityMap.Table == entityName) as BaseEntity;
-            AssertUtil.IsNull(entity, $"未找到实体：{entityName}");
-            var dataList = DbClient.Query($"SELECT * FROM {entityName} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id", new { id });
+            var entity = ServiceContainer.Provider.GetServices<IEntity>().FirstOrDefault(item => item.EntityMap.Table == tableName) as BaseEntity;
+            AssertUtil.IsNull(entity, $"未找到实体：{tableName}");
+            var sql = $"SELECT * FROM {tableName} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id";
+            var dataList = DbClient.Query(sql, new { id });
 
             if (dataList.Rows.Count == 0) return 0;
 
@@ -112,12 +113,12 @@ namespace Sixpence.ORM
             var plugins = ServiceContainer.Provider.GetServices<IEntityManagerPlugin>()
                 .Where(item => EntityCommon.MatchEntityManagerPlugin(item.GetType().Name, entity.EntityMap.Table));
 
-            plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PreDelete }));
+            plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = tableName, Action = EntityAction.PreDelete }));
 
-            var sql = $"DELETE FROM {entityName} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id";
+            sql = $"DELETE FROM {tableName} WHERE {entity.PrimaryColumn.DbPropertyMap.Name} = {Driver.Dialect.ParameterPrefix}id";
             int result = this.Execute(sql, new { id });
 
-            plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = entityName, Action = EntityAction.PostDelete }));
+            plugins?.Each(item => item.Execute(new EntityManagerPluginContext() { EntityManager = this, Entity = entity, EntityName = tableName, Action = EntityAction.PostDelete }));
             return result;
         }
 

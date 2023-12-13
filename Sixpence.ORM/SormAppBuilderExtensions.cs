@@ -129,7 +129,7 @@ namespace Sixpence.ORM
 
                         // 删除字段
                         if (removeColumns.IsNotEmpty())
-                            manager.Execute(driver.Dialect.GetDropColumnSql(tableName, removeColumns));
+                            manager.Execute(driver.Dialect.GetDropColumnSql(tableName, removeColumns.Select(item => item.Name).ToList()));
 
                         // 新增字段
                         if (addColumns.IsNotEmpty())

@@ -34,7 +34,7 @@ namespace Sixpence.ORM
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        string GetDropColumnSql(string tableName, IList<IDbPropertyMap> columns);
+        string GetDropColumnSql(string tableName, IList<string> columns);
 
         /// <summary>
         /// 获取临时表创建语句

@@ -57,7 +57,7 @@ WHERE 1!=1;";
         /// <param name="tableName"></param>
         /// <param name="columns"></param>
         /// <returns></returns>
-        public string GetDropColumnSql(string tableName, IList<IDbPropertyMap> columns)
+        public string GetDropColumnSql(string tableName, IList<string> columns)
         {
             var sql = $@"
 ALTER TABLE {tableName}
@@ -65,7 +65,7 @@ ALTER TABLE {tableName}
             var count = 0;
             foreach (var item in columns)
             {
-                var itemSql = $"DROP COLUMN IF EXISTS {item.Name} {(++count == columns.Count ? ";" : ",")}";
+                var itemSql = $"DROP COLUMN IF EXISTS {item} {(++count == columns.Count ? ";" : ",")}";
                 sql += itemSql;
             }
             return sql;
